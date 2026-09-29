@@ -19,6 +19,6 @@ export async function listAudit(filters: { entity?: string; userId?: string; fro
         filters.to ? lt(auditLog.at, riyadhMidnight(addDays(filters.to, 1))) : undefined,
       ),
     )
-    .orderBy(desc(auditLog.at))
+    .orderBy(desc(auditLog.at), desc(auditLog.id))
     .limit(1000);
 }

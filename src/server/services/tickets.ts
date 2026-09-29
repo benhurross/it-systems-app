@@ -41,12 +41,12 @@ export async function listTickets(user: SessionUser) {
 export async function getTicket(user: SessionUser, id: number) {
   const ticket = one(await withNames().where(and(eq(tickets.id, id), scope(user))));
   const [comments, history, asset] = await Promise.all([
-    db.select().from(ticketComments).where(eq(ticketComments.ticketId, id)).orderBy(asc(ticketComments.createdAt)),
+    db.select().from(ticketComments).where(eq(ticketComments.ticketId, id)).orderBy(asc(ticketComments.createdAt), asc(ticketComments.id)),
     db
       .select({ id: auditLog.id, at: auditLog.at, userName: auditLog.userName, action: auditLog.action, summary: auditLog.summary })
       .from(auditLog)
       .where(and(eq(auditLog.entity, "ticket"), eq(auditLog.entityId, String(id))))
-      .orderBy(asc(auditLog.at)),
+      .orderBy(asc(auditLog.at), asc(auditLog.id)),
     ticket.assetId
       ? db.select({ id: assets.id, name: assets.name }).from(assets).where(eq(assets.id, ticket.assetId))
       : [],

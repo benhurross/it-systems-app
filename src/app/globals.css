@@ -190,4 +190,23 @@
   .recharts-text {
     font-size: 0.75rem;
   }
+  /* The CMDB graph in the app's colours, in both themes. */
+  .react-flow {
+    --xy-background-color: var(--card);
+    --xy-background-pattern-dots-color: var(--border);
+    --xy-node-background-color: var(--background);
+    --xy-node-color: var(--foreground);
+    --xy-node-border: 1px solid var(--border);
+    --xy-node-border-radius: var(--radius-md);
+    --xy-edge-stroke: var(--muted-foreground);
+    --xy-edge-label-background-color: var(--card);
+    --xy-edge-label-color: var(--muted-foreground);
+    --xy-handle-background-color: var(--muted-foreground);
+    --xy-handle-border-color: var(--card);
+    --xy-controls-button-background-color: var(--card);
+    --xy-controls-button-background-color-hover: var(--muted);
+    --xy-controls-button-color: var(--foreground);
+    --xy-controls-button-color-hover: var(--foreground);
+    --xy-controls-button-border-color: var(--border);
+  }
 }

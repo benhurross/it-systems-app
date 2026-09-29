@@ -43,7 +43,7 @@ export async function getAsset(id: number) {
       .leftJoin(fromEmployee, eq(fromEmployee.id, assetMovements.fromEmployeeId))
       .leftJoin(toEmployee, eq(toEmployee.id, assetMovements.toEmployeeId))
       .where(eq(assetMovements.assetId, id))
-      .orderBy(desc(assetMovements.movedAt)),
+      .orderBy(desc(assetMovements.movedAt), desc(assetMovements.id)),
     listRelationships(id),
     db
       .select({ licenseId: licenses.id, product: licenses.product, version: licenses.version })

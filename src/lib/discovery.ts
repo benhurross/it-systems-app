@@ -27,6 +27,18 @@ export function expandCidr(cidr: string): string[] {
   return hosts;
 }
 
+const ARP_LINE = /(\d{1,3}(?:\.\d{1,3}){3})\D+?([0-9a-f]{2}([-:])[0-9a-f]{2}(?:\3[0-9a-f]{2}){4})/i;
+
+/** IP-to-MAC pairs from `arp -a` output, on Windows ("aa-bb-...") or Linux and macOS ("aa:bb:..."). */
+export function parseArp(output: string): Map<string, string> {
+  const table = new Map<string, string>();
+  for (const line of output.split(/\r?\n/)) {
+    const match = line.match(ARP_LINE);
+    if (match && !/^ff[-:]ff/i.test(match[2])) table.set(match[1], match[2].toLowerCase().replaceAll("-", ":"));
+  }
+  return table;
+}
+
 export type HostState = "registered" | "new" | "ip_changed";
 
 const normalizeMac = (mac: string | null) => mac?.toLowerCase().replace(/[^0-9a-f]/g, "") || null;

@@ -82,4 +82,12 @@ describe("DataTable", () => {
     renderWithProviders(<DataTable data={[]} columns={columns} />);
     expect(screen.getByText("Nothing to show yet")).toBeInTheDocument();
   });
+
+  it("names the export after its report and holds it until the rows arrive", () => {
+    const csv = { filename: "audit.csv", label: "Audit report", columns: [{ header: "Tag", value: (a: Asset) => a.tag }] };
+    const { rerender } = renderWithProviders(<DataTable data={[]} columns={columns} csv={csv} loading />);
+    expect(screen.getByRole("button", { name: "Audit report" })).toBeDisabled();
+    rerender(<DataTable data={assets} columns={columns} csv={csv} />);
+    expect(screen.getByRole("button", { name: "Audit report" })).toBeEnabled();
+  });
 });

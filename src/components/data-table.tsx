@@ -82,7 +82,7 @@ export function DataTable<T extends RowData>({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   columns: ColumnDef<Features, T, any>[];
   facets?: Facet[];
-  csv?: { filename: string; columns: CsvColumn<T>[] };
+  csv?: { filename: string; columns: CsvColumn<T>[]; label?: string };
   rowHref?: (row: T) => string;
   toolbar?: ReactNode;
   loading?: boolean;
@@ -141,10 +141,11 @@ export function DataTable<T extends RowData>({
             <Button
               variant="outline"
               size="sm"
+              disabled={loading}
               onClick={() => downloadCsv(csv.filename, toCsv(filtered.map((r) => r.original), csv.columns))}
             >
               <Download />
-              {t("common.exportCsv")}
+              {csv.label ?? t("common.exportCsv")}
             </Button>
           )}
         </div>

@@ -1,7 +1,7 @@
 import { render } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import { ThemeProvider } from "next-themes";
-import type { ReactElement } from "react";
+import type { ReactElement, ReactNode } from "react";
 import ar from "../../messages/ar.json";
 import en from "../../messages/en.json";
 
@@ -10,15 +10,16 @@ export function renderWithProviders(
   ui: ReactElement,
   { locale = "en", theme = false }: { locale?: "en" | "ar"; theme?: boolean } = {},
 ) {
-  return render(
+  const wrapper = ({ children }: { children: ReactNode }) => (
     <NextIntlClientProvider locale={locale} messages={locale === "ar" ? ar : en} timeZone="Asia/Riyadh">
       {theme ? (
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          {ui}
+          {children}
         </ThemeProvider>
       ) : (
-        ui
+        children
       )}
-    </NextIntlClientProvider>,
+    </NextIntlClientProvider>
   );
+  return render(ui, { wrapper });
 }

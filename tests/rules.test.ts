@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { impactOf, neighbours, type Relation } from "@/lib/cmdb";
 import { addDays, daysBetween, hoursBetween, isoDate } from "@/lib/dates";
-import { expandCidr, reconcile } from "@/lib/discovery";
+import { expandCidr, parseArp, reconcile } from "@/lib/discovery";
 import { ref } from "@/lib/domain";
 import { budgetLines, contractState, fiscalYearOf, fiscalYearRange } from "@/lib/finance";
 import { quarterOf, rag, DEFAULT_KPI_TARGETS } from "@/lib/kpis";
@@ -328,6 +328,18 @@ describe("discovery", () => {
     expect(reconcile({ ip: "10.0.0.50", mac: "aabb.cc00.1122" }, assets)).toEqual({ state: "ip_changed", assetId: 1 });
     expect(reconcile({ ip: "10.0.0.9", mac: null }, assets)).toEqual({ state: "registered", assetId: 2 });
     expect(reconcile({ ip: "10.0.0.77", mac: "de:ad:be:ef:00:01" }, assets)).toEqual({ state: "new", assetId: null });
+  });
+
+  it("reads MAC addresses from the ARP table on Windows and Linux, skipping broadcast", () => {
+    const windows = [
+      "Interface: 192.168.1.20 --- 0x7",
+      "  Internet Address      Physical Address      Type",
+      "  192.168.1.1           a4-2b-b0-11-22-33     dynamic",
+      "  192.168.1.255         ff-ff-ff-ff-ff-ff     static",
+    ].join("\r\n");
+    expect(parseArp(windows)).toEqual(new Map([["192.168.1.1", "a4:2b:b0:11:22:33"]]));
+    const linux = ["? (10.0.0.1) at 00:1B:A9:AA:BB:CC [ether] on eth0", "? (10.0.0.9) at <incomplete> on eth0"].join("\n");
+    expect(parseArp(linux)).toEqual(new Map([["10.0.0.1", "00:1b:a9:aa:bb:cc"]]));
   });
 });
 

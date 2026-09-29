@@ -26,7 +26,7 @@ export function impactOf(id: number, relations: Relation[]): number[] {
 }
 
 /** Direct relations of one item: what it relies on, and what relies on it. */
-export function neighbours(id: number, relations: Relation[]) {
+export function neighbours<R extends Relation>(id: number, relations: R[]) {
   return {
     reliesOn: relations.filter((r) => r.sourceId === id),
     reliedOnBy: relations.filter((r) => r.targetId === id),

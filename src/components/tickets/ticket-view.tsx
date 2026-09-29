@@ -367,7 +367,7 @@ function Details({ ticket, mode }: { ticket: TicketDetail; mode: Mode }) {
             </Row>
           )}
           {ticket.reopenCount > 0 && (
-            <Row label={t("tickets.status")}>{t("tickets.reopened", { count: String(ticket.reopenCount) })}</Row>
+            <Row label={t("tickets.reopened")}>{format.number(ticket.reopenCount)}</Row>
           )}
         </dl>
       </CardContent>

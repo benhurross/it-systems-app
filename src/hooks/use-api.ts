@@ -4,13 +4,17 @@ import type { UseFormReturn } from "react-hook-form";
 import { toast } from "sonner";
 import { api, ApiError } from "@/lib/api";
 
-/** GET a path from this app's API; null waits. */
-export function useApi<T>(path: string | null, options?: { refetchInterval?: number }) {
+/** GET a path from this app's API; null waits. `refetchInterval` may depend on the latest data. */
+export function useApi<T>(
+  path: string | null,
+  options?: { refetchInterval?: number | ((data: T | undefined) => number | false) },
+) {
+  const interval = options?.refetchInterval;
   return useQuery({
     queryKey: [path],
     queryFn: () => api<T>(path!),
     enabled: path !== null,
-    refetchInterval: options?.refetchInterval,
+    refetchInterval: typeof interval === "function" ? (query) => interval(query.state.data) : interval,
   });
 }
 

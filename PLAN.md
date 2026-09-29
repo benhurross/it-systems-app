@@ -292,16 +292,16 @@ Each phase ends with a local git commit. There is no remote.
 - [x] Changes: register, create/edit, approval workflow, risk, rollback plan, linked CI and ticket, result
 
 ### Phase 6 - Assets, Discovery, CMDB, Software
-- [ ] Inventory: filters for category, status and location; lifecycle flags; CSV export
-- [ ] Asset detail:
+- [x] Inventory: filters for category, status and location; lifecycle flags; CSV export
+- [x] Asset detail:
   - specs, assignment and lifecycle
   - monitoring target (none, ping, or TCP host and port)
   - installed software, relationships, movement history and related tickets
-- [ ] Asset actions: add, edit, move/reassign (writes a movement record), retire
-- [ ] Discovery: a real sweep of the entered subnet runs in the background with live progress. It probes ping plus ports 22, 80, 443, 445, 3389 and 9100, looks up reverse DNS, and reads MACs from the ARP table where available
-- [ ] Discovery results are reconciled against inventory. An unregistered device can be added through a prefilled form
-- [ ] CMDB: CI list and a graph of the selected CI's neighbourhood, with an impact analysis panel and add/remove relationship
-- [ ] Software: licence register with seats vs installs, compliance status and expiry. Compliance summary cards and an audit report CSV export
+- [x] Asset actions: add, edit, move/reassign (writes a movement record), retire
+- [x] Discovery: a real sweep of the entered subnet runs in the background with live progress. It probes ping plus ports 22, 80, 443, 445, 3389 and 9100, looks up reverse DNS, and reads MACs from the ARP table where available
+- [x] Discovery results are reconciled against inventory. An unregistered device can be added through a prefilled form
+- [x] CMDB: CI list and a graph of the selected CI's neighbourhood, with an impact analysis panel and add/remove relationship
+- [x] Software: licence register with seats vs installs, compliance status and expiry. Compliance summary cards and an audit report CSV export
 
 ### Phase 7 - Network monitoring and Projects
 - [ ] The scheduler starts from `instrumentation.ts`, once per server, and probes monitored devices at the configured interval with bounded concurrency
