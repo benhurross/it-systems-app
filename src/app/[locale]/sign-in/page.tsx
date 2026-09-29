@@ -22,13 +22,15 @@ export default function SignInPage() {
   const t = useTranslations();
   const locale = useLocale();
   const router = useRouter();
-  const form = useForm({ resolver: zodResolver(schema), defaultValues: { email: "", password: "" } });
+  // No default values: registering them would wipe anything typed before the page finished loading.
+  const form = useForm({ resolver: zodResolver(schema) });
   const failure = form.formState.errors.root?.message;
 
   const submit = form.handleSubmit(async (values) => {
     const { data, error } = await authClient.signIn.email(values);
     if (error) {
-      form.setError("root", { message: t(error.code === "BANNED_USER" ? "auth.banned" : "auth.invalid") });
+      const key = error.status === 429 ? "auth.tooMany" : error.code === "BANNED_USER" ? "auth.banned" : "auth.invalid";
+      form.setError("root", { message: t(key) });
       return;
     }
     router.replace(homeFor(data.user.role));

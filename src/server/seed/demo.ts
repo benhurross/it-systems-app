@@ -20,6 +20,7 @@ import * as s from "../db/schema";
 import {
   CHANGES,
   DEMO_ACCOUNTS,
+  DEMO_PASSWORD,
   DEPARTMENT_WEIGHTS,
   FIRST_NAMES,
   KB_ARTICLES,
@@ -33,8 +34,7 @@ import {
 } from "./demo-data";
 import { seedReference } from "./reference";
 
-/** Password for every demo account. Development and test databases only. */
-export const DEMO_PASSWORD = "Demo-Pass-2026";
+export { DEMO_PASSWORD } from "./demo-data";
 
 /** Everything except the reference lists, which `seedReference` keeps. */
 const TABLES = [

@@ -6,4 +6,4 @@ import { seedDemo } from "@/server/seed/demo";
 const counts = await seedDemo();
 await db.$client.end();
 console.log(`Demo data loaded: ${counts.employees} employees, ${counts.assets} assets, ${counts.tickets} tickets.`);
-console.log(`Demo accounts: ${DEMO_ACCOUNTS.map((a) => a.email).join(", ")} (password in src/server/seed/demo.ts).`);
+console.log(`Demo accounts: ${DEMO_ACCOUNTS.map((a) => a.email).join(", ")} (password in src/server/seed/demo-data.ts).`);

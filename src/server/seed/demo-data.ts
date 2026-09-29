@@ -34,7 +34,10 @@ export const DEPARTMENT_WEIGHTS: [string, number][] = [
   ["executive", 4],
 ];
 
-/** Demo accounts, one per role. The password is DEMO_PASSWORD in demo.ts. */
+/** Password for every demo account. Development and test databases only. */
+export const DEMO_PASSWORD = "Demo-Pass-2026";
+
+/** Demo accounts, one per role. */
 export const DEMO_ACCOUNTS = [
   { email: "admin@applus.test", name: "Sara Al-Harbi", role: "admin", department: "it", location: "jeddah", jobTitle: "IT Manager" },
   { email: "it@applus.test", name: "Omar Haddad", role: "it_staff", department: "it", location: "jeddah", jobTitle: "Helpdesk Specialist" },

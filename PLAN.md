@@ -271,14 +271,14 @@ Each phase ends with a local git commit. There is no remote.
 - [x] Coverage of `src/lib` and `src/server` is at least 90% (98.7% of lines; the database connection, session lookup and auth client config are wiring left to Playwright)
 
 ### Phase 4 - Settings (admin only)
-- [ ] Settings appears only for admins, in the sidebar and the command menu. A non-admin opening a Settings URL sees a 403 page, and every Settings endpoint returns 403 to them
-- [ ] Users: create, change role, reset password, deactivate and reactivate, and link to an employee. Admins cannot demote or deactivate themselves. A deactivated user cannot sign in, and their sessions end
-- [ ] Lists: add, rename (English and Arabic), reorder and deactivate. Forms offer only active values
-- [ ] Service desk: SLA hours per priority, applied to new and re-prioritised tickets only
+- [x] Settings appears only for admins, in the sidebar and the command menu. A non-admin opening a Settings URL sees a 403 page, and every Settings endpoint returns 403 to them
+- [x] Users: create, change role, reset password, deactivate and reactivate, and link to an employee. Admins cannot demote or deactivate themselves. A deactivated user cannot sign in, and their sessions end
+- [x] Lists: add, rename (English and Arabic), reorder and deactivate. Forms offer only active values
+- [x] Service desk: SLA hours per priority, applied to new and re-prioritised tickets only
 - [ ] Monitoring: on/off, interval, timeout, threshold and retention. The scheduler follows changes without a restart
-- [ ] KPIs: baseline and target per KPI per year
-- [ ] Organisation: name and fiscal year start month
-- [ ] Audit log: filterable by user, entity and date, read only
+- [x] KPIs: baseline and target per KPI per year
+- [x] Organisation: name and fiscal year start month
+- [x] Audit log: filterable by user, entity and date, read only
 
 ### Phase 5 - Service Desk and employee requests
 - [ ] Tickets list: tabs All / Incidents / Requests. Filters: status, priority, issue type, location, assignee. Shows an SLA countdown or a breach badge

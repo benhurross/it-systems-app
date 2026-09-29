@@ -24,6 +24,7 @@ import {
   TICKET_TYPES,
   VULN_STATUSES,
 } from "./domain";
+import { ROLES } from "./permissions";
 
 // Shared field shapes. Optional fields arrive as null (or are left out) and are stored as null.
 const name = z.string().trim().min(1).max(200);
@@ -61,7 +62,7 @@ export const ticketUpdate = z
   })
   .partial()
   .refine((t) => t.status !== "resolved" || !!t.resolution, {
-    message: "A resolution note is required",
+    message: "validation.resolutionRequired",
     path: ["resolution"],
   });
 
@@ -93,7 +94,7 @@ export const changeInput = z.object({
 
 export const changeDecision = z
   .object({ status: z.enum(CHANGE_STATUSES), result: z.enum(CHANGE_RESULTS).nullish() })
-  .refine((c) => c.status !== "implemented" || !!c.result, { message: "Record the result", path: ["result"] });
+  .refine((c) => c.status !== "implemented" || !!c.result, { message: "validation.resultRequired", path: ["result"] });
 
 export const assetInput = z.object({
   name,
@@ -127,7 +128,7 @@ export const assetMove = z.object({
 
 export const relationshipInput = z
   .object({ sourceId: id, targetId: id, type: z.enum(RELATION_TYPES) })
-  .refine((r) => r.sourceId !== r.targetId, { message: "An item cannot relate to itself", path: ["targetId"] });
+  .refine((r) => r.sourceId !== r.targetId, { message: "validation.selfRelation", path: ["targetId"] });
 
 export const licenseInput = z.object({
   product: name,
@@ -168,7 +169,7 @@ export const contractInput = z
     autoRenew: z.boolean(),
     notes: optionalText,
   })
-  .refine((c) => c.endDate >= c.startDate, { message: "Ends before it starts", path: ["endDate"] });
+  .refine((c) => c.endDate >= c.startDate, { message: "validation.endBeforeStart", path: ["endDate"] });
 
 export const purchaseInput = z.object({
   title: name,
@@ -283,7 +284,7 @@ export const lookupInput = z.object({
   code: z
     .string()
     .trim()
-    .regex(/^[a-z0-9_]+$/, "Lowercase letters, digits and underscores only")
+    .regex(/^[a-z0-9_]+$/, "validation.codeFormat")
     .max(60),
   labelEn: name,
   labelAr: name,
@@ -318,3 +319,27 @@ export const kpiTargetsInput = z.object({
     satisfaction: kpiTarget,
   }),
 });
+
+const password = z.string().min(10).max(128);
+
+export const userCreate = z
+  .object({
+    name,
+    email: z.email(),
+    role: z.enum(ROLES),
+    employeeId: optionalId,
+    password,
+  })
+  .refine((u) => u.role !== "employee" || u.employeeId !== null, {
+    message: "validation.employeeRequired",
+    path: ["employeeId"],
+  });
+
+export const userUpdate = z
+  .object({
+    role: z.enum(ROLES),
+    employeeId: id.nullable(),
+    active: z.boolean(),
+    password: password.nullish(),
+  })
+  .partial();

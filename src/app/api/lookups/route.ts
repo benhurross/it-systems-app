@@ -1,8 +1,8 @@
 import { handler, requireUser } from "@/server/http";
 import { listLookups } from "@/server/services/lookups";
 
-/** Active reference lists, for every form in the app. */
+/** Every reference value, active or not: old records still need their labels. Forms offer only active ones. */
 export const GET = handler(async () => {
   await requireUser("request");
-  return listLookups();
+  return listLookups({ includeInactive: true });
 });

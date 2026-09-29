@@ -3,6 +3,7 @@
 import { MutationCache, QueryCache, QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "next-themes";
 import { useState, type ReactNode } from "react";
+import { z } from "zod";
 import { DirectionProvider } from "@/components/ui/direction";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -29,6 +30,8 @@ function makeQueryClient() {
 
 export function Providers({ dir, children }: { dir: "ltr" | "rtl"; children: ReactNode }) {
   const [queryClient] = useState(makeQueryClient);
+  // Zod's own messages follow the page language. A language switch loads a new document, so once is enough.
+  useState(() => z.config(dir === "rtl" ? z.locales.ar() : z.locales.en()));
 
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>

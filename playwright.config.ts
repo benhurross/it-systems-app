@@ -2,6 +2,12 @@ import { defineConfig, devices } from "@playwright/test";
 import { BASE_URL, PORT, TEST_DATABASE_URL } from "./e2e/env";
 
 // Runs against the production build (`npm run build` first) and its own `ap_it_test` database.
+const browsers = [
+  { name: "chromium", device: devices["Desktop Chrome"] },
+  { name: "firefox", device: devices["Desktop Firefox"] },
+  { name: "webkit", device: devices["Desktop Safari"] },
+];
+
 export default defineConfig({
   testDir: "./e2e",
   globalSetup: "./e2e/global-setup.ts",
@@ -12,15 +18,18 @@ export default defineConfig({
   reporter: [["list"], ["html", { open: "never" }]],
   use: { baseURL: BASE_URL, trace: "retain-on-failure" },
   projects: [
-    { name: "chromium", use: { ...devices["Desktop Chrome"] } },
-    { name: "firefox", use: { ...devices["Desktop Firefox"] } },
-    { name: "webkit", use: { ...devices["Desktop Safari"] } },
+    { name: "setup", testMatch: /auth\.setup\.ts/ },
+    ...browsers.map(({ name, device }) => ({
+      name,
+      use: { ...device },
+      dependencies: ["setup"],
+    })),
   ],
   webServer: {
     command: `npx next start -p ${PORT}`,
     url: `${BASE_URL}/en/sign-in`,
     reuseExistingServer: false,
     timeout: 120_000,
-    env: { DATABASE_URL: TEST_DATABASE_URL, BETTER_AUTH_URL: BASE_URL },
+    env: { DATABASE_URL: TEST_DATABASE_URL, BETTER_AUTH_URL: BASE_URL, AUTH_RATE_LIMIT: "off" },
   },
 });

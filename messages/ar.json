@@ -20,7 +20,7 @@
     "exportCsv": "تصدير CSV",
     "yes": "نعم",
     "no": "لا",
-    "optional": "اختياري",
+    "optional": "(اختياري)",
     "retry": "حاول مرة أخرى",
     "saved": "تم الحفظ",
     "toggleSidebar": "إظهار الشريط الجانبي أو إخفاؤه",
@@ -31,7 +31,11 @@
     "date": "التاريخ",
     "owner": "المسؤول",
     "total": "الإجمالي",
-    "newTicket": "تذكرة جديدة"
+    "newTicket": "تذكرة جديدة",
+    "confirm": "تأكيد",
+    "loadFailed": "تعذّر التحميل.",
+    "select": "اختر",
+    "view": "عرض"
   },
   "nav": {
     "groups": {
@@ -73,7 +77,8 @@
     "newPassword": "كلمة المرور الجديدة",
     "passwordRule": "10 أحرف على الأقل.",
     "passwordChanged": "تم تغيير كلمة المرور.",
-    "wrongPassword": "كلمة المرور الحالية غير صحيحة."
+    "wrongPassword": "كلمة المرور الحالية غير صحيحة.",
+    "tooMany": "محاولات كثيرة. انتظر بضع ثوانٍ ثم حاول مرة أخرى."
   },
   "display": {
     "title": "العرض",
@@ -124,10 +129,294 @@
     "notFoundTitle": "الصفحة غير موجودة",
     "notFound": "هذه الصفحة غير موجودة أو تمت إزالتها.",
     "generic": "حدث خطأ. حاول مرة أخرى.",
-    "goHome": "الذهاب إلى صفحة البداية"
+    "goHome": "الذهاب إلى صفحة البداية",
+    "checkFields": "تحقق من الحقول المظللة.",
+    "conflict": "هذا السجل موجود مسبقًا.",
+    "invalidAction": "هذا الإجراء غير ممكن في حالة السجل الحالية."
   },
   "dashboard": {
     "title": "لوحة المعلومات",
     "welcome": "مرحبًا، {name}"
+  },
+  "enums": {
+    "ticketType": {
+      "incident": "عطل",
+      "request": "طلب"
+    },
+    "ticketStatus": {
+      "open": "مفتوحة",
+      "in_progress": "قيد المعالجة",
+      "on_hold": "معلّقة",
+      "resolved": "تم الحل",
+      "closed": "مغلقة"
+    },
+    "priority": {
+      "low": "منخفضة",
+      "medium": "متوسطة",
+      "high": "عالية",
+      "critical": "حرجة"
+    },
+    "assetStatus": {
+      "in_use": "قيد الاستخدام",
+      "in_stock": "في المخزون",
+      "in_repair": "قيد الإصلاح",
+      "retired": "مستبعد"
+    },
+    "supportStatus": {
+      "supported": "مدعوم حاليًا",
+      "ending_soon": "يقترب من انتهاء الدعم",
+      "end_of_support": "انتهى الدعم الفني",
+      "end_of_life": "انتهى العمر الافتراضي",
+      "unknown": "حالة الدعم غير معروفة"
+    },
+    "criticality": {
+      "low": "منخفض",
+      "medium": "متوسط",
+      "high": "مرتفع",
+      "critical": "حرج"
+    },
+    "monitorMethod": {
+      "none": "غير مراقب",
+      "ping": "Ping",
+      "tcp": "منفذ TCP"
+    },
+    "deviceStatus": {
+      "up": "يعمل",
+      "degraded": "أداء منخفض",
+      "down": "متوقف",
+      "unknown": "غير معروف"
+    },
+    "alertKind": {
+      "down": "توقف",
+      "degraded": "أداء منخفض"
+    },
+    "alertStatus": {
+      "open": "مفتوح",
+      "acknowledged": "تم الاطلاع",
+      "resolved": "تم الحل"
+    },
+    "relationType": {
+      "depends_on": "يعتمد على",
+      "runs_on": "يعمل على",
+      "connects_to": "متصل بـ",
+      "backs_up": "ينسخ احتياطيًا"
+    },
+    "licenseType": {
+      "subscription": "اشتراك",
+      "perpetual": "دائم",
+      "oem": "OEM",
+      "volume": "ترخيص كمي"
+    },
+    "licenseState": {
+      "compliant": "ملتزم",
+      "expiring": "ينتهي قريبًا",
+      "expired": "منتهي",
+      "over_deployed": "تثبيت يتجاوز التراخيص"
+    },
+    "contractState": {
+      "active": "ساري",
+      "expiring": "يستحق التجديد",
+      "expired": "منتهي"
+    },
+    "purchaseStatus": {
+      "requested": "مطلوب",
+      "approved": "معتمد",
+      "rejected": "مرفوض",
+      "ordered": "تم الطلب",
+      "received": "تم الاستلام"
+    },
+    "kbStatus": {
+      "draft": "مسودة",
+      "published": "منشور",
+      "retired": "مؤرشف"
+    },
+    "changeStatus": {
+      "requested": "بانتظار الاعتماد",
+      "approved": "معتمد",
+      "rejected": "مرفوض",
+      "implemented": "تم التنفيذ"
+    },
+    "changeResult": {
+      "successful": "ناجح",
+      "rolled_back": "تم التراجع",
+      "failed": "فشل"
+    },
+    "changeRisk": {
+      "low": "منخفضة",
+      "medium": "متوسطة",
+      "high": "عالية"
+    },
+    "projectStatus": {
+      "planned": "مخطط",
+      "active": "نشط",
+      "on_hold": "متوقف مؤقتًا",
+      "completed": "مكتمل"
+    },
+    "taskStatus": {
+      "todo": "للتنفيذ",
+      "in_progress": "قيد التنفيذ",
+      "done": "منجز"
+    },
+    "riskStatus": {
+      "open": "مفتوح",
+      "mitigating": "قيد المعالجة",
+      "accepted": "مقبول",
+      "closed": "مغلق"
+    },
+    "vulnStatus": {
+      "open": "مفتوحة",
+      "in_progress": "قيد المعالجة",
+      "resolved": "تم الحل",
+      "accepted": "خطر مقبول"
+    },
+    "severity": {
+      "low": "منخفضة",
+      "medium": "متوسطة",
+      "high": "عالية",
+      "critical": "حرجة"
+    },
+    "leaverState": {
+      "forwarding": "إعادة توجيه البريد",
+      "due": "حان حذف صندوق البريد",
+      "completed": "مكتمل"
+    },
+    "onboardingPhase": {
+      "preparation": "التجهيز",
+      "during": "اليوم الأول",
+      "after": "بعد الانضمام"
+    },
+    "rag": {
+      "green": "ضمن المستهدف",
+      "amber": "في تحسن",
+      "red": "خارج المستهدف",
+      "none": "لا توجد بيانات"
+    }
+  },
+  "validation": {
+    "resolutionRequired": "أضف ملاحظة الحل قبل إغلاق المشكلة.",
+    "resultRequired": "سجّل نتيجة التغيير.",
+    "selfRelation": "لا يمكن ربط العنصر بنفسه.",
+    "endBeforeStart": "تاريخ الانتهاء قبل تاريخ البدء.",
+    "codeFormat": "استخدم أحرفًا إنجليزية صغيرة وأرقامًا وشرطة سفلية فقط.",
+    "employeeRequired": "اربط سجل موظف لهذا الدور."
+  },
+  "settings": {
+    "title": "الإعدادات",
+    "description": "إعدادات النظام العامة. لا يطّلع عليها إلا مسؤولو النظام.",
+    "tabs": {
+      "users": "المستخدمون",
+      "lists": "القوائم",
+      "serviceDesk": "مكتب الخدمة",
+      "monitoring": "المراقبة",
+      "kpis": "مستهدفات الأداء",
+      "organisation": "المنشأة",
+      "audit": "سجل التدقيق"
+    },
+    "users": {
+      "add": "إضافة مستخدم",
+      "edit": "تعديل المستخدم",
+      "name": "الاسم الكامل",
+      "email": "البريد الإلكتروني",
+      "role": "الدور",
+      "employee": "سجل الموظف",
+      "noEmployee": "غير مرتبط",
+      "password": "كلمة مرور مؤقتة",
+      "passwordHint": "شاركها بشكل خاص. يمكن للمستخدم تغييرها من قائمة المستخدم.",
+      "generate": "توليد",
+      "status": "الحالة",
+      "active": "نشط",
+      "deactivated": "موقوف",
+      "deactivate": "إيقاف",
+      "reactivate": "إعادة التفعيل",
+      "resetPassword": "إعادة تعيين كلمة المرور",
+      "newPassword": "كلمة المرور الجديدة",
+      "you": "أنت",
+      "created": "تمت إضافة المستخدم.",
+      "updated": "تم تحديث المستخدم.",
+      "selfNote": "لا يمكنك تغيير دورك أو إيقاف حسابك.",
+      "deactivateConfirm": "سيتم تسجيل خروج {name} ولن يتمكن من الدخول حتى تتم إعادة تفعيله."
+    },
+    "lists": {
+      "list": "القائمة",
+      "code": "الرمز",
+      "codeHint": "يُحفظ في السجلات ولا يمكن تغييره بعد الحفظ.",
+      "english": "الاسم بالإنجليزية",
+      "arabic": "الاسم بالعربية",
+      "order": "الترتيب",
+      "active": "يظهر في النماذج",
+      "inactive": "مخفي من النماذج",
+      "add": "إضافة قيمة",
+      "edit": "تعديل القيمة",
+      "names": {
+        "location": "المواقع",
+        "department": "الإدارات",
+        "issue_type": "أنواع المشكلات",
+        "asset_category": "فئات الأصول",
+        "asset_type": "أنواع الأصول",
+        "manufacturer": "الشركات المصنعة",
+        "kb_category": "فئات قاعدة المعرفة",
+        "vendor_category": "فئات الموردين",
+        "budget_category": "بنود الميزانية",
+        "risk_category": "فئات المخاطر"
+      }
+    },
+    "sla": {
+      "title": "مستهدفات الحل",
+      "description": "عدد الساعات المسموح بها لحل التذكرة حسب الأولوية. يسري التغيير على التذاكر التي تُفتح أو تتغير أولويتها من الآن.",
+      "hours": "ساعات"
+    },
+    "monitoring": {
+      "title": "فحوصات الشبكة",
+      "description": "يفحص الخادم كل جهاز مراقب وفق هذا الجدول وينبه عند توقفه أو بطئه.",
+      "enabled": "تشغيل الفحوصات",
+      "interval": "الفحص كل (ثانية)",
+      "timeout": "مهلة الانتظار (ملّي ثانية)",
+      "degraded": "يُعد بطيئًا فوق (ملّي ثانية)",
+      "retention": "الاحتفاظ بالسجل (يوم)"
+    },
+    "kpis": {
+      "title": "خط الأساس والمستهدفات",
+      "description": "تُحدد لكل سنة. السنوات التي لا تحتوي على أرقام خاصة بها تستخدم أرقام ملف العمل.",
+      "year": "السنة",
+      "kpi": "المؤشر",
+      "baseline": "خط الأساس",
+      "target": "المستهدف"
+    },
+    "organisation": {
+      "title": "المنشأة",
+      "name": "اسم المنشأة",
+      "fiscalStart": "بداية السنة المالية"
+    },
+    "audit": {
+      "when": "الوقت",
+      "who": "المستخدم",
+      "action": "الإجراء",
+      "entity": "نوع السجل",
+      "summary": "ما حدث",
+      "from": "من",
+      "to": "إلى"
+    },
+    "saved": "تم حفظ الإعدادات."
+  },
+  "kpi": {
+    "tat": "التذاكر المحلولة ضمن المدة",
+    "complaints": "الشكاوى (تجاوز المدة)",
+    "training_hours": "ساعات تدريب فريق التقنية",
+    "iso_ncs": "حالات عدم المطابقة ISO 9001",
+    "satisfaction": "رضا المستخدمين عن الخدمة"
+  },
+  "months": {
+    "1": "يناير",
+    "2": "فبراير",
+    "3": "مارس",
+    "4": "أبريل",
+    "5": "مايو",
+    "6": "يونيو",
+    "7": "يوليو",
+    "8": "أغسطس",
+    "9": "سبتمبر",
+    "10": "أكتوبر",
+    "11": "نوفمبر",
+    "12": "ديسمبر"
   }
 }
