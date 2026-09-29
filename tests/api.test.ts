@@ -22,6 +22,10 @@ const routes = {
   audit: await import("@/app/api/audit/route"),
   relationships: await import("@/app/api/relationships/route"),
   budgets: await import("@/app/api/budgets/route"),
+  network: await import("@/app/api/network/route"),
+  check: await import("@/app/api/network/[id]/check/route"),
+  acknowledge: await import("@/app/api/alerts/[id]/acknowledge/route"),
+  dailyChecks: await import("@/app/api/daily-checks/route"),
 };
 
 const request = (method: string, body?: unknown) =>
@@ -60,6 +64,8 @@ describe("access", () => {
     expect((await routes.budgets.GET(request("GET"), params())).status).toBe(403);
     expect((await routes.kb.POST(request("POST", {}), params())).status).toBe(403);
     expect((await routes.audit.GET(request("GET"), params())).status).toBe(403);
+    expect((await routes.network.GET(request("GET"), params())).status).toBe(403);
+    expect((await routes.dailyChecks.PUT(request("PUT", {}), params())).status).toBe(403);
     expect((await routes.lookups.GET(request("GET"), params())).status).toBe(200);
   });
 
@@ -133,5 +139,24 @@ describe("conflicts", () => {
     session.user = itStaff;
     const res = await routes.relationships.POST(request("POST", { sourceId: 1, targetId: 99_999, type: "depends_on" }), params());
     expect(res.status).toBe(400);
+  });
+});
+
+describe("network over HTTP", () => {
+  it("serves the network status and the daily checklist to IT staff", async () => {
+    session.user = itStaff;
+    const status = await routes.network.GET(request("GET"), params());
+    expect(status.status).toBe(200);
+    expect((await status.json()).devices.length).toBeGreaterThan(30);
+
+    const checklist = await routes.dailyChecks.GET(new Request("http://localhost/api/daily-checks?date=2026-09-28"), params());
+    expect((await checklist.json()).items).toHaveLength(15);
+    expect((await routes.dailyChecks.GET(new Request("http://localhost/api/daily-checks?date=yesterday"), params())).status).toBe(400);
+  });
+
+  it("answers 404 for devices and alerts that do not exist", async () => {
+    session.user = itStaff;
+    expect((await routes.check.POST(request("POST"), params({ id: "99999" }))).status).toBe(404);
+    expect((await routes.acknowledge.POST(request("POST"), params({ id: "99999" }))).status).toBe(404);
   });
 });

@@ -47,6 +47,19 @@ describe("input schemas", () => {
     expect(parsed).toMatchObject({ ipAddress: "10.0.0.3", notes: null, model: null, monitorPort: null });
   });
 
+  it("needs an address to monitor a device, and a port to check it over TCP", () => {
+    const base = {
+      name: "X", category: "network", type: "switch", status: "in_use", location: "jeddah",
+      supportStatus: "supported", criticality: "high",
+    };
+    expect(assetInput.safeParse({ ...base, monitorMethod: "none" }).success).toBe(true);
+    const noAddress = assetInput.safeParse({ ...base, monitorMethod: "ping" });
+    expect(noAddress.error?.issues).toEqual([expect.objectContaining({ path: ["ipAddress"], message: "validation.ipRequired" })]);
+    const noPort = assetInput.safeParse({ ...base, monitorMethod: "tcp", ipAddress: "10.0.0.3" });
+    expect(noPort.error?.issues).toEqual([expect.objectContaining({ path: ["monitorPort"], message: "validation.portRequired" })]);
+    expect(assetInput.safeParse({ ...base, monitorMethod: "tcp", ipAddress: "10.0.0.3", monitorPort: 443 }).success).toBe(true);
+  });
+
   it("checks vendor contact details", () => {
     const base = { name: "V", category: "services", active: true };
     expect(vendorInput.safeParse({ ...base, email: "not-an-email" }).success).toBe(false);

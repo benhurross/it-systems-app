@@ -275,7 +275,7 @@ Each phase ends with a local git commit. There is no remote.
 - [x] Users: create, change role, reset password, deactivate and reactivate, and link to an employee. Admins cannot demote or deactivate themselves. A deactivated user cannot sign in, and their sessions end
 - [x] Lists: add, rename (English and Arabic), reorder and deactivate. Forms offer only active values
 - [x] Service desk: SLA hours per priority, applied to new and re-prioritised tickets only
-- [ ] Monitoring: on/off, interval, timeout, threshold and retention. The scheduler follows changes without a restart
+- [x] Monitoring: on/off, interval, timeout, threshold and retention. The scheduler follows changes without a restart
 - [x] KPIs: baseline and target per KPI per year
 - [x] Organisation: name and fiscal year start month
 - [x] Audit log: filterable by user, entity and date, read only
@@ -304,12 +304,12 @@ Each phase ends with a local git commit. There is no remote.
 - [x] Software: licence register with seats vs installs, compliance status and expiry. Compliance summary cards and an audit report CSV export
 
 ### Phase 7 - Network monitoring and Projects
-- [ ] The scheduler starts from `instrumentation.ts`, once per server, and probes monitored devices at the configured interval with bounded concurrency
-- [ ] Check results are stored, and history older than the retention window is pruned daily
-- [ ] Network page: device status, latency, availability and sparklines. It refreshes every 10s. When checks are paused, admins see a notice linking to Settings
-- [ ] Alerts panel: open and resolved alerts, acknowledge, and Create ticket
-- [ ] Daily checks checklist, using the workbook's Daily Monitoring items and recorded per day and per person
-- [ ] Projects: list with owner, status, due date and progress. Create a project; the detail page has a task board (To do / In progress / Done) where moving a task updates progress
+- [x] The scheduler starts from `instrumentation.ts`, once per server, and probes monitored devices at the configured interval with bounded concurrency
+- [x] Check results are stored, and history older than the retention window is pruned daily
+- [x] Network page: device status, latency, availability and sparklines. It refreshes every 10s. When checks are paused, admins see a notice linking to Settings
+- [x] Alerts panel: open and resolved alerts, acknowledge, and Create ticket
+- [x] Daily checks checklist, using the workbook's Daily Monitoring items and recorded per day and per person
+- [x] Projects: list with owner, status, due date and progress. Create a project; the detail page has a task board (To do / In progress / Done) where moving a task updates progress
 
 ### Phase 8 - Finance, Risk & Security, People
 - [ ] Budget: allocation vs committed per category for the fiscal year, utilisation bars, and renewals in the next 90 days

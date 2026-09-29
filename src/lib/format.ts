@@ -22,6 +22,10 @@ export function formatDateTime(value: Date | string, locale: string) {
   );
 }
 
+export function formatTime(value: Date | string, locale: string) {
+  return new Intl.DateTimeFormat(intl(locale), { hour: "2-digit", minute: "2-digit", timeZone: TIME_ZONE }).format(toDate(value));
+}
+
 export function formatNumber(value: number, locale: string, options?: Intl.NumberFormatOptions) {
   return new Intl.NumberFormat(intl(locale), options).format(value);
 }

@@ -7,6 +7,7 @@ import {
   formatNumber,
   formatPercent,
   formatRelative,
+  formatTime,
 } from "@/lib/format";
 
 /** Formatters bound to the current locale. */
@@ -15,6 +16,7 @@ export function useFormat() {
   return {
     date: (value: Date | string) => formatDate(value, locale),
     dateTime: (value: Date | string) => formatDateTime(value, locale),
+    time: (value: Date | string) => formatTime(value, locale),
     number: (value: number, options?: Intl.NumberFormatOptions) => formatNumber(value, locale, options),
     currency: (value: number) => formatCurrency(value, locale),
     percent: (ratio: number) => formatPercent(ratio, locale),

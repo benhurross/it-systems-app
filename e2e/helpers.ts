@@ -1,3 +1,4 @@
+import { createServer, type AddressInfo } from "node:net";
 import { expect, type Page, type TestInfo } from "@playwright/test";
 
 /** Fails the test if the page logs an error to the console. */
@@ -6,7 +7,11 @@ export function watchConsole(page: Page) {
   page.on("console", (message) => {
     if (message.type() === "error") errors.push(message.text());
   });
-  page.on("pageerror", (error) => errors.push(error.message));
+  page.on("pageerror", (error) => {
+    // Browsers report this when a ResizeObserver (the CMDB graph measures its nodes with one)
+    // needs a second pass in a frame. Nothing is lost, and it is not an application error.
+    if (!error.message.startsWith("ResizeObserver loop")) errors.push(error.message);
+  });
   return { assertClean: () => expect(errors, errors.join("\n")).toEqual([]) };
 }
 
@@ -26,4 +31,33 @@ export const unique = (info: TestInfo, label: string) => `${label} ${info.projec
 export async function choose(page: Page, label: string | RegExp, option: string | RegExp) {
   await page.getByRole("combobox", { name: label }).click();
   await page.getByRole("option", { name: option }).click();
+}
+
+/** A TCP port on this machine that the test opens and closes, standing in for a device. */
+export async function listen() {
+  const server = createServer((socket) => socket.end());
+  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+  return {
+    port: (server.address() as AddressInfo).port,
+    close: () => new Promise((resolve) => server.close(resolve)),
+  };
+}
+
+/** Registers a device on this machine that is monitored over `port`. */
+export async function addTcpDevice(page: Page, name: string, port: number) {
+  const res = await page.request.post("/api/assets", {
+    data: {
+      name,
+      category: "servers",
+      type: "physical_server",
+      status: "in_use",
+      location: "jeddah",
+      supportStatus: "supported",
+      criticality: "high",
+      ipAddress: "127.0.0.1",
+      monitorMethod: "tcp",
+      monitorPort: port,
+    },
+  });
+  expect(res.ok()).toBe(true);
 }

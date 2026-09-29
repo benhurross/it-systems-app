@@ -44,6 +44,8 @@ test.describe("IT staff", () => {
     await page.getByRole("dialog").getByRole("button", { name: "Resolve" }).click();
     await expect(page.getByText("Replaced the HDMI cable.")).toBeVisible();
     await expect(page.getByText("Met", { exact: true })).toBeVisible();
+    // The dialog closes once the page has refreshed; until then its own Close button is the only one reachable.
+    await expect(page.getByRole("dialog")).toBeHidden();
 
     await page.getByRole("button", { name: "Close", exact: true }).click();
     await expect(page.getByRole("button", { name: "Reopen" })).toBeVisible();

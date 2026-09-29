@@ -7,6 +7,7 @@ import {
   formatNumber,
   formatPercent,
   formatRelative,
+  formatTime,
 } from "@/lib/format";
 
 const noon = new Date("2026-09-29T09:00:00Z"); // 12:00 in Riyadh
@@ -15,6 +16,8 @@ describe("format", () => {
   it("formats dates in the Riyadh time zone", () => {
     expect(formatDate("2026-09-28T22:30:00Z", "en")).toBe("29 Sept 2026");
     expect(formatDateTime(noon, "en")).toBe("29 Sept 2026, 12:00");
+    expect(formatTime(noon, "en")).toBe("12:00");
+    expect(formatTime(noon, "ar")).not.toMatch(/[٠-٩]/);
   });
 
   it("uses the Gregorian calendar and Latin digits in Arabic", () => {

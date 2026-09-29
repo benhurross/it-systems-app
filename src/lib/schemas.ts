@@ -118,7 +118,9 @@ export const assetInput = z.object({
   notes: optionalText,
   monitorMethod: z.enum(MONITOR_METHODS),
   monitorPort: z.number().int().min(1).max(65_535).nullish().transform((v) => v ?? null),
-});
+})
+  .refine((a) => a.monitorMethod === "none" || a.ipAddress !== null, { message: "validation.ipRequired", path: ["ipAddress"] })
+  .refine((a) => a.monitorMethod !== "tcp" || a.monitorPort !== null, { message: "validation.portRequired", path: ["monitorPort"] });
 
 export const assetMove = z.object({
   toLocation: code,

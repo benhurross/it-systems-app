@@ -44,6 +44,10 @@ test.describe("inventory", () => {
     await choose(page, "Check with", "TCP port");
     await dialog.getByLabel("TCP port").fill("3389");
     await dialog.getByRole("button", { name: "Save" }).click();
+    // A monitored device needs an address.
+    await expect(dialog.getByText("Add an IP address to monitor this device.")).toBeVisible();
+    await dialog.getByLabel("IP address").fill("10.99.0.5");
+    await dialog.getByRole("button", { name: "Save" }).click();
     await expect(page.getByText("Latitude 5550")).toBeVisible();
     await expect(page.getByText("TCP port 3389")).toBeVisible();
 

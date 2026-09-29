@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { session } from "./env";
+import { addTcpDevice, listen } from "./helpers";
 
 // Journeys that change system-wide settings. They run once, in their own project, so parallel
 // browsers never race over the same value.
@@ -32,4 +33,27 @@ test("an SLA change applies to tickets opened afterwards", async ({ page }) => {
   await critical.fill("4");
   await page.getByRole("button", { name: "Save" }).click();
   await expect(page.getByText("Settings saved.").last()).toBeVisible();
+});
+
+test("turning network checks on in Settings starts them without a restart", async ({ page }) => {
+  test.setTimeout(120_000);
+  const { port, close } = await listen();
+  await addTcpDevice(page, "SCHEDULED-PROBE", port);
+  const toggle = async (seconds: string) => {
+    await page.goto("/en/settings/monitoring");
+    await page.getByRole("switch", { name: "Run checks" }).click();
+    await page.getByLabel("Check every (seconds)").fill(seconds);
+    await page.getByRole("button", { name: "Save" }).click();
+    await expect(page.getByText("Settings saved.").last()).toBeVisible();
+  };
+
+  await toggle("15");
+  await page.goto("/en/network/status");
+  await expect(page.getByText("Checked automatically every 15 seconds.")).toBeVisible();
+  await page.getByRole("textbox", { name: "Filter rows" }).fill("SCHEDULED-PROBE");
+  // Nobody presses Check now: the scheduler picks the device up on its own.
+  await expect(page.getByRole("row").filter({ hasText: "SCHEDULED-PROBE" })).toContainText("Up", { timeout: 60_000 });
+
+  await toggle("60");
+  await close();
 });

@@ -8,7 +8,7 @@ export function SectionTabs({ items }: { items: { href: string; label: string }[
   const pathname = usePathname();
 
   return (
-    <nav className="mb-6 flex gap-1 overflow-x-auto border-b">
+    <nav className="mb-6 flex gap-1 overflow-x-auto overflow-y-hidden border-b">
       {items.map((item) => {
         const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
         return (

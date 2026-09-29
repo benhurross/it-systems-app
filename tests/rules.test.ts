@@ -8,6 +8,7 @@ import { quarterOf, rag, DEFAULT_KPI_TARGETS } from "@/lib/kpis";
 import { compliance, licenseState } from "@/lib/licenses";
 import { assetFlags } from "@/lib/lifecycle";
 import { availability, nextState, parsePing } from "@/lib/monitor";
+import { isProjectOverdue, projectProgress } from "@/lib/projects";
 import { forwardingDaysLeft, forwardingEnds, leaverState, onboardingComplete, onboardingProgress } from "@/lib/people";
 import { isOverdue, riskLevel, riskScore } from "@/lib/risk";
 import {
@@ -340,6 +341,20 @@ describe("discovery", () => {
     expect(parseArp(windows)).toEqual(new Map([["192.168.1.1", "a4:2b:b0:11:22:33"]]));
     const linux = ["? (10.0.0.1) at 00:1B:A9:AA:BB:CC [ether] on eth0", "? (10.0.0.9) at <incomplete> on eth0"].join("\n");
     expect(parseArp(linux)).toEqual(new Map([["10.0.0.1", "00:1b:a9:aa:bb:cc"]]));
+  });
+});
+
+describe("projects", () => {
+  it("is overdue past its due date until completed", () => {
+    expect(isProjectOverdue({ dueDate: "2026-09-28", status: "active" }, "2026-09-29")).toBe(true);
+    expect(isProjectOverdue({ dueDate: "2026-09-29", status: "active" }, "2026-09-29")).toBe(false);
+    expect(isProjectOverdue({ dueDate: "2026-09-28", status: "completed" }, "2026-09-29")).toBe(false);
+    expect(isProjectOverdue({ dueDate: null, status: "on_hold" }, "2026-09-29")).toBe(false);
+  });
+
+  it("measures progress by tasks done", () => {
+    expect(projectProgress(3, 8)).toBe(0.375);
+    expect(projectProgress(0, 0)).toBe(0);
   });
 });
 
