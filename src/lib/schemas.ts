@@ -1,0 +1,320 @@
+import { z } from "zod";
+import {
+  ASSET_STATUSES,
+  CHANGE_RESULTS,
+  CHANGE_RISKS,
+  CHANGE_STATUSES,
+  CRITICALITIES,
+  CSAT_SCORES,
+  DAILY_CHECKS,
+  KB_STATUSES,
+  LICENSE_TYPES,
+  LOOKUP_LISTS,
+  MANUAL_KPIS,
+  MONITOR_METHODS,
+  PRIORITIES,
+  PROJECT_STATUSES,
+  PURCHASE_STATUSES,
+  RELATION_TYPES,
+  RISK_STATUSES,
+  SEVERITIES,
+  SUPPORT_STATUSES,
+  TASK_STATUSES,
+  TICKET_STATUSES,
+  TICKET_TYPES,
+  VULN_STATUSES,
+} from "./domain";
+
+// Shared field shapes. Optional fields arrive as null (or are left out) and are stored as null.
+const name = z.string().trim().min(1).max(200);
+const body = z.string().trim().min(1).max(10_000);
+const optionalText = z.string().trim().max(10_000).nullish().transform((v) => v || null);
+const day = z.iso.date();
+const optionalDay = z.iso.date().nullish().transform((v) => v ?? null);
+const id = z.number().int().positive();
+const optionalId = id.nullish().transform((v) => v ?? null);
+const optionalUser = z.string().min(1).nullish().transform((v) => v ?? null);
+const amount = z.number().nonnegative().max(1e11);
+const code = z.string().trim().min(1).max(60);
+
+export const ticketCreate = z.object({
+  type: z.enum(TICKET_TYPES),
+  subject: name,
+  description: body,
+  issueType: code,
+  location: code,
+  priority: z.enum(PRIORITIES).default("medium"),
+  requesterId: optionalId,
+  assigneeId: optionalUser,
+  assetId: optionalId,
+});
+
+export const ticketUpdate = z
+  .object({
+    status: z.enum(TICKET_STATUSES),
+    priority: z.enum(PRIORITIES),
+    issueType: code,
+    assigneeId: optionalUser,
+    assetId: optionalId,
+    resolution: optionalText,
+    satisfaction: z.union(CSAT_SCORES.map((s) => z.literal(s))).nullish(),
+  })
+  .partial()
+  .refine((t) => t.status !== "resolved" || !!t.resolution, {
+    message: "A resolution note is required",
+    path: ["resolution"],
+  });
+
+export const commentCreate = z.object({ body });
+
+export const kbArticle = z.object({
+  title: name,
+  category: code,
+  issueType: code.nullish().transform((v) => v ?? null),
+  symptoms: body,
+  cause: optionalText,
+  resolution: body,
+  status: z.enum(KB_STATUSES),
+  reviewDue: optionalDay,
+});
+
+export const changeInput = z.object({
+  title: name,
+  assetId: optionalId,
+  description: body,
+  reason: body,
+  risk: z.enum(CHANGE_RISKS),
+  rollbackPlan: body,
+  plannedAt: z.iso.datetime({ offset: true }),
+  vendor: optionalText,
+  ticketId: optionalId,
+  notes: optionalText,
+});
+
+export const changeDecision = z
+  .object({ status: z.enum(CHANGE_STATUSES), result: z.enum(CHANGE_RESULTS).nullish() })
+  .refine((c) => c.status !== "implemented" || !!c.result, { message: "Record the result", path: ["result"] });
+
+export const assetInput = z.object({
+  name,
+  category: code,
+  type: code,
+  manufacturer: code.nullish().transform((v) => v ?? null),
+  model: optionalText,
+  serial: optionalText,
+  status: z.enum(ASSET_STATUSES),
+  location: code,
+  assignedTo: optionalId,
+  purchaseId: optionalId,
+  purchaseDate: optionalDay,
+  purchaseCost: amount.nullish().transform((v) => v ?? null),
+  warrantyEnd: optionalDay,
+  supportStatus: z.enum(SUPPORT_STATUSES),
+  criticality: z.enum(CRITICALITIES),
+  ipAddress: z.ipv4().nullish().transform((v) => v ?? null),
+  macAddress: optionalText,
+  os: optionalText,
+  notes: optionalText,
+  monitorMethod: z.enum(MONITOR_METHODS),
+  monitorPort: z.number().int().min(1).max(65_535).nullish().transform((v) => v ?? null),
+});
+
+export const assetMove = z.object({
+  toLocation: code,
+  toEmployeeId: optionalId,
+  reason: name,
+});
+
+export const relationshipInput = z
+  .object({ sourceId: id, targetId: id, type: z.enum(RELATION_TYPES) })
+  .refine((r) => r.sourceId !== r.targetId, { message: "An item cannot relate to itself", path: ["targetId"] });
+
+export const licenseInput = z.object({
+  product: name,
+  vendorId: optionalId,
+  version: optionalText,
+  type: z.enum(LICENSE_TYPES),
+  seats: z.number().int().min(0).max(1_000_000),
+  purchaseDate: optionalDay,
+  expiryDate: optionalDay,
+  cost: amount.nullish().transform((v) => v ?? null),
+  owner: code.nullish().transform((v) => v ?? null),
+  reference: optionalText,
+  notes: optionalText,
+});
+
+export const licenseInstall = z.object({ assetId: id });
+
+export const vendorInput = z.object({
+  name,
+  category: code,
+  contactName: optionalText,
+  email: z.email().nullish().transform((v) => v ?? null),
+  phone: optionalText,
+  website: z.url().nullish().transform((v) => v ?? null),
+  active: z.boolean(),
+  notes: optionalText,
+});
+
+export const contractInput = z
+  .object({
+    title: name,
+    vendorId: optionalId,
+    category: code,
+    location: code.nullish().transform((v) => v ?? null),
+    startDate: day,
+    endDate: day,
+    annualCost: amount,
+    autoRenew: z.boolean(),
+    notes: optionalText,
+  })
+  .refine((c) => c.endDate >= c.startDate, { message: "Ends before it starts", path: ["endDate"] });
+
+export const purchaseInput = z.object({
+  title: name,
+  category: code,
+  vendorId: optionalId,
+  requestedFor: optionalId,
+  quantity: z.number().int().min(1).max(10_000),
+  amount,
+  hardware: z.boolean(),
+  notes: optionalText,
+});
+
+export const purchaseStatus = z.object({ status: z.enum(PURCHASE_STATUSES) });
+
+export const budgetInput = z.object({
+  fiscalYear: z.number().int().min(2000).max(2100),
+  category: code,
+  amount,
+});
+
+export const projectInput = z.object({
+  name,
+  description: optionalText,
+  ownerId: optionalUser,
+  status: z.enum(PROJECT_STATUSES),
+  startDate: optionalDay,
+  dueDate: optionalDay,
+});
+
+export const taskInput = z.object({
+  title: name,
+  assigneeId: optionalUser,
+  status: z.enum(TASK_STATUSES),
+  dueDate: optionalDay,
+});
+
+const score = z.number().int().min(1).max(5);
+
+export const riskInput = z.object({
+  title: name,
+  category: code,
+  assetId: optionalId,
+  description: body,
+  controls: optionalText,
+  likelihood: score,
+  impact: score,
+  treatment: optionalText,
+  ownerId: optionalUser,
+  status: z.enum(RISK_STATUSES),
+  reviewDate: optionalDay,
+});
+
+export const vulnerabilityInput = z.object({
+  title: name,
+  severity: z.enum(SEVERITIES),
+  assetId: optionalId,
+  description: optionalText,
+  detectedOn: day,
+  detectionMethod: optionalText,
+  status: z.enum(VULN_STATUSES),
+  deadline: day,
+  resolution: optionalText,
+  ownerId: optionalUser,
+});
+
+export const employeeInput = z.object({
+  name,
+  email: z.email(),
+  department: code,
+  location: code,
+  jobTitle: name,
+  phone: optionalText,
+  active: z.boolean(),
+});
+
+export const joinerInput = z.object({
+  name,
+  email: z.email(),
+  department: code,
+  location: code,
+  jobTitle: name,
+  startDate: day,
+});
+
+export const leaverInput = z.object({
+  employeeId: id,
+  resignationDate: day,
+  forwardTo: z.email().nullish().transform((v) => v ?? null),
+  notes: optionalText,
+});
+
+export const checklistUpdate = z.object({ tasks: z.record(z.string(), z.boolean()) });
+
+export const dailyCheckInput = z.object({
+  date: day,
+  item: z.enum(DAILY_CHECKS),
+  done: z.boolean(),
+  note: optionalText,
+});
+
+export const kpiActualInput = z.object({
+  year: z.number().int().min(2000).max(2100),
+  quarter: z.number().int().min(1).max(4),
+  kpi: z.enum(MANUAL_KPIS),
+  value: z.number().min(0).max(1_000_000),
+});
+
+export const discoveryStart = z.object({ cidr: z.string().trim().min(1).max(40) });
+
+export const lookupInput = z.object({
+  list: z.enum(LOOKUP_LISTS),
+  code: z
+    .string()
+    .trim()
+    .regex(/^[a-z0-9_]+$/, "Lowercase letters, digits and underscores only")
+    .max(60),
+  labelEn: name,
+  labelAr: name,
+  sortOrder: z.number().int().min(0).max(10_000),
+  active: z.boolean(),
+});
+
+const hours = z.number().positive().max(24 * 90);
+export const slaSettings = z.object({ critical: hours, high: hours, medium: hours, low: hours });
+
+export const monitorSettings = z.object({
+  enabled: z.boolean(),
+  intervalSeconds: z.number().int().min(15).max(3600),
+  timeoutMs: z.number().int().min(250).max(10_000),
+  degradedMs: z.number().int().min(10).max(10_000),
+  retentionDays: z.number().int().min(1).max(365),
+});
+
+export const organisationSettings = z.object({
+  name,
+  fiscalYearStartMonth: z.number().int().min(1).max(12),
+});
+
+const kpiTarget = z.object({ baseline: z.number().min(0), target: z.number().min(0) });
+export const kpiTargetsInput = z.object({
+  year: z.number().int().min(2000).max(2100),
+  targets: z.object({
+    tat: kpiTarget,
+    complaints: kpiTarget,
+    training_hours: kpiTarget,
+    iso_ncs: kpiTarget,
+    satisfaction: kpiTarget,
+  }),
+});

@@ -28,6 +28,8 @@ export default defineConfig({
     ],
     coverage: {
       include: ["src/lib/**", "src/server/**"],
+      // Connection and configuration glue, exercised end to end by Playwright rather than here.
+      exclude: ["src/server/db/**", "src/server/current-user.ts", "src/lib/auth-client.ts"],
       reporter: ["text", "html"],
     },
   },

@@ -253,22 +253,22 @@ Each phase ends with a local git commit. There is no remote.
 - [x] Unit tests: `can()`, en/ar message key parity, format helpers, CSV, text-size stepping, the Display menu, role-aware navigation
 
 ### Phase 3 - Data model, API and seeds
-- [ ] Drizzle schema covers:
+- [x] Drizzle schema covers:
   - every module, plus reference lists, settings and the audit log
   - monitor checks, alerts and discovery runs
-- [ ] REST handlers for every resource. Each one checks role and scope, validates with zod, writes through Drizzle, and records an audit entry
-- [ ] Every domain rule above implemented as a pure function
-- [ ] `db:seed` loads the reference lists from the workbook's dropdown sheets, with both labels, plus default settings. It can be re-run safely
-- [ ] `db:seed:demo` is deterministic and fictional. It produces:
+- [x] REST handlers for every resource. Each one checks role and scope, validates with zod, writes through Drizzle, and records an audit entry
+- [x] Every domain rule above implemented as a pure function
+- [x] `db:seed` loads the reference lists from the workbook's dropdown sheets, with both labels, plus default settings. It can be re-run safely
+- [x] `db:seed:demo` is deterministic and fictional. It produces:
   - ~60 employees and demo accounts for the three roles
   - ~140 assets, ~40 CMDB relationships and ~350 tickets over 12 months
   - licences, vendors, contracts, purchases, budget, projects, KB articles, changes, risks, vulnerabilities, joiners and leavers
   - a day of monitoring history, with checks paused
-- [ ] Unit tests cover:
+- [x] Unit tests cover:
   - every rule, including edge cases
   - every handler, run against PGlite, including 401, 403 and employee scoping (an employee cannot read another person's ticket)
   - seed referential integrity and idempotence
-- [ ] Coverage of `src/lib` and `src/server` is at least 90%
+- [x] Coverage of `src/lib` and `src/server` is at least 90% (98.7% of lines; the database connection, session lookup and auth client config are wiring left to Playwright)
 
 ### Phase 4 - Settings (admin only)
 - [ ] Settings appears only for admins, in the sidebar and the command menu. A non-admin opening a Settings URL sees a 403 page, and every Settings endpoint returns 403 to them
