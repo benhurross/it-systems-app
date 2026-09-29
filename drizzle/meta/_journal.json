@@ -8,6 +8,13 @@
       "when": 1790679591965,
       "tag": "0000_bent_korath",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1790680415364,
+      "tag": "0001_auth",
+      "breakpoints": true
     }
   ]
 }

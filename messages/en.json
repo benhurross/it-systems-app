@@ -1,0 +1,133 @@
+{
+  "app": {
+    "name": "AP Plus IT Systems",
+    "tagline": "IT service and asset management"
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "create": "Create",
+    "add": "Add",
+    "edit": "Edit",
+    "delete": "Delete",
+    "close": "Close",
+    "search": "Search",
+    "loading": "Loading",
+    "actions": "Actions",
+    "all": "All",
+    "none": "None",
+    "back": "Back",
+    "exportCsv": "Export CSV",
+    "yes": "Yes",
+    "no": "No",
+    "optional": "Optional",
+    "retry": "Try again",
+    "saved": "Saved",
+    "toggleSidebar": "Toggle sidebar",
+    "status": "Status",
+    "name": "Name",
+    "description": "Description",
+    "notes": "Notes",
+    "date": "Date",
+    "owner": "Owner",
+    "total": "Total",
+    "newTicket": "New ticket"
+  },
+  "nav": {
+    "groups": {
+      "overview": "Overview",
+      "serviceDesk": "Service Desk",
+      "infrastructure": "Infrastructure",
+      "management": "Management",
+      "self": "Self service",
+      "system": "System"
+    },
+    "dashboard": "Dashboard",
+    "kpis": "KPIs",
+    "tickets": "Tickets",
+    "knowledge": "Knowledge Base",
+    "changes": "Changes",
+    "assets": "Assets",
+    "cmdb": "CMDB",
+    "software": "Software",
+    "network": "Network",
+    "projects": "Projects",
+    "finance": "Finance",
+    "risk": "Risk & Security",
+    "people": "People",
+    "settings": "Settings",
+    "myRequests": "My requests",
+    "newRequest": "New request"
+  },
+  "auth": {
+    "title": "Sign in",
+    "subtitle": "Use the account your IT administrator created for you.",
+    "email": "Email",
+    "password": "Password",
+    "submit": "Sign in",
+    "invalid": "Email or password is incorrect.",
+    "banned": "This account has been deactivated.",
+    "signOut": "Sign out",
+    "changePassword": "Change password",
+    "currentPassword": "Current password",
+    "newPassword": "New password",
+    "passwordRule": "At least 10 characters.",
+    "passwordChanged": "Password changed.",
+    "wrongPassword": "The current password is incorrect."
+  },
+  "display": {
+    "title": "Display",
+    "theme": "Theme",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System",
+    "textSize": "Text size",
+    "smaller": "Smaller text",
+    "larger": "Larger text",
+    "reset": "Reset"
+  },
+  "locale": {
+    "label": "Language",
+    "other": "العربية"
+  },
+  "roles": {
+    "admin": "Admin",
+    "it_staff": "IT staff",
+    "employee": "Employee"
+  },
+  "command": {
+    "open": "Search",
+    "placeholder": "Search pages and actions",
+    "pages": "Pages",
+    "actions": "Actions",
+    "empty": "No matches",
+    "themeLight": "Use the light theme",
+    "themeDark": "Use the dark theme",
+    "themeSystem": "Follow the system theme",
+    "textLarger": "Increase text size",
+    "textSmaller": "Decrease text size",
+    "textReset": "Reset text size",
+    "switchLocale": "Switch to Arabic"
+  },
+  "table": {
+    "filter": "Filter rows",
+    "range": "{from}–{to} of {total}",
+    "previous": "Previous page",
+    "next": "Next page",
+    "empty": "Nothing to show yet",
+    "noMatches": "No rows match the filters",
+    "clearFilters": "Clear filters"
+  },
+  "errors": {
+    "forbiddenTitle": "Not available",
+    "forbidden": "Your role does not include this area. Ask an administrator if you need access.",
+    "notFoundTitle": "Page not found",
+    "notFound": "This page does not exist or has been removed.",
+    "generic": "Something went wrong. Try again.",
+    "goHome": "Go to your start page"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Welcome, {name}"
+  }
+}

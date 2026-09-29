@@ -148,6 +148,8 @@ Latest stable versions at install, recorded in `PLAN.md`:
 
 `next dev` writes its agent-rules block into AGENTS.md when it detects an AI agent, unless CLAUDE.md already holds the block. CLAUDE.md carries it, so AGENTS.md stays as written.
 
+`@swc/core` is pinned to 1.16.2 through `overrides`. next-intl's plugin loads it, and 1.16.12 (released 2026-09-29) refuses to load on this machine: it validates its native-binary cache under `%LOCALAPPDATA%\swc` and rejects a user profile that grants an AppContainer SID full control. 1.16.2 is inside next-intl's `~1.16.0` range and is what AP Web v2 runs. Drop the override once a later 1.16.x loads here.
+
 ## Structure
 
 ```
@@ -238,17 +240,17 @@ Each phase ends with a local git commit. There is no remote.
 - [x] Scripts: `dev`, `build`, `start`, `lint`, `typecheck`, `test`, `e2e`, `db:up`, `db:generate`, `db:migrate`, `db:seed`, `db:seed:demo`, `admin:create`. Lint, typecheck and build are clean
 
 ### Phase 2 - Sign-in, i18n, app shell and display settings
-- [ ] Better Auth: email and password, database sessions, admin plugin, no public sign-up. `admin:create` prints a one-time password
-- [ ] Sign-in page in both locales, and sign-out. Unauthenticated pages redirect to sign-in, and unauthenticated API calls get 401
-- [ ] `requireUser` and `requireRole` return 401 or 403 before any handler work
-- [ ] next-intl for `en` and `ar`. `/` redirects to `/en`. `<html lang dir>` is set per locale, and Radix `DirectionProvider` is wired
-- [ ] AppShell: collapsible sidebar, off-canvas on mobile, with role-aware navigation. The top bar holds the command menu (Ctrl+K), New ticket, Display menu, locale switcher and the user menu
-- [ ] Display menu: theme (Light / Dark / System) and five-step text size. Both are remembered, applied before first paint, and available in the command menu
-- [ ] TanStack Query provider. A successful mutation refetches active queries
-- [ ] Shared `DataTable`: sorting, text search, faceted filters, pagination, CSV export
-- [ ] `PageHeader`, `SectionTabs`, `StatCard`, `StatusBadge` and `EmptyState` built
+- [x] Better Auth: email and password, database sessions, admin plugin, no public sign-up. `admin:create` prints a one-time password
+- [x] Sign-in page in both locales, and sign-out. Unauthenticated pages redirect to sign-in, and unauthenticated API calls get 401
+- [x] `requireUser` and `requireRole` return 401 or 403 before any handler work
+- [x] next-intl for `en` and `ar`. `/` redirects to `/en`. `<html lang dir>` is set per locale, and Radix `DirectionProvider` is wired
+- [x] AppShell: collapsible sidebar, off-canvas on mobile, with role-aware navigation. The top bar holds the command menu (Ctrl+K), New ticket, Display menu, locale switcher and the user menu
+- [x] Display menu: theme (Light / Dark / System) and five-step text size. Both are remembered, applied before first paint, and available in the command menu
+- [x] TanStack Query provider. A successful mutation refetches active queries
+- [x] Shared `DataTable`: sorting, text search, faceted filters, pagination, CSV export
+- [x] `PageHeader`, `SectionTabs`, `StatCard`, `StatusBadge` and `EmptyState` built
 - [ ] Charts and the CMDB canvas render LTR inside RTL pages, follow the theme, and scale with text size
-- [ ] Unit tests: `can()`, en/ar message key parity, format helpers, CSV, text-size stepping, the Display menu, role-aware navigation
+- [x] Unit tests: `can()`, en/ar message key parity, format helpers, CSV, text-size stepping, the Display menu, role-aware navigation
 
 ### Phase 3 - Data model, API and seeds
 - [ ] Drizzle schema covers:
