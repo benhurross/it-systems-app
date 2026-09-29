@@ -1,0 +1,30 @@
+# dependencies
+/node_modules
+
+# next.js
+/.next/
+/out/
+next-env.d.ts
+*.tsbuildinfo
+
+# testing
+/coverage
+/playwright-report
+/test-results
+/e2e/.auth
+
+# env files: only the example is committed
+.env*
+!.env.example
+
+# the source workbook holds real employee data and credentials
+*.xlsx
+
+# local tool settings
+.claude/settings.local.json
+
+# misc
+.DS_Store
+Thumbs.db
+*.pem
+npm-debug.log*

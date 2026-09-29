@@ -1,0 +1,193 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * AP Plus brand, taken from the company theme: primary #0047BA, navy #21325B,
+ * accent #00C9A7, info #09A5BE, warn #F5CA99, danger #ED4C78, surface #F7FAFF.
+ * Every text pairing below was measured at WCAG AA (4.5:1) or better in both themes.
+ * Chart slots were checked with the dataviz palette validator (CVD, band, 3:1 contrast).
+ */
+:root {
+  --app-font: var(--font-plex), var(--font-plex-arabic), ui-sans-serif, system-ui, sans-serif;
+
+  --background: #f7faff;
+  --foreground: #1e2022;
+  --card: #ffffff;
+  --card-foreground: #1e2022;
+  --popover: #ffffff;
+  --popover-foreground: #1e2022;
+  --primary: #0047ba;
+  --primary-foreground: #ffffff;
+  --secondary: #eef3fb;
+  --secondary-foreground: #21325b;
+  --muted: #f1f4f9;
+  --muted-foreground: #5c6b7c;
+  --accent: #e6efff;
+  --accent-foreground: #08305a;
+  --destructive: #b3244b;
+  --border: #e3e8f1;
+  --input: #c9d1de;
+  --ring: #0047ba;
+
+  --brand: #0047ba;
+  --brand-soft: #e6efff;
+  --success: #046b5a;
+  --success-soft: #dff4ee;
+  --warning: #8a4b00;
+  --warning-soft: #fff0d9;
+  --danger: #b3244b;
+  --danger-soft: #fde7ed;
+  --info: #05677a;
+  --info-soft: #ddf3f7;
+  --neutral: #475467;
+  --neutral-soft: #edf1f6;
+
+  --chart-1: #0047ba;
+  --chart-2: #0f9d84;
+  --chart-3: #eb6834;
+  --chart-4: #8e4ec6;
+  --chart-5: #8a94a6;
+
+  --radius: 0.625rem;
+
+  --sidebar: #21325b;
+  --sidebar-foreground: #dfe6f3;
+  --sidebar-primary: #0047ba;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #2c4170;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #2e4272;
+  --sidebar-ring: #70aff2;
+  --sidebar-muted: #a9b7d0;
+}
+
+.dark {
+  --background: #0d1526;
+  --foreground: #e6ebf4;
+  --card: #131c30;
+  --card-foreground: #e6ebf4;
+  --popover: #16213a;
+  --popover-foreground: #e6ebf4;
+  --primary: #6aa5ff;
+  --primary-foreground: #0b1220;
+  --secondary: #1c2740;
+  --secondary-foreground: #e6ebf4;
+  --muted: #1a2438;
+  --muted-foreground: #9aa8bf;
+  --accent: #1f2c47;
+  --accent-foreground: #e6ebf4;
+  --destructive: #ff7a9a;
+  --border: #26324a;
+  --input: #3a4866;
+  --ring: #6aa5ff;
+
+  --brand: #8fbcff;
+  --brand-soft: rgb(63 134 242 / 0.18);
+  --success: #4fd6b5;
+  --success-soft: rgb(15 157 132 / 0.18);
+  --warning: #f5ca99;
+  --warning-soft: rgb(245 165 36 / 0.16);
+  --danger: #ff8fab;
+  --danger-soft: rgb(237 76 120 / 0.18);
+  --info: #6fd3e3;
+  --info-soft: rgb(9 165 190 / 0.18);
+  --neutral: #b4bfd0;
+  --neutral-soft: rgb(148 163 184 / 0.14);
+
+  --chart-1: #3f86f2;
+  --chart-2: #14a88c;
+  --chart-3: #e0703f;
+  --chart-4: #8b74e0;
+  --chart-5: #7d89a0;
+
+  --sidebar: #0a1122;
+  --sidebar-foreground: #d5deee;
+  --sidebar-primary: #1e56c4;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #16223d;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #1b2742;
+  --sidebar-ring: #6aa5ff;
+  --sidebar-muted: #9aa8bf;
+}
+
+:lang(ar) {
+  --app-font: var(--font-plex-arabic), var(--font-plex), ui-sans-serif, system-ui, sans-serif;
+}
+
+@theme inline {
+  --font-sans: var(--app-font);
+  --font-heading: var(--app-font);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-brand: var(--brand);
+  --color-brand-soft: var(--brand-soft);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --color-neutral: var(--neutral);
+  --color-neutral-soft: var(--neutral-soft);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-muted: var(--sidebar-muted);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]) {
+    cursor: pointer;
+  }
+  /* Chart text follows the text-size setting: Recharts writes pixel sizes otherwise. */
+  .recharts-text {
+    font-size: 0.75rem;
+  }
+}

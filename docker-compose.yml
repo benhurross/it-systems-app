@@ -1,0 +1,22 @@
+# Postgres for this project only. Port 5433 keeps it clear of other local databases.
+# The password protects nothing but a container bound to this machine.
+name: ap-it-systems
+
+services:
+  postgres:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: apit
+      POSTGRES_PASSWORD: apit
+      POSTGRES_DB: ap_it
+    ports:
+      - '127.0.0.1:5433:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U apit -d ap_it']
+      interval: 5s
+      retries: 10
+
+volumes:
+  pgdata:
