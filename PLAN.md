@@ -281,15 +281,15 @@ Each phase ends with a local git commit. There is no remote.
 - [x] Audit log: filterable by user, entity and date, read only
 
 ### Phase 5 - Service Desk and employee requests
-- [ ] Tickets list: tabs All / Incidents / Requests. Filters: status, priority, issue type, location, assignee. Shows an SLA countdown or a breach badge
-- [ ] New ticket and Report incident dialogs for IT staff, and a New request form for employees. All validate with zod
-- [ ] Ticket detail:
+- [x] Tickets list: tabs All / Incidents / Requests. Filters: status, priority, issue type, location, assignee. Shows an SLA countdown or a breach badge
+- [x] New ticket and Report incident dialogs for IT staff, and a New request form for employees. All validate with zod
+- [x] Ticket detail:
   - status workflow, assignment, priority and comment timeline
   - resolve and close with a CSAT rating, and reopen
   - linked asset, suggested KB articles, and the ticket's audit history
-- [ ] Employees see and act on their own tickets only, and read published KB articles only
-- [ ] Knowledge Base: search, categories, article view, create/edit, draft/published/retired states, review-due flag
-- [ ] Changes: register, create/edit, approval workflow, risk, rollback plan, linked CI and ticket, result
+- [x] Employees see and act on their own tickets only, and read published KB articles only
+- [x] Knowledge Base: search, categories, article view, create/edit, draft/published/retired states, review-due flag
+- [x] Changes: register, create/edit, approval workflow, risk, rollback plan, linked CI and ticket, result
 
 ### Phase 6 - Assets, Discovery, CMDB, Software
 - [ ] Inventory: filters for category, status and location; lifecycle flags; CSV export

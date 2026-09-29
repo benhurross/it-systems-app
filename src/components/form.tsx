@@ -1,7 +1,8 @@
 "use client";
 
+import { Check, ChevronsUpDown } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useId, type ReactNode } from "react";
+import { useId, useState, type ReactNode } from "react";
 import {
   Controller,
   FormProvider,
@@ -12,6 +13,7 @@ import {
   type UseFormReturn,
 } from "react-hook-form";
 import { Button } from "@/components/ui/button";
+import { Command, CommandEmpty, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import {
   Dialog,
   DialogContent,
@@ -22,6 +24,7 @@ import {
 } from "@/components/ui/dialog";
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
@@ -226,6 +229,78 @@ export function SelectField({ options, ...props }: FieldProps & { options: Optio
               </SelectContent>
             </Select>
           )}
+        />
+      )}
+    </Shell>
+  );
+}
+
+/** A searchable picker for long lists such as employees or assets. */
+export function ComboboxField({ options, placeholder, ...props }: FieldProps & { options: Option[]; placeholder?: string }) {
+  const t = useTranslations("common");
+  const { control } = useFormContext();
+  const [open, setOpen] = useState(false);
+  return (
+    <Shell {...props}>
+      {(id, invalid) => (
+        <Controller
+          control={control}
+          name={props.name}
+          render={({ field }) => {
+            const selected = options.find((o) => o.value === field.value);
+            return (
+              <Popover open={open} onOpenChange={setOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    id={id}
+                    type="button"
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={open}
+                    aria-invalid={invalid}
+                    className="w-full justify-between font-normal"
+                  >
+                    <span className={selected ? "truncate" : "truncate text-muted-foreground"}>
+                      {selected?.label ?? placeholder ?? t("select")}
+                    </span>
+                    <ChevronsUpDown className="opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-(--radix-popover-trigger-width) p-0" align="start">
+                  <Command>
+                    <CommandInput placeholder={t("search")} />
+                    <CommandList>
+                      <CommandEmpty>{t("none")}</CommandEmpty>
+                      {props.optional && (
+                        <CommandItem
+                          value={`__${t("none")}`}
+                          onSelect={() => {
+                            field.onChange(null);
+                            setOpen(false);
+                          }}
+                        >
+                          {t("none")}
+                        </CommandItem>
+                      )}
+                      {options.map((o) => (
+                        <CommandItem
+                          key={o.value}
+                          value={`${o.label} ${o.value}`}
+                          onSelect={() => {
+                            field.onChange(o.value);
+                            setOpen(false);
+                          }}
+                        >
+                          <Check className={o.value === field.value ? "opacity-100" : "opacity-0"} />
+                          {o.label}
+                        </CommandItem>
+                      ))}
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+            );
+          }}
         />
       )}
     </Shell>

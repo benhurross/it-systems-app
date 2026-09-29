@@ -23,7 +23,15 @@ export default defineConfig({
       name,
       use: { ...device },
       dependencies: ["setup"],
+      testIgnore: /global\.spec\.ts/,
     })),
+    // Journeys that change system-wide settings run once, after the rest, so browsers never race over them.
+    {
+      name: "global",
+      testMatch: /global\.spec\.ts/,
+      use: { ...devices["Desktop Chrome"] },
+      dependencies: browsers.map((b) => b.name),
+    },
   ],
   webServer: {
     command: `npx next start -p ${PORT}`,

@@ -1,6 +1,7 @@
 "use client";
 
 import { MutationCache, QueryCache, QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { ThemeProvider } from "next-themes";
 import { useState, type ReactNode } from "react";
 import { z } from "zod";
@@ -30,8 +31,20 @@ function makeQueryClient() {
 
 export function Providers({ dir, children }: { dir: "ltr" | "rtl"; children: ReactNode }) {
   const [queryClient] = useState(makeQueryClient);
-  // Zod's own messages follow the page language. A language switch loads a new document, so once is enough.
-  useState(() => z.config(dir === "rtl" ? z.locales.ar() : z.locales.en()));
+  const required = useTranslations("validation")("required");
+  // Zod's messages follow the page language, and an empty required field just says so rather than
+  // reporting a type. A language switch loads a new document, so configuring once is enough.
+  useState(() =>
+    z.config({
+      ...(dir === "rtl" ? z.locales.ar() : z.locales.en()),
+      customError: (issue) => {
+        const empty =
+          (issue.code === "invalid_type" && (issue.input === undefined || issue.input === null)) ||
+          (issue.code === "too_small" && issue.origin === "string" && issue.minimum === 1);
+        return empty ? required : undefined;
+      },
+    }),
+  );
 
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>

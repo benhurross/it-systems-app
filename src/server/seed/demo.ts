@@ -426,7 +426,7 @@ export async function seedDemo(now = new Date()) {
       description: `Reported from the ${requester.location === "riyadh" ? "Riyadh branch" : "Jeddah office"}. The user needs this for their daily work.`,
       requesterId: requester.id,
       assigneeId: status === "open" && chance(0.3) ? null : assignee,
-      assetId: issueType === "hardware" ? (deviceOf(requester.id)?.id ?? null) : null,
+      assetId: (forced?.issueType ?? issueType) === "hardware" ? (deviceOf(requester.id)?.id ?? null) : null,
       dueAt: new Date(createdAt.getTime() + target * HOUR),
       resolvedAt: done ? resolvedAt : null,
       closedAt,
