@@ -90,10 +90,13 @@ test("email settings are saved, a test email reaches the mail server, and the ou
     expect(sink.messages[0]).toContain("To: admin@applus.test");
     expect(sink.messages[0]).toContain("From: AP Plus IT <itsupport@applus.test>");
 
-    const row = page.getByRole("row").filter({ hasText: "admin@applus.test" }).first();
-    await expect(row).toContainText("Test");
-    await expect(row).toContainText("Sent");
-    await row.getByRole("button", { name: "View" }).click();
+    const item = page.getByRole("list", { name: "Outbox" }).getByRole("listitem").filter({ hasText: "admin@applus.test" }).first();
+    await expect(item).toContainText("Test");
+    await expect(item).toContainText("Sent");
+    await page.getByRole("group", { name: "Show" }).getByRole("button", { name: "Failed" }).click();
+    await expect(page.getByText("No emails yet.")).toBeVisible();
+    await page.getByRole("group", { name: "Show" }).getByRole("button", { name: "All" }).click();
+    await item.getByRole("button", { name: /^View / }).click();
     await expect(page.getByTitle("Email preview")).toBeVisible();
     await page.keyboard.press("Escape");
 

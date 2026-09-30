@@ -21,6 +21,7 @@ type Stored = {
   fromAddress: string;
   appUrl: string;
   allowInvalidCert: boolean;
+  retentionDays: number;
 };
 
 /** Off until an admin sets it up: messages are kept in the outbox rather than sent. */
@@ -35,6 +36,7 @@ const DEFAULTS: Stored = {
   fromAddress: "",
   appUrl: "",
   allowInvalidCert: false,
+  retentionDays: 90,
 };
 
 async function stored(): Promise<Stored> {

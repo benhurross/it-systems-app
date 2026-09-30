@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { FieldGroup } from "@/components/ui/field";
 import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 
 /** One settings form on a card, with a Save button. Shows a skeleton until its values have loaded. */
 export function SettingsCard<TIn extends FieldValues, TOut extends FieldValues>({
@@ -17,6 +18,7 @@ export function SettingsCard<TIn extends FieldValues, TOut extends FieldValues>(
   onSubmit,
   pending,
   loading,
+  className,
   children,
 }: {
   title: string;
@@ -25,11 +27,13 @@ export function SettingsCard<TIn extends FieldValues, TOut extends FieldValues>(
   onSubmit: SubmitHandler<TOut>;
   pending?: boolean;
   loading?: boolean;
+  /** Replaces the default width limit, for a card laid out in a grid. */
+  className?: string;
   children: ReactNode;
 }) {
   const t = useTranslations("common");
   return (
-    <Card className="max-w-2xl">
+    <Card className={cn("max-w-2xl", className)}>
       <CardHeader>
         <CardTitle>{title}</CardTitle>
         {description && <CardDescription>{description}</CardDescription>}

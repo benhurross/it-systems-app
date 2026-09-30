@@ -25,6 +25,7 @@ const settings = emailSettings.parse({
   fromAddress: "itsupport@applus.test",
   appUrl: "http://192.168.0.159:3200/",
   allowInvalidCert: false,
+  retentionDays: 90,
 });
 const message = (to: string) => ({ kind: "test" as const, to, subject: "Hello", html: "<p>Hello</p>", text: "Hello" });
 
@@ -124,6 +125,45 @@ describe("sending", () => {
     expect(rows.map((r) => r.recipient)).toEqual(["b@applus.test", "a@applus.test"]);
     expect(rows[0]).not.toHaveProperty("html");
     expect((await outbox.getEmail(rows[0].id)).html).toBe("<p>Hello</p>");
+  });
+});
+
+describe("cleaning the outbox", () => {
+  it("deletes sent and held messages and old links after the days kept, and keeps failures", async () => {
+    await db.delete(s.emails);
+    const DAY = 86_400_000;
+    const now = new Date("2026-09-30T09:00:00Z");
+    const old = new Date(now.getTime() - 91 * DAY);
+    const recent = new Date(now.getTime() - 10 * DAY);
+    await db.insert(s.emails).values(
+      (["sent", "held", "failed"] as const).flatMap((status) =>
+        [old, recent].map((createdAt) => ({ ...message(`${status}@applus.test`), recipient: `${status}@applus.test`, status, createdAt })),
+      ),
+    );
+    const [ticket] = await db
+      .insert(s.tickets)
+      .values({
+        type: "request",
+        subject: "Old",
+        description: "Old",
+        issueType: "hardware",
+        location: "jeddah",
+        requesterId: (await db.insert(s.employees).values({ name: "Old Timer", email: "old.timer@applus.test", department: "it", location: "jeddah", jobTitle: "Clerk" }).returning())[0].id,
+        dueAt: now,
+      })
+      .returning();
+    const link = (tokenHash: string, expiresAt: Date, usedAt: Date | null) => ({ tokenHash, kind: "resolution" as const, ticketId: ticket.id, employeeId: ticket.requesterId, expiresAt, usedAt });
+    await db.insert(s.emailLinks).values([link("a", old, null), link("b", now, old), link("c", now, null), link("d", recent, recent)]);
+
+    expect(await outbox.pruneOutbox(now)).toEqual({ messages: 2, links: 2 });
+    const left = await db.select().from(s.emails);
+    expect(left.map((e) => `${e.status} ${e.createdAt.getTime() === old.getTime() ? "old" : "recent"}`).sort()).toEqual([
+      "failed old",
+      "failed recent",
+      "held recent",
+      "sent recent",
+    ]);
+    expect((await db.select().from(s.emailLinks)).map((l) => l.tokenHash).sort()).toEqual(["c", "d"]);
   });
 });
 

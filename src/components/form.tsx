@@ -214,7 +214,9 @@ export function SelectField({ options, ...props }: FieldProps & { options: Optio
           render={({ field }) => (
             <Select
               value={field.value == null || field.value === "" ? (props.optional ? NONE : "") : String(field.value)}
-              onValueChange={(v) => field.onChange(v === NONE ? null : numeric ? Number(v) : v)}
+              // Radix reports "" when a value arrives before its hidden <select> has the options (a form
+              // filled in after loading); no real choice is "", so it would only wipe the loaded value.
+              onValueChange={(v) => v !== "" && field.onChange(v === NONE ? null : numeric ? Number(v) : v)}
             >
               <SelectTrigger id={id} aria-invalid={invalid} className="w-full" onBlur={field.onBlur}>
                 <SelectValue placeholder={t("select")} />

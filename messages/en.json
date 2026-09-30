@@ -573,7 +573,13 @@
       "error": "Error",
       "view": "View",
       "preview": "Email preview",
-      "empty": "No emails yet."
+      "empty": "No emails yet.",
+      "retentionDays": "Keep sent emails for (days)",
+      "retentionHint": "Sent and held emails, and email links, are deleted after this many days. Failed emails are kept.",
+      "show": "Show",
+      "all": "All",
+      "attemptsCount": "{count, plural, one {# attempt} other {# attempts}}",
+      "viewEmail": "View {subject}"
     },
     "tickets": {
       "title": "Resolved tickets",

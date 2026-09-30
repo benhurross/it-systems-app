@@ -23,7 +23,9 @@ export default defineConfig({
       },
       {
         extends: true,
-        test: { name: "node", environment: "node", include: ["tests/**/*.test.ts"] },
+        // Each file runs its own in-process Postgres. A test taking 1-2 s alone can pass 5 s while the
+        // browser suite shares the machine, so these get more room than Vitest's default.
+        test: { name: "node", environment: "node", include: ["tests/**/*.test.ts"], testTimeout: 30_000 },
       },
     ],
     coverage: {

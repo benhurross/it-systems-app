@@ -324,6 +324,8 @@ export const emailSettings = z
     fromAddress: z.union([z.literal(""), z.email()]),
     appUrl: z.union([z.literal(""), z.url({ protocol: /^https?$/ })]).transform((v) => v.replace(/\/+$/, "")),
     allowInvalidCert: z.boolean(),
+    /** Sent and held messages, and used or expired email links, are deleted after this many days. */
+    retentionDays: z.number().int().min(7).max(3650),
   })
   .superRefine((v, ctx) => {
     if (!v.enabled) return;

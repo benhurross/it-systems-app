@@ -145,6 +145,10 @@ test.describe("as an admin", () => {
     await expect(page.getByRole("group", { name: /Tickets resolved within SLA/ }).getByLabel("Target")).toHaveValue("90");
     await page.goto("/en/settings/organisation");
     await expect(page.getByLabel("Organization name")).toHaveValue("AP Plus");
+    // A choice from a list loads too (it used to come up empty, and saving failed).
+    await page.goto("/en/settings/email");
+    await expect(page.getByRole("combobox", { name: "Connection security" })).toHaveText("STARTTLS (usually port 587)");
+    await expect(page.getByLabel("Keep sent emails for (days)")).toHaveValue("90");
   });
 
   test("Settings works in Arabic", async ({ page }) => {

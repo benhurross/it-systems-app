@@ -1,8 +1,8 @@
-import { and, asc, desc, eq, inArray, lt, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNotNull, lt, or, sql } from "drizzle-orm";
 import nodemailer, { type SendMailOptions } from "nodemailer";
 import type { EmailKind } from "@/lib/domain";
 import { db } from "../db";
-import { emails } from "../db/schema";
+import { emailLinks, emails } from "../db/schema";
 import { notFound, one } from "../http";
 import { getMailConfig, type MailConfig } from "./config";
 
@@ -154,4 +154,24 @@ export async function getEmail(id: number) {
   const [row] = await db.select().from(emails).where(eq(emails.id, id));
   if (!row) throw notFound();
   return row;
+}
+
+const DAY_MS = 86_400_000;
+
+/**
+ * Deletes sent and held messages older than the days kept, with email links that were used or
+ * expired that long ago. Failed messages stay, so a problem is never cleared away unseen.
+ */
+export async function pruneOutbox(now = new Date()) {
+  const { retentionDays } = await getMailConfig();
+  const before = new Date(now.getTime() - retentionDays * DAY_MS);
+  const messages = await db
+    .delete(emails)
+    .where(and(inArray(emails.status, ["sent", "held"]), lt(emails.createdAt, before)))
+    .returning({ id: emails.id });
+  const links = await db
+    .delete(emailLinks)
+    .where(or(and(isNotNull(emailLinks.usedAt), lt(emailLinks.usedAt, before)), lt(emailLinks.expiresAt, before)))
+    .returning({ id: emailLinks.id });
+  return { messages: messages.length, links: links.length };
 }

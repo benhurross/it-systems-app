@@ -382,6 +382,7 @@ Requested by the owner. The company runs its own Exchange Server, so mail goes o
 - [x] A resolved ticket the requester has not answered closes itself after 3 days (Settings → Service desk), recorded in its history as the system; the requester sees the date on the ticket and in the email
 - [x] A new ticket nobody is assigned to emails every admin (except one who opened it), with "Accept (assign to me)" and "Assign to …" links for each IT staff member. The links need sign-in and come back afterwards (only to paths inside the app); the page they open shows the ticket and asks to confirm
 - [x] Whoever a ticket is assigned to gets an email, unless they assigned it to themselves
+- [x] Settings → Email shows the outbox beside the settings on wide screens, as a compact list with a filter (all, failed, held, sent). Sent and held emails and old email links are deleted after 90 days (adjustable); failed emails are kept
 
 ### Phase 11 - Handover
 - [ ] Minimal README: prerequisites (Node, Docker), setup, scripts, and where the demo accounts are defined
