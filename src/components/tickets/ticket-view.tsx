@@ -143,6 +143,7 @@ function ResolveDialog({ ticket, onClose }: { ticket: TicketDetail; onClose: () 
 /** For the person who raised it: confirm the fix with a rating, or reopen. */
 function ConfirmFix({ ticket }: { ticket: TicketDetail }) {
   const t = useTranslations("requests");
+  const format = useFormat();
   const [rating, setRating] = useState<number | null>(null);
   const close = useApiMutation(
     () => api(`/tickets/${ticket.id}`, { method: "PATCH", body: { status: "closed", satisfaction: rating } }),
@@ -156,7 +157,9 @@ function ConfirmFix({ ticket }: { ticket: TicketDetail }) {
     <Card className="border-success/40 bg-success-soft/40">
       <CardHeader>
         <CardTitle>{t("confirmTitle")}</CardTitle>
-        <p className="text-sm text-muted-foreground">{t("confirmText")}</p>
+        <p className="text-sm text-muted-foreground">
+          {t("confirmText")} {ticket.closesAt && t("autoClose", { date: format.date(ticket.closesAt) })}
+        </p>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">

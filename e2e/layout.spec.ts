@@ -1,6 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 import { TEXT_SIZE_KEY, TEXT_SIZES } from "../src/lib/text-size";
 import { session } from "./env";
+import { resolvedTicket } from "./helpers";
 import { ALLOWED, resolve } from "./routes";
 
 // At the largest text size, every page fits a phone, a tablet and a desktop screen: the page never
@@ -67,21 +68,32 @@ function layoutProblems(page: Page) {
   });
 }
 
+/** Opens the page at each width in both languages and gathers what does not fit. */
+async function sweep(page: Page, path: string) {
+  const problems: string[] = [];
+  for (const width of WIDTHS) {
+    await page.setViewportSize({ width, height: 900 });
+    for (const locale of ["en", "ar"]) {
+      await page.goto(`/${locale}${path === "/" ? "" : path}`);
+      await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+      await expect(page.locator('[data-slot="skeleton"]')).toHaveCount(0);
+      await page.waitForLoadState("networkidle");
+      expect(await page.evaluate(() => document.documentElement.style.fontSize)).toBe(`${LARGEST}%`);
+      problems.push(...(await layoutProblems(page)).map((p) => `${locale} at ${width}px: ${p}`));
+    }
+  }
+  return problems;
+}
+
+test("the answer page from a resolution email fits every screen at the largest text size", async ({ page }, info) => {
+  const { token } = await resolvedTicket(page, `Answer page layout ${info.project.name}`);
+  const problems = await sweep(page, `/respond/${token}`);
+  expect(problems, problems.join("\n")).toEqual([]);
+});
+
 for (const route of ALLOWED.admin) {
   test(`${route} fits every screen at the largest text size`, async ({ page }) => {
-    const path = await resolve(page, route);
-    const problems: string[] = [];
-    for (const width of WIDTHS) {
-      await page.setViewportSize({ width, height: 900 });
-      for (const locale of ["en", "ar"]) {
-        await page.goto(`/${locale}${path === "/" ? "" : path}`);
-        await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-        await expect(page.locator('[data-slot="skeleton"]')).toHaveCount(0);
-        await page.waitForLoadState("networkidle");
-        expect(await page.evaluate(() => document.documentElement.style.fontSize)).toBe(`${LARGEST}%`);
-        problems.push(...(await layoutProblems(page)).map((p) => `${locale} at ${width}px: ${p}`));
-      }
-    }
+    const problems = await sweep(page, await resolve(page, route));
     expect(problems, problems.join("\n")).toEqual([]);
   });
 }

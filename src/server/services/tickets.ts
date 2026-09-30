@@ -12,6 +12,8 @@ import { assets, auditLog, employees, ticketComments, tickets, users } from "../
 import { badRequest, forbidden, notFound, one } from "../http";
 import { getSetting } from "../settings";
 import { heldAsset } from "./me";
+import { notifyResolved } from "./notify";
+import { autoCloseAt } from "./respond";
 
 const columns = {
   ...getTableColumns(tickets),
@@ -52,7 +54,9 @@ export async function getTicket(user: SessionUser, id: number) {
       ? db.select({ id: assets.id, name: assets.name }).from(assets).where(eq(assets.id, ticket.assetId))
       : [],
   ]);
-  return { ...ticket, comments, history, asset: asset[0] ?? null };
+  // A resolved ticket closes by itself if the requester does not answer; say when.
+  const closesAt = ticket.status === "resolved" && ticket.resolvedAt ? await autoCloseAt(ticket.resolvedAt) : null;
+  return { ...ticket, comments, history, asset: asset[0] ?? null, closesAt };
 }
 
 export async function createTicket(user: SessionUser, input: z.infer<typeof ticketCreate>) {
@@ -142,6 +146,7 @@ export async function updateTicket(user: SessionUser, id: number, input: z.infer
 
   const row = one(await db.update(tickets).set(changes).where(eq(tickets.id, id)).returning());
   await audit(user, "update", "ticket", id, `Updated ${ref("ticket", id)}: ${notes.join(", ")}`);
+  if (changes.status === "resolved") await notifyResolved(row);
   return row;
 }
 

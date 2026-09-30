@@ -102,3 +102,23 @@ export async function mailSink() {
     close: () => new Promise((resolve) => server.close(resolve)),
   };
 }
+
+/**
+ * Opens a ticket for the demo employee, resolves it, and returns the answer link's token from the
+ * resolution email in the outbox. Needs an admin session, which can read the outbox.
+ */
+export async function resolvedTicket(page: Page, subject: string) {
+  const users = (await (await page.request.get("/api/settings/users")).json()) as { email: string; employeeId: number }[];
+  const requesterId = users.find((u) => u.email === "employee@applus.test")!.employeeId;
+  const created = await page.request.post("/api/tickets", {
+    data: { type: "request", subject, description: "Raised by a test.", issueType: "hardware", location: "jeddah", requesterId },
+  });
+  expect(created.ok()).toBe(true);
+  const { id } = (await created.json()) as { id: number };
+  const resolved = await page.request.patch(`/api/tickets/${id}`, { data: { status: "resolved", resolution: "Restarted the print spooler." } });
+  expect(resolved.ok()).toBe(true);
+  const outbox = (await (await page.request.get("/api/settings/email/outbox")).json()) as { id: number; ticketId: number; kind: string; recipient: string }[];
+  const email = outbox.find((e) => e.ticketId === id && e.kind === "resolution")!;
+  const { html } = (await (await page.request.get(`/api/settings/email/outbox/${email.id}`)).json()) as { html: string };
+  return { id, token: /\/en\/respond\/([\w-]+)\?/.exec(html)![1], recipient: email.recipient };
+}

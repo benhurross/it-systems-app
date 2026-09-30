@@ -291,6 +291,15 @@ export const lookupInput = z.object({
 const hours = z.number().positive().max(24 * 90);
 export const slaSettings = z.object({ critical: hours, high: hours, medium: hours, low: hours });
 
+/** Resolved tickets the requester has not answered close by themselves after this many days. */
+export const ticketSettings = z.object({ autoCloseDays: z.number().int().min(1).max(30) });
+
+/** A requester's answer to "is it fixed?", from the link in the resolution email. */
+export const respondInput = z.discriminatedUnion("answer", [
+  z.object({ answer: z.literal("fixed"), rating: z.union(CSAT_SCORES.map((s) => z.literal(s))).nullish() }),
+  z.object({ answer: z.literal("not_fixed"), reason: body }),
+]);
+
 export const monitorSettings = z.object({
   enabled: z.boolean(),
   intervalSeconds: z.number().int().min(15).max(3600),

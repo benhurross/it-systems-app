@@ -1,4 +1,5 @@
 import { createTranslator } from "next-intl";
+import { formatDate } from "@/lib/format";
 import ar from "../../../messages/ar.json";
 import en from "../../../messages/en.json";
 
@@ -89,5 +90,32 @@ export function testEmail(senderName: string) {
     subject: t("test.subject"),
     heading: t("test.heading"),
     paragraphs: [t("test.body", { name: senderName })],
+  }));
+}
+
+/** To the requester when IT resolves their ticket: confirm the fix or say it is still a problem. */
+export function resolutionEmail(p: {
+  ref: string;
+  subject: string;
+  requester: string;
+  resolver: string | null;
+  resolution: string | null;
+  closesOn: Date;
+  link: (locale: Locale, answer: "fixed" | "not-fixed") => string;
+}) {
+  return bilingual((t, locale) => ({
+    subject: t("resolution.subject", { ref: p.ref }),
+    heading: t("resolution.heading"),
+    paragraphs: [t("resolution.greeting", { name: p.requester }), t("resolution.body", { ref: p.ref })],
+    details: [
+      [t("resolution.request"), `${p.ref} ${p.subject}`],
+      ...(p.resolver ? [[t("resolution.resolvedBy"), p.resolver] as [string, string]] : []),
+      ...(p.resolution ? [[t("resolution.resolution"), p.resolution] as [string, string]] : []),
+    ],
+    buttons: [
+      { label: t("resolution.fixed"), href: p.link(locale, "fixed"), primary: true },
+      { label: t("resolution.notFixed"), href: p.link(locale, "not-fixed") },
+    ],
+    note: t("resolution.note", { date: formatDate(p.closesOn, locale) }),
   }));
 }

@@ -1,7 +1,8 @@
 import { db } from "./db";
 import { auditLog } from "./db/schema";
 
-export type Actor = { id: string; name: string };
+/** Who acted. A person answering from an email link may have no account, so no id. */
+export type Actor = { id: string | null; name: string };
 
 /** Records who did what. Summaries name the record, never personal details beyond that. */
 export async function audit(actor: Actor | null, action: string, entity: string, entityId: string | number, summary: string) {

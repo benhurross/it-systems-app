@@ -574,6 +574,11 @@
       "view": "View",
       "preview": "Email preview",
       "empty": "No emails yet."
+    },
+    "tickets": {
+      "title": "Resolved tickets",
+      "description": "When IT resolves a ticket, the requester is asked to confirm the fix. Tickets nobody answers close by themselves.",
+      "autoCloseDays": "Close after (days)"
     }
   },
   "kpi": {
@@ -675,7 +680,8 @@
     "reopenedToast": "Reopened. IT will take another look.",
     "empty": "You have not raised any requests yet.",
     "device": "Device",
-    "removeDevice": "Not about this device"
+    "removeDevice": "Not about this device",
+    "autoClose": "If you do not answer, it closes by itself on {date}."
   },
   "kb": {
     "title": "Knowledge Base",
@@ -1219,6 +1225,39 @@
       "subject": "Test email from AP Plus IT Systems",
       "heading": "Email is working",
       "body": "{name} sent this test from Settings, Email. The app can reach your mail server."
+    },
+    "resolution": {
+      "subject": "{ref} is resolved. Is it fixed?",
+      "heading": "IT has resolved your request",
+      "greeting": "Hello {name},",
+      "body": "Please tell us whether {ref} is fixed. It takes one click.",
+      "request": "Request",
+      "resolvedBy": "Resolved by",
+      "resolution": "What IT did",
+      "fixed": "Yes, it's fixed",
+      "notFixed": "No, still a problem",
+      "note": "If we don't hear from you, the request closes by itself on {date}. Each link works once, only for this request, and opens a page where you confirm before anything changes."
     }
+  },
+  "respond": {
+    "title": "Is it fixed?",
+    "intro": "Hello {name}. IT marked {ref} as resolved.",
+    "request": "Request",
+    "resolution": "What IT did",
+    "answer": "Your answer",
+    "fixed": "Yes, it's fixed",
+    "notFixed": "No, still a problem",
+    "rate": "How was the service? (optional)",
+    "stars": "{count} out of 5",
+    "reason": "What is still wrong?",
+    "confirmFixed": "Confirm and close the request",
+    "confirmNotFixed": "Reopen the request",
+    "doneFixed": "Thank you. {ref} is closed.",
+    "doneNotFixed": "Thank you. {ref} is open again, and IT will take another look.",
+    "used": "This link has already been used.",
+    "expired": "This link has expired.",
+    "answered": "{ref} is no longer waiting for your answer.",
+    "notFound": "This link does not work. Check that it was copied in full.",
+    "signIn": "Sign in to see your requests"
   }
 }
