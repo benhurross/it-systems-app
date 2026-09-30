@@ -344,27 +344,35 @@ The charts use the app's chart tokens, which pass the dataviz validator in both 
 
 ### Phase 10 - Integration testing (Playwright)
 - [ ] Runs on Chromium, Firefox and WebKit against the production build and a fresh `ap_it_test` database (migrated and seeded in global setup). Signed-in sessions are prepared once per role, and specs that change settings run serially
-- [ ] Every route renders its heading in both locales, for each role allowed to see it, with no console errors
-- [ ] Journeys:
+- [x] Every route renders its heading in both locales, for each role allowed to see it, with no console errors
+- [x] Journeys:
   - IT staff ticket lifecycle, an employee's request from raising it to rating it, incident report, KB suggestion and change approval
   - asset move, CMDB impact and licence audit export
   - discovery of `127.0.0.1/32` added to inventory
   - monitoring of a TCP port the test opens then closes: up, then down with an alert, then a ticket
   - project task progress, purchase to budget, received to inventory, risk heatmap, joiner completion and offboarding countdown
   - command menu
-- [ ] Settings journeys:
+- [x] Settings journeys:
   - an admin creates a user, who signs in without seeing Settings
   - a deactivated user cannot sign in
   - a list change reaches the forms, and an SLA change reaches new tickets
   - each of these shows up in the audit log
-- [ ] Access: employees are blocked from IT modules and Settings in the UI and the API. Signed-out visitors land on sign-in
-- [ ] Persistence: changes survive a reload
-- [ ] Locale switch keeps the page and sets `dir="rtl"`
-- [ ] Theme: toggling sets `html.dark`, and System follows `prefers-color-scheme`. The choice survives reload
-- [ ] Text size: each step changes the root font size, and the choice survives reload
-- [ ] At the largest text step there is no horizontal scroll and no clipped control at 375, 768 and 1280px
-- [ ] axe finds no serious or critical violations in either locale or either theme
-- [ ] Every defect found is fixed, with a regression test
+- [x] Access: employees are blocked from IT modules and Settings in the UI and the API. Signed-out visitors land on sign-in
+- [x] Persistence: changes survive a reload
+- [x] Locale switch keeps the page and sets `dir="rtl"`
+- [x] Theme: toggling sets `html.dark`, and System follows `prefers-color-scheme`. The choice survives reload
+- [x] Text size: each step changes the root font size, and the choice survives reload
+- [x] At the largest text step there is no horizontal scroll and no clipped control at 375, 768 and 1280px
+- [x] axe finds no serious or critical violations in either locale or either theme
+- [x] Every defect found is fixed, with a regression test
+
+The cloud workspace only has Chromium, and no `ping`, so the suite ran there in Chromium, green apart from the discovery journey, which needs `ping`. The first box is ticked once `npm run e2e` passes on a machine with all three browsers.
+
+The sweeps found and fixed:
+- At 768px with the largest text the sidebar left the page 416px and pushed the top bar off screen. The sidebar now stays beside the page only from 48rem in the current text size and slides in over it below that
+- Detail panels squeezed their values to 32px; their rows now stack when the panel is narrower than 16rem
+- The tickets view switch and the risk heatmap overflowed phones; long device, asset and ticket links were cut short instead of wrapping
+- The tickets list's tabs pointed at a panel that did not exist, and unselected tabs had 4.21:1 contrast in the light theme (now 4.95:1)
 
 ### Phase 11 - Handover
 - [ ] Minimal README: prerequisites (Node, Docker), setup, scripts, and where the demo accounts are defined
