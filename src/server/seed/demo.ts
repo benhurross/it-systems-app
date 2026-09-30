@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto";
 import { eq, sql } from "drizzle-orm";
 import { addDays, isoDate } from "@/lib/dates";
 import {
@@ -12,6 +13,7 @@ import {
   type TicketStatus,
 } from "@/lib/domain";
 import { quarterOf } from "@/lib/kpis";
+import type { Role } from "@/lib/permissions";
 import { DEFAULT_MONITOR_SETTINGS } from "@/lib/monitor";
 import { DEFAULT_SLA } from "@/lib/sla";
 import { auth } from "../auth";
@@ -32,9 +34,14 @@ import {
   VENDORS,
   VULNERABILITIES,
 } from "./demo-data";
+import type { Person } from "./people";
+import { PLACEHOLDER_DOMAIN } from "./people";
 import { seedReference } from "./reference";
 
 export { DEMO_PASSWORD } from "./demo-data";
+
+/** An account the seed created, with the password it was given. */
+export type DemoAccount = { name: string; email: string; role: Role; password: string; department: string };
 
 /** Everything except the reference lists, which `seedReference` keeps. */
 const TABLES = [
@@ -193,7 +200,12 @@ const HOUR = 3_600_000;
 const pad = (n: number) => String(n).padStart(2, "0");
 
 /** Wipes the database and fills it with a year of fictional activity, relative to `now`. */
-export async function seedDemo(now = new Date()) {
+/**
+ * Replaces everything with demo data. By default the people are invented; with `people` (a real
+ * staff list, see ./people.ts) they are used instead, each account gets a one-time password, and
+ * only people already inactive are shown leaving. Tickets, assets and the rest stay fictional.
+ */
+export async function seedDemo(now = new Date(), options: { people?: Person[] } = {}) {
   const rand = mulberry32(20_260_929);
   const int = (min: number, max: number) => min + Math.floor(rand() * (max - min + 1));
   const pick = <T>(items: readonly T[]): T => items[Math.floor(rand() * items.length)];
@@ -221,46 +233,82 @@ export async function seedDemo(now = new Date()) {
 
   // ---------------------------------------------------------------- directory and accounts
 
-  const people: (typeof s.employees.$inferInsert)[] = DEMO_ACCOUNTS.map((a) => ({
-    name: a.name,
-    email: a.email,
-    department: a.department,
-    location: a.location,
-    jobTitle: a.jobTitle,
-    phone: `Ext. ${int(200, 899)}`,
-  }));
-  const names = new Set(people.map((p) => p.name));
-  while (people.length < 64) {
-    const name = `${pick(FIRST_NAMES)} ${pick(LAST_NAMES)}`;
-    if (names.has(name)) continue;
-    names.add(name);
-    const department = weighted(DEPARTMENT_WEIGHTS);
-    people.push({
-      name,
-      email: `${name.toLowerCase().replace(/[^a-z]+/g, ".")}@applus.test`,
-      department,
-      location: chance(0.7) ? "jeddah" : "riyadh",
-      jobTitle: pick(TITLES[department]),
-      phone: `Ext. ${int(200, 899)}`,
-    });
+  const people: (typeof s.employees.$inferInsert)[] = [];
+  if (options.people) {
+    people.push(...options.people.map(({ name, email, department, location, jobTitle, phone, active }) => ({ name, email, department, location, jobTitle, phone, active })));
+  } else {
+    people.push(
+      ...DEMO_ACCOUNTS.map((a) => ({
+        name: a.name,
+        email: a.email,
+        department: a.department,
+        location: a.location,
+        jobTitle: a.jobTitle,
+        phone: `Ext. ${int(200, 899)}`,
+      })),
+    );
+    const names = new Set(people.map((p) => p.name));
+    while (people.length < 64) {
+      const name = `${pick(FIRST_NAMES)} ${pick(LAST_NAMES)}`;
+      if (names.has(name)) continue;
+      names.add(name);
+      const department = weighted(DEPARTMENT_WEIGHTS);
+      people.push({
+        name,
+        email: `${name.toLowerCase().replace(/[^a-z]+/g, ".")}@applus.test`,
+        department,
+        location: chance(0.7) ? "jeddah" : "riyadh",
+        jobTitle: pick(TITLES[department]),
+        phone: `Ext. ${int(200, 899)}`,
+      });
+    }
   }
   const employees = await db.insert(s.employees).values(people).returning();
-  /** Everyone outside IT: the people who raise tickets. */
-  const nonIt = employees.filter((e) => e.department !== "it");
 
-  const userIds: Record<string, string> = {};
-  for (const account of DEMO_ACCOUNTS) {
-    const { user } = await auth.api.createUser({
-      body: { email: account.email, name: account.name, password: DEMO_PASSWORD, role: account.role },
-    });
-    const employee = employees.find((e) => e.email === account.email)!;
+  /** Employee id to user id, for everyone with an account. */
+  const userIds = new Map<number, string>();
+  const staffNames: Record<string, string> = {};
+  const accounts: DemoAccount[] = [];
+  const signUp = async (employee: (typeof employees)[number], role: Role, password: string) => {
+    const { user } = await auth.api.createUser({ body: { email: employee.email, name: employee.name, password, role } });
     await db.update(s.users).set({ employeeId: employee.id }).where(eq(s.users.id, user.id));
-    userIds[account.email] = user.id;
+    userIds.set(employee.id, user.id);
+    staffNames[user.id] = employee.name;
+    accounts.push({ name: employee.name, email: employee.email, role, password, department: employee.department });
+    return user.id;
+  };
+
+  // The IT team's parts: an admin who approves, the helpdesk, a systems administrator and an engineer.
+  let admin: string, helpdesk: string, sysadmin: string, engineer: string;
+  let team: string[];
+  if (options.people) {
+    for (const [i, person] of options.people.entries()) {
+      if (person.role) await signUp(employees[i], person.role, randomBytes(12).toString("base64url"));
+    }
+    const staff = accounts.filter((a) => a.role !== "employee");
+    if (staff.length === 0) throw new Error("No one in the staff list gets an account. Give an active person with an email the admin role.");
+    // Executives may hold accounts to see everything, but the IT work goes to everyone else.
+    const workers = staff.filter((a) => a.department !== "executive");
+    const pool = (workers.length ? workers : staff).map((a) => employees.find((e) => e.email === a.email)!);
+    const roleOf = (e: (typeof employees)[number]) => accounts.find((a) => a.email === e.email)!.role;
+    const lead = pool.find((e) => roleOf(e) === "admin" && e.department === "it") ?? pool.find((e) => roleOf(e) === "admin") ?? pool[0];
+    const rest = pool.filter((e) => e !== lead);
+    const first = rest.find((e) => roleOf(e) === "it_staff") ?? rest[0] ?? lead;
+    const others = rest.filter((e) => e !== first);
+    [admin, helpdesk, sysadmin, engineer] = [lead, first, others[0] ?? first, others[1] ?? others[0] ?? first].map((e) => userIds.get(e.id)!);
+    team = pool.map((e) => userIds.get(e.id)!);
+  } else {
+    for (const account of DEMO_ACCOUNTS) {
+      await signUp(employees.find((e) => e.email === account.email)!, account.role, DEMO_PASSWORD);
+    }
+    const idOf = (email: string) => userIds.get(employees.find((e) => e.email === email)!.id)!;
+    [admin, helpdesk, sysadmin, engineer] = ["admin@applus.test", "it@applus.test", "it2@applus.test", "it3@applus.test"].map(idOf);
+    team = [admin, helpdesk, sysadmin, engineer];
   }
-  const admin = userIds["admin@applus.test"];
-  const [omar, faisal, joseph] = ["it@applus.test", "it2@applus.test", "it3@applus.test"].map((e) => userIds[e]);
-  const nora = employees.find((e) => e.email === "employee@applus.test")!;
-  const staffNames: Record<string, string> = Object.fromEntries(DEMO_ACCOUNTS.map((a) => [userIds[a.email], a.name]));
+  const nora = employees.find((e) => e.email === "employee@applus.test") ?? null;
+  /** Everyone outside IT still working here: the people who raise tickets. */
+  const nonIt = employees.filter((e) => e.active && e.department !== "it" && !team.includes(userIds.get(e.id) ?? ""));
+  if (nonIt.length === 0) throw new Error("The staff list needs at least one active person outside IT to raise tickets.");
 
   // ---------------------------------------------------------------- infrastructure and devices
 
@@ -338,7 +386,7 @@ export async function seedDemo(now = new Date()) {
       os: kind === "monitor" ? null : ageDays > 5 * 365 ? "Windows 10 Pro" : "Windows 11 Pro",
     });
   };
-  for (const person of employees) {
+  for (const person of employees.filter((e) => e.active)) {
     device(chance(0.82) ? "laptop" : "desktop", person, "in_use", int(60, 5 * 365 + 200));
     if (chance(0.45)) device("monitor", person, "in_use", int(60, 4 * 365));
   }
@@ -365,7 +413,7 @@ export async function seedDemo(now = new Date()) {
       fromEmployeeId: null,
       toEmployeeId: d.assignedTo,
       reason: i % 2 ? "Replacement for a faulty device" : "Issued to a new starter",
-      movedBy: staffNames[omar],
+      movedBy: staffNames[helpdesk],
       movedAt: at(day(-int(5, 120)), 10),
     })),
   );
@@ -386,18 +434,20 @@ export async function seedDemo(now = new Date()) {
     [2, 5],
     [1, 3],
   ];
-  const userOfEmployee = (employeeId: number) =>
-    DEMO_ACCOUNTS.map((a) => ({ a, id: userIds[a.email] })).find(
-      ({ a }) => employees.find((e) => e.email === a.email)?.id === employeeId,
-    )?.id;
+  const userOfEmployee = (employeeId: number) => userIds.get(employeeId);
 
   type Draft = typeof s.tickets.$inferInsert & { createdAt: Date };
   const drafts: Draft[] = [];
 
+  // The engineer covers the Riyadh branch. A real list may have no one there, so they share the main
+  // queue; and in a small team one person may hold several parts, so each is weighted once.
+  const queue: [string, number][] = options.people
+    ? ([[helpdesk, 5], [sysadmin, 3], [engineer, 2], [admin, 1]] as [string, number][]).filter(([id], i, all) => all.findIndex(([other]) => other === id) === i)
+    : [[helpdesk, 5], [sysadmin, 3], [admin, 1]];
   const draft = (requester: (typeof employees)[number], createdAt: Date, forced?: Partial<Draft>) => {
     const [issueType, template] = weighted(templates.map((t) => [t, t[1].weight] as const));
     const priority = weighted(priorities);
-    const assignee = requester.location === "riyadh" && chance(0.6) ? joseph : weighted([[omar, 5], [faisal, 3], [admin, 1]] as const);
+    const assignee = requester.location === "riyadh" && chance(0.6) ? engineer : weighted(queue);
     const target = DEFAULT_SLA[priority];
     const late = chance(0.13);
     const resolvedAt = new Date(createdAt.getTime() + target * (late ? 1.1 + rand() * 1.9 : 0.05 + rand() * 0.8) * HOUR);
@@ -451,38 +501,40 @@ export async function seedDemo(now = new Date()) {
     }
   }
   // The employee demo account's own requests: one in progress, one waiting for them to confirm.
-  draft(nora, ago(50), {
-    subject: "Excel keeps crashing",
-    issueType: "software",
-    priority: "medium",
-    status: "in_progress",
-    assigneeId: omar,
-    resolvedAt: null,
-    closedAt: null,
-    resolution: null,
-    satisfaction: null,
-    dueAt: new Date(ago(50).getTime() + 24 * HOUR),
-  });
-  draft(nora, ago(26), {
-    subject: "VPN not connecting from home",
-    issueType: "internet",
-    priority: "high",
-    status: "resolved",
-    assigneeId: faisal,
-    resolvedAt: ago(3),
-    closedAt: null,
-    satisfaction: null,
-    resolution: "Your VPN profile was renewed. Please try again and confirm it works.",
-    dueAt: new Date(ago(26).getTime() + 8 * HOUR),
-  });
-  for (const back of [20, 45, 80]) draft(nora, at(day(-back), 10), {});
+  if (nora) {
+    draft(nora, ago(50), {
+      subject: "Excel keeps crashing",
+      issueType: "software",
+      priority: "medium",
+      status: "in_progress",
+      assigneeId: helpdesk,
+      resolvedAt: null,
+      closedAt: null,
+      resolution: null,
+      satisfaction: null,
+      dueAt: new Date(ago(50).getTime() + 24 * HOUR),
+    });
+    draft(nora, ago(26), {
+      subject: "VPN not connecting from home",
+      issueType: "internet",
+      priority: "high",
+      status: "resolved",
+      assigneeId: sysadmin,
+      resolvedAt: ago(3),
+      closedAt: null,
+      satisfaction: null,
+      resolution: "Your VPN profile was renewed. Please try again and confirm it works.",
+      dueAt: new Date(ago(26).getTime() + 8 * HOUR),
+    });
+    for (const back of [20, 45, 80]) draft(nora, at(day(-back), 10), {});
+  }
   // One ticket parked while a part is on order.
-  draft(nonIt[7], ago(76), {
+  draft(nonIt[Math.min(7, nonIt.length - 1)], ago(76), {
     subject: "Laptop battery not charging",
     issueType: "hardware",
     priority: "low",
     status: "on_hold",
-    assigneeId: omar,
+    assigneeId: helpdesk,
     resolvedAt: null,
     closedAt: null,
     resolution: null,
@@ -498,7 +550,7 @@ export async function seedDemo(now = new Date()) {
   for (const t of ticketRows) {
     const creator = t.createdBy ? staffNames[t.createdBy] : undefined;
     const requesterName = employees.find((e) => e.id === t.requesterId)!.name;
-    const assignee = t.assigneeId ?? omar;
+    const assignee = t.assigneeId ?? helpdesk;
     history.push({
       at: t.createdAt,
       userId: t.createdBy,
@@ -551,7 +603,7 @@ export async function seedDemo(now = new Date()) {
       ...a,
       status: i === 10 ? ("draft" as const) : i === 11 ? ("retired" as const) : ("published" as const),
       reviewDue: i === 3 ? day(-5) : day(int(30, 300)),
-      authorId: i % 2 ? omar : faisal,
+      authorId: i % 2 ? helpdesk : sysadmin,
       createdAt: at(day(-int(30, 300)), 11),
     })),
   );
@@ -585,7 +637,7 @@ export async function seedDemo(now = new Date()) {
         status: c.status,
         result: c.result,
         vendor: c.asset.startsWith("fw") ? "Falcon Security Solutions" : null,
-        requestedBy: faisal,
+        requestedBy: sysadmin,
         approvedBy: c.status === "approved" || c.status === "implemented" ? admin : null,
         implementedAt: c.status === "implemented" ? new Date(plannedAt.getTime() + HOUR) : null,
         createdAt: at(day(Math.min(c.days, 0) - int(3, 10)), 9),
@@ -703,7 +755,7 @@ export async function seedDemo(now = new Date()) {
           amount,
           status,
           hardware,
-          requestedBy: pick([omar, faisal, joseph]),
+          requestedBy: pick([helpdesk, sysadmin, engineer]),
           approvedBy: decided ? admin : null,
           decidedAt: decided,
           orderedAt: status === "ordered" || status === "received" ? new Date(created.getTime() + 50 * HOUR) : null,
@@ -740,7 +792,7 @@ export async function seedDemo(now = new Date()) {
       .values({
         name: p.name,
         description: `${p.name}.`,
-        ownerId: [admin, faisal, joseph][i % 3],
+        ownerId: [admin, sysadmin, engineer][i % 3],
         status: p.status,
         startDate: day(p.start),
         dueDate: day(p.due),
@@ -752,7 +804,7 @@ export async function seedDemo(now = new Date()) {
         projectId: project.id,
         title,
         status,
-        assigneeId: [omar, faisal, joseph][(i + j) % 3],
+        assigneeId: [helpdesk, sysadmin, engineer][(i + j) % 3],
         dueDate: day(p.start + Math.round(((p.due - p.start) * (j + 1)) / p.tasks.length)),
       })),
     );
@@ -768,7 +820,7 @@ export async function seedDemo(now = new Date()) {
       likelihood: r.likelihood,
       impact: r.impact,
       treatment: r.treatment,
-      ownerId: pick([admin, faisal, joseph]),
+      ownerId: pick([admin, sysadmin, engineer]),
       status: r.status,
       reviewDate: day(int(10, 90)),
     })),
@@ -786,7 +838,7 @@ export async function seedDemo(now = new Date()) {
       deadline: day(v.deadline),
       resolvedOn: v.status === "resolved" ? day(-int(1, v.daysAgo - 1)) : null,
       resolution: v.status === "resolved" ? "Fixed and verified by a rescan." : null,
-      ownerId: pick([faisal, joseph]),
+      ownerId: pick([sysadmin, engineer]),
     })),
   );
 
@@ -794,27 +846,62 @@ export async function seedDemo(now = new Date()) {
 
   const all = Object.fromEntries(ONBOARDING_TASKS.map((t) => [t.key, true]));
   const some = (n: number) => Object.fromEntries(ONBOARDING_TASKS.slice(0, n).map((t) => [t.key, true]));
-  const [finished] = await db
-    .insert(s.employees)
-    .values({ name: "Rakan Al-Sulami", email: "rakan.al.sulami@applus.test", department: "operations", location: "jeddah", jobTitle: "Claims Officer" })
-    .returning();
-  await db.insert(s.joiners).values([
-    { name: finished.name, email: finished.email, department: "operations", location: "jeddah", jobTitle: "Claims Officer", startDate: day(-40), tasks: all, employeeId: finished.id, completedAt: at(day(-33), 14) },
-    { name: "Lina Farouk", email: "lina.farouk@applus.test", department: "sales", location: "riyadh", jobTitle: "Account Manager", startDate: day(3), tasks: some(4) },
-    { name: "Hamza Nasser", email: "hamza.nasser@applus.test", department: "finance", location: "jeddah", jobTitle: "Accountant", startDate: day(10), tasks: some(2) },
-    { name: "Dima Saleh", email: "dima.saleh@applus.test", department: "hr", location: "jeddah", jobTitle: "HR Specialist", startDate: day(21), tasks: {} },
-  ]);
-
   const offboard = (n: number) => Object.fromEntries(OFFBOARDING_TASKS.slice(0, n).map((t) => [t, true]));
-  const leaving = nonIt.slice(-5);
-  await db.insert(s.leavers).values([
-    { employeeId: leaving[0].id, resignationDate: day(-95), forwardTo: leaving[4].email, tasks: offboard(4), notes: "Mailbox kept for the claims team until handover ends." },
-    { employeeId: leaving[1].id, resignationDate: day(-60), forwardTo: leaving[4].email, tasks: offboard(3) },
-    { employeeId: leaving[2].id, resignationDate: day(-20), forwardTo: leaving[4].email, tasks: offboard(2) },
-    { employeeId: leaving[3].id, resignationDate: day(-120), forwardTo: null, tasks: offboard(6), completedAt: at(day(-28), 12) },
-    { employeeId: leaving[4].id, resignationDate: day(-3), forwardTo: null, tasks: {} },
-  ]);
-  await db.update(s.employees).set({ active: false }).where(eq(s.employees.id, leaving[3].id));
+  let onboarded = 0;
+  if (options.people) {
+    // The newest hires (the last in the list) finished onboarding. Only people already inactive are
+    // shown leaving, so no one still working here appears to have resigned.
+    const real = (e: (typeof employees)[number]) => !e.email.endsWith(`@${PLACEHOLDER_DOMAIN}`);
+    const newest = nonIt.filter(real).slice(-3);
+    if (newest.length) {
+      await db.insert(s.joiners).values(
+        newest.map((e, i) => {
+          const startDate = day(-15 - 25 * (newest.length - 1 - i));
+          const { name, email, department, location, jobTitle } = e;
+          return { name, email, department, location, jobTitle, startDate, tasks: all, employeeId: e.id, completedAt: at(addDays(startDate, 7), 14) };
+        }),
+      );
+    }
+    const gone = employees.filter((e) => !e.active && !userIds.has(e.id)).slice(-5);
+    const plans = [
+      { resignationDate: day(-95), forward: true, tasks: offboard(4), completedAt: null },
+      { resignationDate: day(-60), forward: true, tasks: offboard(3), completedAt: null },
+      { resignationDate: day(-20), forward: true, tasks: offboard(2), completedAt: null },
+      { resignationDate: day(-120), forward: false, tasks: offboard(6), completedAt: at(day(-28), 12) },
+      { resignationDate: day(-3), forward: false, tasks: {}, completedAt: null },
+    ];
+    const colleague = (e: (typeof employees)[number]) => nonIt.find((c) => c.department === e.department && real(c))?.email ?? null;
+    if (gone.length) {
+      await db.insert(s.leavers).values(
+        gone.map((e, i) => {
+          const { forward, ...plan } = plans[i];
+          return { employeeId: e.id, ...plan, forwardTo: forward ? colleague(e) : null };
+        }),
+      );
+    }
+  } else {
+    const [finished] = await db
+      .insert(s.employees)
+      .values({ name: "Rakan Al-Sulami", email: "rakan.al.sulami@applus.test", department: "operations", location: "jeddah", jobTitle: "Claims Officer" })
+      .returning();
+    await db.insert(s.joiners).values([
+      { name: finished.name, email: finished.email, department: "operations", location: "jeddah", jobTitle: "Claims Officer", startDate: day(-40), tasks: all, employeeId: finished.id, completedAt: at(day(-33), 14) },
+      { name: "Lina Farouk", email: "lina.farouk@applus.test", department: "sales", location: "riyadh", jobTitle: "Account Manager", startDate: day(3), tasks: some(4) },
+      { name: "Hamza Nasser", email: "hamza.nasser@applus.test", department: "finance", location: "jeddah", jobTitle: "Accountant", startDate: day(10), tasks: some(2) },
+      { name: "Dima Saleh", email: "dima.saleh@applus.test", department: "hr", location: "jeddah", jobTitle: "HR Specialist", startDate: day(21), tasks: {} },
+    ]);
+
+    const leaving = nonIt.slice(-5);
+    await db.insert(s.leavers).values([
+      { employeeId: leaving[0].id, resignationDate: day(-95), forwardTo: leaving[4].email, tasks: offboard(4), notes: "Mailbox kept for the claims team until handover ends." },
+      { employeeId: leaving[1].id, resignationDate: day(-60), forwardTo: leaving[4].email, tasks: offboard(3) },
+      { employeeId: leaving[2].id, resignationDate: day(-20), forwardTo: leaving[4].email, tasks: offboard(2) },
+      { employeeId: leaving[3].id, resignationDate: day(-120), forwardTo: null, tasks: offboard(6), completedAt: at(day(-28), 12) },
+      { employeeId: leaving[4].id, resignationDate: day(-3), forwardTo: null, tasks: {} },
+    ]);
+    await db.update(s.employees).set({ active: false }).where(eq(s.employees.id, leaving[3].id));
+    onboarded = 1;
+  }
 
   // ---------------------------------------------------------------- monitoring history
 
@@ -849,7 +936,7 @@ export async function seedDemo(now = new Date()) {
   }
   await db.insert(s.alerts).values([
     { assetId: asset["ap-ryd-3"].id, kind: "down", status: "open", openedAt: ago(1.8) },
-    { assetId: asset["prn-ryd-1"].id, kind: "degraded", status: "acknowledged", openedAt: ago(0.8), acknowledgedBy: joseph, acknowledgedAt: ago(0.5) },
+    { assetId: asset["prn-ryd-1"].id, kind: "degraded", status: "acknowledged", openedAt: ago(0.8), acknowledgedBy: engineer, acknowledgedAt: ago(0.5) },
     { assetId: asset["fw-ryd"].id, kind: "down", status: "resolved", openedAt: ago(6), resolvedAt: ago(5.7) },
     { assetId: asset["sw-jed-2"].id, kind: "degraded", status: "resolved", openedAt: ago(74), resolvedAt: ago(73) },
   ]);
@@ -857,7 +944,7 @@ export async function seedDemo(now = new Date()) {
   // A finished sweep of the printer subnet: one device unknown, one printer on a new address.
   const [run] = await db
     .insert(s.discoveryRuns)
-    .values({ cidr: "10.10.30.0/24", status: "done", total: 254, scanned: 254, startedBy: joseph, startedAt: ago(49), finishedAt: ago(48.9) })
+    .values({ cidr: "10.10.30.0/24", status: "done", total: 254, scanned: 254, startedBy: engineer, startedAt: ago(49), finishedAt: ago(48.9) })
     .returning();
   const printers = ["prn-jed-fin", "prn-jed-ops", "prn-jed-hr", "scn-jed"].map((k) => asset[k]);
   await db.insert(s.discoveryHosts).values([
@@ -881,8 +968,8 @@ export async function seedDemo(now = new Date()) {
         item,
         done,
         note: item === "ups" && back === 2 ? "Battery at 80%, replacement requested." : null,
-        checkedBy: done ? omar : null,
-        checkedByName: done ? staffNames[omar] : null,
+        checkedBy: done ? helpdesk : null,
+        checkedByName: done ? staffNames[helpdesk] : null,
         checkedAt: done ? at(date, 8, 10 + i) : null,
       });
     });
@@ -912,5 +999,5 @@ export async function seedDemo(now = new Date()) {
   }
   await db.insert(s.kpiActuals).values(actuals);
 
-  return { employees: employees.length + 1, assets: infraRows.length + deviceRows.length, tickets: ticketRows.length };
+  return { employees: employees.length + onboarded, assets: infraRows.length + deviceRows.length, tickets: ticketRows.length, accounts };
 }
