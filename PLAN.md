@@ -323,8 +323,8 @@ Each phase ends with a local git commit. There is no remote.
 
 ### Staff list for local testing
 The demo seed can use the real staff list in place of invented people, for testing on the owner's machine. The list holds real names and emails, so it stays on that machine and is never committed (`*.xlsx` is ignored). Tickets, assets and the other records stay fictional, and tests keep using the invented people.
-- [x] `npm run people:check -- <file.xlsx>` reads the list and reports how it will load. Departments are matched to the list; missing emails get `@no-email.invalid` placeholders, missing titles "Employee", and everyone is in Jeddah unless a Location column says otherwise. Accounts go only to active people with a real email and a Role of admin or IT staff
-- [x] `npm run db:seed:demo -- --people <file.xlsx>` loads those people and accounts (one-time password each) in place of the invented ones. The IT work goes to the account holders outside Executive: an IT admin approves, IT staff take the helpdesk, the rest share the queue. Only people already inactive get offboarding records; the newest hires get finished onboarding records. Without `--people` the demo data is unchanged
+- [x] `npm run people:check "<file.xlsx>"` reads the list and reports how it will load. Departments are matched to the list; missing emails get `@no-email.invalid` placeholders, missing titles "Employee", and everyone is in Jeddah unless a Location column says otherwise. Accounts go only to active people with a real email and a Role of admin or IT staff
+- [x] `npm run db:seed:demo "<file.xlsx>"` (or `-- --people <file.xlsx>`) loads those people and accounts (one-time password each) in place of the invented ones. The IT work goes to the account holders outside Executive: an IT admin approves, IT staff take the helpdesk, the rest share the queue. Only people already inactive get offboarding records; the newest hires get finished onboarding records. Without `--people` the demo data is unchanged
 
 ### Phase 9 - Dashboard and KPIs
 - [ ] Tiles:

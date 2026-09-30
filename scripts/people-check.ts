@@ -5,7 +5,7 @@ import { REFERENCE } from "@/server/seed/reference";
 // Reads a staff list and reports how it would be loaded. Nothing is written to the database.
 const [file] = process.argv.slice(2);
 if (!file) {
-  console.error('Usage: npm run people:check -- "<path to .xlsx>"');
+  console.error('Usage: npm run people:check "<path to .xlsx>"');
   process.exit(1);
 }
 

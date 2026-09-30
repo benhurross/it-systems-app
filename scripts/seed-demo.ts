@@ -6,12 +6,15 @@ import { seedDemo } from "@/server/seed/demo";
 import { cleanPeople } from "@/server/seed/people";
 
 // Replaces everything in the database with demo data. Development and test databases only.
-// With --people <file.xlsx>, a real staff list takes the place of the invented people.
-const { values } = parseArgs({ options: { people: { type: "string" } } });
+// Given a staff list (npm run db:seed:demo "<file.xlsx>"), its people take the place of the invented ones.
+// The file may also follow --people; PowerShell drops the `--` npm needs to pass that on, so a bare path
+// is accepted too.
+const { values, positionals } = parseArgs({ options: { people: { type: "string" } }, allowPositionals: true });
+const file = values.people ?? positionals[0];
 
 let people;
-if (values.people) {
-  const cleaned = cleanPeople(await readSheet(values.people));
+if (file) {
+  const cleaned = cleanPeople(await readSheet(file));
   people = cleaned.people;
   console.log(`Staff list: ${people.length} people, ${cleaned.notes.length} notes (npm run people:check lists them).`);
 }
@@ -24,4 +27,5 @@ if (people) {
   for (const a of counts.accounts) console.log(`  ${a.role.padEnd(8)} ${a.email.padEnd(34)} ${a.password}   ${a.name}`);
 } else {
   console.log(`Demo accounts: ${DEMO_ACCOUNTS.map((a) => a.email).join(", ")} (password in src/server/seed/demo-data.ts).`);
+  console.log('These people are invented. To use your staff list instead: npm run db:seed:demo "<path to .xlsx>"');
 }
