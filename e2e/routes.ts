@@ -2,7 +2,7 @@ import { expect, type Page } from "@playwright/test";
 import type { Role } from "./env";
 
 // Every page of the app. `:name` stands for the id of a record, filled in by `resolve`.
-export const REQUEST = ["/requests", "/requests/new", "/requests/:ticket", "/knowledge", "/knowledge/:article"];
+export const REQUEST = ["/home", "/requests", "/requests/new", "/requests/:ticket", "/knowledge", "/knowledge/:article"];
 export const IT = [
   "/",
   "/kpis",

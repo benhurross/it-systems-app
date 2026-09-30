@@ -162,6 +162,32 @@ test.describe("employees", () => {
     console.assertClean();
   });
 
+  test("their dashboard lists their requests and devices, and reports a problem with a device", async ({ page }, info) => {
+    const console = watchConsole(page);
+    const subject = unique(info, "Laptop fan is loud");
+    await page.goto("/en");
+    await expect(page).toHaveURL(/\/en\/home$/);
+    await expect(page.getByRole("heading", { name: "My dashboard" })).toBeVisible();
+    await expect(page.getByRole("link", { name: /Open requests/ })).toBeVisible();
+
+    const report = page.getByRole("link", { name: /^Report a problem with / }).first();
+    const device = (await report.getAttribute("aria-label"))!.replace("Report a problem with ", "");
+    await report.click();
+    await expect(page).toHaveURL(/\/en\/requests\/new\?asset=\d+$/);
+    await expect(page.getByText(`${device} ·`)).toBeVisible();
+    // The device's location is filled in; the rest is up to the person.
+    await choose(page, "Issue type", "Hardware");
+    await page.getByLabel("Subject").fill(subject);
+    await page.getByLabel("What is happening?").fill("The fan runs at full speed all day.");
+    await page.getByRole("button", { name: "Send request" }).click();
+    await expect(page.getByRole("heading", { name: subject })).toBeVisible();
+    await expect(page.getByText(device, { exact: true })).toBeVisible();
+
+    await page.goto("/en/home");
+    await expect(page.getByRole("link", { name: new RegExp(subject) })).toBeVisible();
+    console.assertClean();
+  });
+
   test("only their own tickets and published articles are visible", async ({ page, browser }) => {
     await page.goto("/en/requests");
     const rows = page.getByRole("row").filter({ has: page.getByRole("cell") });

@@ -61,7 +61,8 @@
     "people": "People",
     "settings": "Settings",
     "myRequests": "My requests",
-    "newRequest": "New request"
+    "newRequest": "New request",
+    "home": "My dashboard"
   },
   "auth": {
     "title": "Sign in",
@@ -613,7 +614,9 @@
     "stars": "{count} out of 5",
     "thanks": "Thank you. Your request is closed.",
     "reopenedToast": "Reopened. IT will take another look.",
-    "empty": "You have not raised any requests yet."
+    "empty": "You have not raised any requests yet.",
+    "device": "Device",
+    "removeDevice": "Not about this device"
   },
   "kb": {
     "title": "Knowledge Base",
@@ -1125,5 +1128,30 @@
     "saved": "Figures saved.",
     "outOf": "{value} / 5",
     "note": "Status compares the latest quarter for SLA, complaints and satisfaction, and the year so far for training hours and ISO non-conformities. Complaints are tickets that missed their SLA deadline in the quarter."
+  },
+  "home": {
+    "title": "My dashboard",
+    "welcome": "Hello {name}. Here are your requests and the devices IT has given you.",
+    "open": "Open requests",
+    "openHint": "Being worked on by IT",
+    "awaiting": "Waiting for you",
+    "awaitingHint": "Fixed: please confirm",
+    "closed": "Closed recently",
+    "closedHint": "Last {days} days",
+    "confirmTitle": "Please confirm these fixes",
+    "confirmText": "IT marked these as resolved. Open each one to confirm it works, or reopen it.",
+    "latest": "Latest requests",
+    "allRequests": "All requests",
+    "noRequests": "You have not raised any requests yet.",
+    "devices": "My devices",
+    "devicesHint": "Equipment IT has assigned to you.",
+    "noDevices": "No devices are assigned to you.",
+    "serial": "Serial",
+    "warranty": "Warranty until",
+    "warrantyEnded": "Warranty ended {date}",
+    "noWarranty": "No warranty date",
+    "report": "Report a problem",
+    "reportFor": "Report a problem with {device}",
+    "notLinked": "Your account is not linked to an employee record yet. Ask IT to link it."
   }
 }

@@ -21,6 +21,7 @@ import { can, type Area } from "./permissions";
 
 export type NavItem = {
   key:
+    | "home"
     | "dashboard"
     | "kpis"
     | "tickets"
@@ -92,6 +93,7 @@ export const NAV: NavGroup[] = [
     area: "request",
     hiddenWith: "it",
     items: [
+      { key: "home", href: "/home", icon: LayoutDashboard },
       { key: "myRequests", href: "/requests", icon: Inbox },
       { key: "newRequest", href: "/requests/new", icon: SquarePen },
       { key: "knowledge", href: "/knowledge", icon: BookOpen },
@@ -110,7 +112,7 @@ export function navFor(role: string | null | undefined): NavGroup[] {
 
 /** Where a role lands after signing in, and where the logo points. */
 export function homeFor(role: string | null | undefined): string {
-  return can(role, "it") ? "/" : "/requests";
+  return can(role, "it") ? "/" : "/home";
 }
 
 const matches = (href: string, pathname: string) =>

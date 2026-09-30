@@ -1,4 +1,4 @@
-import { and, count, desc, eq, gte, inArray } from "drizzle-orm";
+import { and, count, desc, eq, gte, inArray, isNotNull, ne } from "drizzle-orm";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import { ONBOARDING_TASKS, OFFBOARDING_TASKS } from "@/lib/domain";
 import { vulnerabilityInput } from "@/lib/schemas";
@@ -24,6 +24,7 @@ const settings = await import("@/server/settings");
 const { listAudit } = await import("@/server/services/audit-log");
 const { dashboard } = await import("@/server/services/dashboard");
 const kpis = await import("@/server/services/kpis");
+const me = await import("@/server/services/me");
 
 type User = Awaited<ReturnType<typeof asUser>>;
 let admin: User;
@@ -363,5 +364,39 @@ describe("KPIs", () => {
     await kpis.setKpiActuals({ year: 2024, kpi: "iso_ncs", quarters: [null, 0, 1, null] }, it_);
     expect((await kpis.kpis(2024, NOW)).rows.find((r) => r.kpi === "iso_ncs")!.quarters).toEqual([null, 0, 1, null]);
     expect((await lastAudit("kpi")).summary).toBe("Recorded iso_ncs for 2024: Q1 –, Q2 0, Q3 1, Q4 –");
+  });
+});
+
+describe("my dashboard", () => {
+  it("counts an employee's own requests, lists the latest, and shows the devices assigned to them", async () => {
+    const [device] = await db.select().from(s.assets).where(eq(s.assets.status, "in_stock")).limit(1);
+    await db.update(s.assets).set({ assignedTo: employee.employeeId, status: "in_use" }).where(eq(s.assets.id, device.id));
+
+    const mine = await me.mySummary(employee, NOW);
+    if (!mine.linked) throw new Error("The demo employee should be linked to an employee record");
+    const own = await db.select().from(s.tickets).where(eq(s.tickets.requesterId, employee.employeeId!));
+    const inFlight = own.filter((t) => ["open", "in_progress", "on_hold"].includes(t.status));
+    expect(mine.summary.open).toBe(inFlight.length);
+    expect(mine.summary.awaiting).toBe(own.filter((t) => t.status === "resolved").length);
+    expect(mine.awaiting.map((t) => t.status).every((status) => status === "resolved")).toBe(true);
+    expect(mine.latest).toHaveLength(Math.min(me.LATEST_REQUESTS, own.length));
+    expect(mine.latest.map((t) => t.createdAt.getTime())).toEqual(mine.latest.map((t) => t.createdAt.getTime()).toSorted((a, b) => b - a));
+    expect(mine.assets.map((a) => a.id)).toContain(device.id);
+    expect(mine.assets.every((a) => a.status !== "retired")).toBe(true);
+  });
+
+  it("has nothing to show for an account with no employee record", async () => {
+    expect(await me.mySummary({ ...admin, employeeId: null }, NOW)).toEqual({ linked: false });
+  });
+
+  it("lets an employee name one of their own devices on a request, and ignores anyone else's", async () => {
+    const [own] = await db.select().from(s.assets).where(eq(s.assets.assignedTo, employee.employeeId!)).limit(1);
+    const [other] = await db
+      .select()
+      .from(s.assets)
+      .where(and(isNotNull(s.assets.assignedTo), ne(s.assets.assignedTo, employee.employeeId!)))
+      .limit(1);
+    expect((await tickets.createTicket(employee, { ...ticketInput, assetId: own.id })).assetId).toBe(own.id);
+    expect((await tickets.createTicket(employee, { ...ticketInput, assetId: other.id })).assetId).toBeNull();
   });
 });

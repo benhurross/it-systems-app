@@ -39,13 +39,13 @@ describe("navigation", () => {
   });
 
   it("gives employees only self service", () => {
-    expect(keys("employee")).toEqual(["myRequests", "newRequest", "knowledge"]);
+    expect(keys("employee")).toEqual(["home", "myRequests", "newRequest", "knowledge"]);
   });
 
   it("sends each role to its own start page", () => {
     expect(homeFor("admin")).toBe("/");
     expect(homeFor("it_staff")).toBe("/");
-    expect(homeFor("employee")).toBe("/requests");
+    expect(homeFor("employee")).toBe("/home");
   });
 
   it("marks the longest matching entry active", () => {

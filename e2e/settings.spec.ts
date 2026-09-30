@@ -175,7 +175,7 @@ test.describe("as an employee", () => {
 
   test("the dashboard and Settings are out of reach", async ({ page }) => {
     await page.goto("/en");
-    await expect(page).toHaveURL(/\/en\/requests$/);
+    await expect(page).toHaveURL(/\/en\/home$/);
     await expect(page.getByRole("link", { name: "My requests" })).toBeVisible();
     await page.goto("/en/settings/lists");
     await expect(page.getByRole("heading", { name: "Not available" })).toBeVisible();

@@ -17,7 +17,7 @@ const heading = (page: Page) => page.getByRole("heading", { level: 1 });
 
 /** What the pages read from the API, by the area of the app allowed to read it. */
 const APIS = {
-  request: ["/api/tickets", "/api/kb", "/api/lookups"],
+  request: ["/api/me", "/api/tickets", "/api/kb", "/api/lookups"],
   it: [
     "/api/dashboard",
     "/api/kpis",
@@ -110,10 +110,10 @@ for (const role of ["admin", "it", "employee"] as const) {
 test.describe("as employee", () => {
   test.use({ storageState: session("employee") });
 
-  test("the dashboard address takes an employee to their requests", async ({ page }) => {
+  test("the dashboard address takes an employee to their own dashboard", async ({ page }) => {
     await page.goto("/ar");
-    await expect(page).toHaveURL(/\/ar\/requests$/);
-    await expect(heading(page)).toHaveText(ar.requests.title);
+    await expect(page).toHaveURL(/\/ar\/home$/);
+    await expect(heading(page)).toHaveText(ar.home.title);
   });
 });
 

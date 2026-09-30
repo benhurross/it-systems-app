@@ -342,6 +342,7 @@ function Details({ ticket, mode }: { ticket: TicketDetail; mode: Mode }) {
                 )
               : (ticket.assigneeName ?? t("tickets.unassigned"))}
           </Row>
+          {!it && ticket.asset && <Row label={t("tickets.asset")}>{ticket.asset.name}</Row>}
           {it && (
             <Row label={t("tickets.asset")}>
               {edit(

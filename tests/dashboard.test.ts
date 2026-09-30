@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ATTENTION_LIMIT, dashboardSummary, lastMonths, type DashboardInput } from "@/lib/dashboard";
+import { RECENT_CLOSED_DAYS, requesterSummary } from "@/lib/self-service";
 
 // Noon in Riyadh on 29 September 2026.
 const NOW = new Date("2026-09-29T09:00:00Z");
@@ -190,5 +191,26 @@ describe("dashboard", () => {
       { category: "servers", count: 1 },
     ]);
     expect(charts.budget).toEqual([{ category: "hardware", budget: 100, committed: 40 }]);
+  });
+});
+
+describe("a requester's own summary", () => {
+  it("counts requests in progress, waiting for confirmation, and closed in the recent window", () => {
+    const daysAgo = (days: number) => new Date(NOW.getTime() - days * 24 * 3_600_000);
+    expect(
+      requesterSummary(
+        [
+          { status: "open", closedAt: null },
+          { status: "in_progress", closedAt: null },
+          { status: "on_hold", closedAt: null },
+          { status: "resolved", closedAt: null },
+          { status: "closed", closedAt: daysAgo(1) },
+          { status: "closed", closedAt: daysAgo(RECENT_CLOSED_DAYS - 1) },
+          { status: "closed", closedAt: daysAgo(RECENT_CLOSED_DAYS + 1) },
+        ],
+        NOW,
+      ),
+    ).toEqual({ open: 3, awaiting: 1, closedRecently: 2 });
+    expect(requesterSummary([], NOW)).toEqual({ open: 0, awaiting: 0, closedRecently: 0 });
   });
 });

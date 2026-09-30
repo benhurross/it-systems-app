@@ -11,6 +11,7 @@ import { db } from "../db";
 import { assets, auditLog, employees, ticketComments, tickets, users } from "../db/schema";
 import { badRequest, forbidden, notFound, one } from "../http";
 import { getSetting } from "../settings";
+import { heldAsset } from "./me";
 
 const columns = {
   ...getTableColumns(tickets),
@@ -60,7 +61,8 @@ export async function createTicket(user: SessionUser, input: z.infer<typeof tick
   if (!requesterId) {
     throw it ? badRequest("Choose who the ticket is for") : forbidden("Your account is not linked to an employee record");
   }
-  // People outside IT describe the problem; IT sets priority, assignment and the affected asset.
+  // People outside IT describe the problem; IT sets priority and assignment. They may name one of
+  // their own devices as the one affected.
   const priority = it ? input.priority : "medium";
   const now = new Date();
   const row = one(
@@ -75,7 +77,7 @@ export async function createTicket(user: SessionUser, input: z.infer<typeof tick
         priority,
         requesterId,
         assigneeId: it ? input.assigneeId : null,
-        assetId: it ? input.assetId : null,
+        assetId: it ? input.assetId : await heldAsset(input.assetId, requesterId),
         dueAt: dueAt(now, priority, await getSetting("sla")),
         createdBy: user.id,
         createdAt: now,

@@ -12,6 +12,7 @@ import type * as kb from "@/server/services/kb";
 import type * as kpis from "@/server/services/kpis";
 import type * as licenses from "@/server/services/licenses";
 import type * as lookups from "@/server/services/lookups";
+import type * as me from "@/server/services/me";
 import type * as monitoring from "@/server/services/monitoring";
 import type * as people from "@/server/services/people";
 import type * as projects from "@/server/services/projects";
@@ -67,3 +68,4 @@ export type DailyChecklist = {
   items: Item<typeof dailyChecks.dailyChecklist>[];
   history: Item<typeof dailyChecks.dailyHistory>[];
 };
+export type MySummary = Result<typeof me.mySummary>;

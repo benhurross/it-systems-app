@@ -374,6 +374,15 @@ The sweeps found and fixed:
 - The tickets view switch and the risk heatmap overflowed phones; long device, asset and ticket links were cut short instead of wrapping
 - The tickets list's tabs pointed at a panel that did not exist, and unselected tabs had 4.21:1 contrast in the light theme (now 4.95:1)
 
+### Self-service dashboard and email (added after Phase 10)
+Requested by the owner. The company runs its own Exchange Server, so mail goes out over SMTP.
+- [x] Employees start on their own dashboard: open requests, fixes waiting for them to confirm, requests closed in the last 90 days, their latest requests and the devices assigned to them. "Report a problem" on a device opens a request about it at the device's location; a request can name only the person's own devices
+- [ ] Email over the Exchange server's SMTP, set in Settings → Email with a test button. Until it is set up, messages are kept in an outbox in the app instead of being sent. Emails are in English and Arabic
+- [ ] When IT resolves a ticket, the requester gets an email with "Yes, it's fixed" and "No, still a problem" links that work without signing in: each opens a short page (rating, or a reason), works once and expires. Outlook's link scanners open links on their own, so opening a link never acts by itself
+- [ ] A resolved ticket the requester has not answered closes itself after 3 days (a Service desk setting)
+- [ ] A new request nobody is assigned to emails every admin, with "Take it" and "Assign to" links for each IT staff member. These need the admin to sign in, and come back to the ticket afterwards
+- [ ] Whoever a ticket is assigned to gets an email, unless they assigned it to themselves
+
 ### Phase 11 - Handover
 - [ ] Minimal README: prerequisites (Node, Docker), setup, scripts, and where the demo accounts are defined
 - [ ] Lint, typecheck, unit, build and e2e all green, with no skipped tests
