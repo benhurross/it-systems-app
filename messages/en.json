@@ -78,7 +78,8 @@
     "passwordRule": "At least 10 characters.",
     "passwordChanged": "Password changed.",
     "wrongPassword": "The current password is incorrect.",
-    "tooMany": "Too many attempts. Wait a few seconds and try again."
+    "tooMany": "Too many attempts. Wait a few seconds and try again.",
+    "untrusted": "Sign-in from this address isn’t allowed yet. Ask your administrator to add {address} to the app’s trusted addresses."
   },
   "display": {
     "title": "Display",

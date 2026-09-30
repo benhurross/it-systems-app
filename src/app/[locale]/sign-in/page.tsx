@@ -29,8 +29,18 @@ export default function SignInPage() {
   const submit = form.handleSubmit(async (values) => {
     const { data, error } = await authClient.signIn.email(values);
     if (error) {
-      const key = error.status === 429 ? "auth.tooMany" : error.code === "BANNED_USER" ? "auth.banned" : "auth.invalid";
-      form.setError("root", { message: t(key) });
+      // A refused address is not a wrong password: say so, or people reset passwords that were fine.
+      const key =
+        error.status === 429
+          ? "auth.tooMany"
+          : error.code === "BANNED_USER"
+            ? "auth.banned"
+            : error.code === "INVALID_ORIGIN"
+              ? "auth.untrusted"
+              : "auth.invalid";
+      form.setError("root", {
+        message: key === "auth.untrusted" ? t(key, { address: window.location.origin }) : t(key),
+      });
       return;
     }
     router.replace(homeFor(data.user.role));
