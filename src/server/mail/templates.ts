@@ -42,7 +42,7 @@ function section(s: Section, locale: Locale) {
     ? `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:4px 0 16px;border-collapse:collapse;width:100%">${s.details
         .map(
           ([label, value]) =>
-            `<tr><td style="padding:6px 0;color:${COLORS.muted};width:35%;vertical-align:top">${escape(label)}</td><td style="padding:6px 0;vertical-align:top">${escape(value).replace(/\n/g, "<br>")}</td></tr>`,
+            `<tr><td style="padding:6px 0;color:${COLORS.muted};width:35%;vertical-align:top">${escape(label)}</td><td dir="auto" style="padding:6px 0;vertical-align:top">${escape(value).replace(/\n/g, "<br>")}</td></tr>`,
         )
         .join("")}</table>`
     : "";
@@ -72,9 +72,9 @@ function sectionText(s: Section) {
 
 /** The whole message, as HTML and as plain text, from one section per language. */
 export function render(content: Record<Locale, Section>) {
-  const footer = `${translators.en("email.footer")} · ${translators.ar("email.footer")}`;
-  const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"></head><body style="margin:0;padding:0;background:${COLORS.page};font-family:'Segoe UI',Tahoma,Arial,sans-serif;font-size:15px;color:${COLORS.text}"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${COLORS.page}"><tr><td align="center" style="padding:24px 12px"><table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:100%;max-width:600px;background:#ffffff;border:1px solid ${COLORS.border};border-radius:12px"><tr><td style="padding:18px 28px;border-bottom:1px solid ${COLORS.border};font-weight:700;color:${COLORS.brand}">AP Plus IT</td></tr><tr>${section(content.en, "en")}</tr><tr><td style="border-top:1px solid ${COLORS.border};font-size:0;line-height:0">&nbsp;</td></tr><tr>${section(content.ar, "ar")}</tr></table><p style="margin:16px 0 0;color:${COLORS.muted};font-size:12px">${escape(footer)}</p></td></tr></table></body></html>`;
-  const text = `${sectionText(content.en)}\n\n----------\n\n${sectionText(content.ar)}\n\n${footer}\n`;
+  const footer = { en: translators.en("email.footer"), ar: translators.ar("email.footer") };
+  const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"></head><body style="margin:0;padding:0;background:${COLORS.page};font-family:'Segoe UI',Tahoma,Arial,sans-serif;font-size:15px;color:${COLORS.text}"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${COLORS.page}"><tr><td align="center" style="padding:24px 12px"><table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:100%;max-width:600px;background:#ffffff;border:1px solid ${COLORS.border};border-radius:12px"><tr><td style="padding:18px 28px;border-bottom:1px solid ${COLORS.border};font-weight:700;color:${COLORS.brand}">AP Plus IT</td></tr><tr>${section(content.en, "en")}</tr><tr><td style="border-top:1px solid ${COLORS.border};font-size:0;line-height:0">&nbsp;</td></tr><tr>${section(content.ar, "ar")}</tr></table><p style="margin:16px 0 0;color:${COLORS.muted};font-size:12px">${escape(footer.en)}</p><p dir="rtl" lang="ar" style="margin:4px 0 0;color:${COLORS.muted};font-size:12px">${escape(footer.ar)}</p></td></tr></table></body></html>`;
+  const text = `${sectionText(content.en)}\n\n----------\n\n${sectionText(content.ar)}\n\n${footer.en}\n${footer.ar}\n`;
   return { html, text };
 }
 
