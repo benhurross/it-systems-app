@@ -11,11 +11,14 @@ if (!file) {
 
 const { people, notes } = cleanPeople(await readSheet(file));
 const label = (list: "department" | "location", code: string) => REFERENCE[list].find(([c]) => c === code)?.[1] ?? code;
-const tally = (values: string[]) =>
-  Object.entries(Object.groupBy(values, (v) => v))
-    .sort(([, a], [, b]) => b!.length - a!.length)
-    .map(([value, all]) => `${value} ${all!.length}`)
+const tally = (values: string[]) => {
+  const counts = new Map<string, number>();
+  for (const v of values) counts.set(v, (counts.get(v) ?? 0) + 1);
+  return [...counts]
+    .sort(([, a], [, b]) => b - a)
+    .map(([value, n]) => `${value} ${n}`)
     .join(", ");
+};
 
 const active = people.filter((p) => p.active);
 console.log(`${people.length} people: ${active.length} active, ${people.length - active.length} inactive.`);
