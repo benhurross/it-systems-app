@@ -439,7 +439,8 @@
     "employeeRequired": "Link an employee record for this role.",
     "required": "Required",
     "ipRequired": "Add an IP address to monitor this device.",
-    "portRequired": "Add the TCP port to check."
+    "portRequired": "Add the TCP port to check.",
+    "employeeNumber": "Use letters, digits and dashes only."
   },
   "settings": {
     "title": "Settings",
@@ -1159,7 +1160,8 @@
       "assets": "Assets held",
       "noAssets": "No assets assigned.",
       "tickets": "Recent tickets",
-      "noTickets": "No tickets raised."
+      "noTickets": "No tickets raised.",
+      "duplicate": "Duplicate"
     },
     "onboarding": {
       "new": "New joiner",
@@ -1191,7 +1193,9 @@
       "completeHint": "Ticking the last step completes offboarding and marks the employee as having left.",
       "notesSaved": "Notes saved.",
       "saveNotes": "Save notes"
-    }
+    },
+    "employeeNumber": "ID number",
+    "idLabel": "ID: {number}"
   },
   "kpis": {
     "title": "KPIs",

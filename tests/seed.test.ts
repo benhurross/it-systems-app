@@ -11,6 +11,7 @@ const s = await import("@/server/db/schema");
 const { seedReference, REFERENCE } = await import("@/server/seed/reference");
 const { seedDemo } = await import("@/server/seed/demo");
 const { cleanPeople } = await import("@/server/seed/people");
+const { applyEmployeeNumbers } = await import("@/server/seed/employee-numbers");
 const { NOW } = await import("./helpers/seeded");
 
 describe("reference seed", () => {
@@ -127,6 +128,25 @@ describe("demo seed with a staff list", () => {
     const users = await db.select().from(s.users);
     emailOf = new Map(users.map((u) => [u.id, u.email]));
   }, 120_000);
+
+  it("fills in ID numbers from a later list, matching by email or name, and leaves the rest alone", async () => {
+    const later = cleanPeople([
+      ["EmpID", "Full Name", "Department", "Email", "active"],
+      [3001, "Hala Lead", "IT", "HALA@example.test", "YES"],
+      [3002, "No Mail", "Sales", null, "YES"],
+      [3003, "Former 0", "Operations", "former0@example.test", "NO"],
+      [3004, "Not Here", "Sales", "not.here@example.test", "YES"],
+    ]).people;
+    const before = await db.select().from(s.employees);
+    expect(await applyEmployeeNumbers(later)).toEqual({ updated: 2, unchanged: 1, unmatched: ["Not Here"] });
+    const after = await db.select().from(s.employees);
+    const number = (name: string) => after.find((e) => e.name === name)?.employeeNumber;
+    expect([number("Hala Lead"), number("No Mail"), number("Former 0")]).toEqual(["3001", "3002", null]);
+    // Nothing but the numbers changed.
+    const strip = (rows: typeof before) =>
+      rows.map((row) => ({ ...row, employeeNumber: undefined, updatedAt: undefined })).sort((a, b) => a.id - b.id);
+    expect(strip(after)).toEqual(strip(before));
+  });
 
   it("uses exactly the listed people and none of the invented ones", async () => {
     const employees = await db.select().from(s.employees);

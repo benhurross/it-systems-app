@@ -240,12 +240,22 @@ export const vulnerabilityInput = z.object({
   ownerId: optionalUser,
 });
 
+/** A company ID number: letters, digits and dashes; blank for none. */
+const employeeNumber = z
+  .string()
+  .trim()
+  .max(30)
+  .regex(/^[A-Za-z0-9-]*$/, "validation.employeeNumber")
+  .nullish()
+  .transform((v) => v || null);
+
 export const employeeInput = z.object({
   name,
   email: z.email(),
   department: code,
   location: code,
   jobTitle: name,
+  employeeNumber,
   phone: optionalText,
   active: z.boolean(),
 });
@@ -256,6 +266,7 @@ export const joinerInput = z.object({
   department: code,
   location: code,
   jobTitle: name,
+  employeeNumber,
   startDate: day,
 });
 

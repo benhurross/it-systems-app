@@ -20,8 +20,26 @@ export default function DirectoryPage() {
   const lookups = useLookups();
   const [adding, setAdding] = useState(false);
   const { data = [], isLoading } = useApi<Employee[]>("/employees");
+  // An ID number held by more than one current employee is flagged, to be corrected.
+  const holders = new Map<string, number>();
+  for (const e of data) if (e.active && e.employeeNumber) holders.set(e.employeeNumber, (holders.get(e.employeeNumber) ?? 0) + 1);
 
   const columns = [
+    col.accessor("employeeNumber", {
+      header: t("employeeNumber"),
+      cell: (info) => {
+        const number = info.getValue();
+        if (!number) return <span className="text-muted-foreground">—</span>;
+        return (
+          <span className="flex flex-wrap items-center gap-1.5">
+            <span className="font-mono tabular-nums" dir="ltr">
+              {number}
+            </span>
+            {info.row.original.active && (holders.get(number) ?? 0) > 1 && <StatusBadge tone="warning">{t("directory.duplicate")}</StatusBadge>}
+          </span>
+        );
+      },
+    }),
     col.accessor("name", {
       header: t("name"),
       cell: (info) => (
@@ -86,6 +104,7 @@ export default function DirectoryPage() {
         csv={{
           filename: "directory.csv",
           columns: [
+            { header: "ID number", value: (e) => e.employeeNumber },
             { header: "Name", value: (e) => e.name },
             { header: "Job title", value: (e) => e.jobTitle },
             { header: "Department", value: (e) => lookups.label("department", e.department) },

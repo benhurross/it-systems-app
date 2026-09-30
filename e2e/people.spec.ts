@@ -80,3 +80,35 @@ test("a directory profile shows the devices held and the tickets raised", async 
   await expect(page.getByRole("link", { name: /^LT-\d+/ }).first()).toBeVisible();
   await expect(page.getByRole("link", { name: /^IT\d{6}/ }).first()).toBeVisible();
 });
+
+test("ID numbers show in the directory, are edited there, and one held twice is flagged", async ({ page }, info) => {
+  const number = `9${Date.now() % 100_000}${info.workerIndex}`;
+  const person = (label: string) => ({
+    name: unique(info, label),
+    email: `${label.toLowerCase()}.${info.project.name}.${Date.now()}@applus.test`,
+    department: "sales",
+    location: "jeddah",
+    jobTitle: "Account Manager",
+    employeeNumber: null,
+    phone: null,
+    active: true,
+  });
+  const first = person("Numbered");
+  const second = { ...person("Twin"), employeeNumber: number };
+  for (const p of [first, second]) expect((await page.request.post("/api/employees", { data: p })).ok()).toBe(true);
+
+  await page.goto("/en/people/directory");
+  await page.getByRole("textbox", { name: "Filter rows" }).fill(first.name);
+  await page.getByRole("row").filter({ hasText: first.name }).getByRole("link", { name: first.name }).click();
+  await page.getByRole("button", { name: "Edit" }).click();
+  await page.getByRole("dialog").getByLabel("ID number").fill(number);
+  await page.getByRole("dialog").getByRole("button", { name: "Save" }).click();
+  await expect(page.getByText(`ID: ${number}`)).toBeVisible();
+
+  await page.goto("/en/people/directory");
+  await page.getByRole("textbox", { name: "Filter rows" }).fill(number);
+  const rows = page.getByRole("row").filter({ hasText: number });
+  await expect(rows).toHaveCount(2);
+  await expect(rows.first()).toContainText("Duplicate");
+  await expect(rows.last()).toContainText("Duplicate");
+});

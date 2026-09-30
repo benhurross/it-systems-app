@@ -43,6 +43,11 @@ export default function EmployeePage({ params }: PageProps<"/[locale]/people/dir
           )}
           <h1 className="text-2xl font-semibold tracking-tight">{person.name}</h1>
           <p className="text-muted-foreground">
+            {person.employeeNumber && (
+              <>
+                <span dir="ltr">{t("people.idLabel", { number: person.employeeNumber })}</span> ·{" "}
+              </>
+            )}
             {person.jobTitle} · {lookups.label("department", person.department)} · {lookups.label("location", person.location)}
           </p>
           <div className="flex flex-wrap gap-x-5 gap-y-1 text-sm">

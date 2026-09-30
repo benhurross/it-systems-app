@@ -96,6 +96,7 @@ export async function completeJoiner(id: number, actor: Actor) {
           department: joiner.department,
           location: joiner.location,
           jobTitle: joiner.jobTitle,
+          employeeNumber: joiner.employeeNumber,
         })
         .returning(),
     );

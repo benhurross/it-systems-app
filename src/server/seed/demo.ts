@@ -235,7 +235,18 @@ export async function seedDemo(now = new Date(), options: { people?: Person[] } 
 
   const people: (typeof s.employees.$inferInsert)[] = [];
   if (options.people) {
-    people.push(...options.people.map(({ name, email, department, location, jobTitle, phone, active }) => ({ name, email, department, location, jobTitle, phone, active })));
+    people.push(
+      ...options.people.map(({ name, email, department, location, jobTitle, employeeNumber, phone, active }) => ({
+        name,
+        email,
+        department,
+        location,
+        jobTitle,
+        employeeNumber,
+        phone,
+        active,
+      })),
+    );
   } else {
     people.push(
       ...DEMO_ACCOUNTS.map((a) => ({
@@ -263,6 +274,8 @@ export async function seedDemo(now = new Date(), options: { people?: Person[] } 
       });
     }
   }
+  // Invented people get invented ID numbers, in order, without touching the random sequence.
+  if (!options.people) people.forEach((p, i) => (p.employeeNumber = String(1001 + i)));
   const employees = await db.insert(s.employees).values(people).returning();
 
   /** Employee id to user id, for everyone with an account. */

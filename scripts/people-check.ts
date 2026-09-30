@@ -25,6 +25,7 @@ console.log(`${people.length} people: ${active.length} active, ${people.length -
 console.log(`Departments: ${tally(people.map((p) => label("department", p.department)))}`);
 console.log(`Locations: ${tally(people.map((p) => label("location", p.location)))}`);
 console.log(`Placeholder emails: ${people.filter((p) => p.placeholderEmail).length}`);
+console.log(`ID numbers: ${active.filter((p) => p.employeeNumber).length} of ${active.length} active people have one.`);
 console.log("Accounts:");
 for (const p of people.filter((p) => p.role)) console.log(`  ${p.role}: ${p.name} <${p.email}>`);
 if (notes.length) {

@@ -14,6 +14,8 @@ export type Person = {
   department: string;
   location: string;
   jobTitle: string;
+  /** The ID number on their card; none for people who have left. */
+  employeeNumber: string | null;
   phone: string | null;
   active: boolean;
   /** The account to create for them; null for no account. */
@@ -33,6 +35,7 @@ export { PLACEHOLDER_DOMAIN };
 /** Header spellings each field accepts, compared without case, spaces or punctuation. */
 const COLUMNS = {
   name: ["fullname", "name", "employeename"],
+  number: ["empid", "employeeid", "employeenumber", "empno", "idnumber", "staffid", "staffnumber"],
   first: ["firstname", "givenname"],
   last: ["lastname", "surname", "familyname"],
   email: ["email", "emailaddress", "mail"],
@@ -184,8 +187,21 @@ export function cleanPeople(sheet: Cell[][]): { people: Person[]; notes: string[
       role = null;
     }
 
-    people.push({ name, email, department: dept, location: loc, jobTitle, phone: get("phone") || null, active, role, placeholderEmail });
+    // Whole numbers come from Excel as numbers; anything else is kept as written.
+    let employeeNumber: string | null = get("number").replace(/\.0+$/, "") || null;
+    if (employeeNumber && !active) {
+      notes.push(`${name}: ID ${employeeNumber} is not kept, because they are inactive.`);
+      employeeNumber = null;
+    }
+
+    people.push({ name, email, department: dept, location: loc, jobTitle, employeeNumber, phone: get("phone") || null, active, role, placeholderEmail });
   });
+
+  const byNumber = new Map<string, Person[]>();
+  for (const p of people) if (p.employeeNumber) byNumber.set(p.employeeNumber, [...(byNumber.get(p.employeeNumber) ?? []), p]);
+  for (const [number, same] of byNumber) {
+    if (same.length > 1) notes.push(`ID ${number} is used by ${same.map((p) => p.name).join(" and ")}; correct it in the directory.`);
+  }
 
   const byName = new Map<string, Person[]>();
   for (const p of people) byName.set(p.name.toLowerCase(), [...(byName.get(p.name.toLowerCase()) ?? []), p]);

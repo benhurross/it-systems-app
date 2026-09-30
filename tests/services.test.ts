@@ -277,7 +277,7 @@ describe("directory", () => {
 describe("joiners and leavers", () => {
   it("completes onboarding only when every step is done, adding the employee", async () => {
     const joiner = await people.createJoiner(
-      { name: "Test Joiner", email: "test.joiner@applus.test", department: "sales", location: "riyadh", jobTitle: "Account Manager", startDate: "2026-10-05" },
+      { name: "Test Joiner", email: "test.joiner@applus.test", department: "sales", location: "riyadh", jobTitle: "Account Manager", employeeNumber: "2077", startDate: "2026-10-05" },
       it_,
     );
     await expect(people.completeJoiner(joiner.id, it_)).rejects.toMatchObject({ status: 400 });
@@ -285,7 +285,7 @@ describe("joiners and leavers", () => {
     const done = await people.completeJoiner(joiner.id, it_);
     expect(done.employeeId).not.toBeNull();
     expect(Object.keys(done.tasks)).not.toContain("injected");
-    expect((await people.getEmployee(done.employeeId!)).email).toBe("test.joiner@applus.test");
+    expect(await people.getEmployee(done.employeeId!)).toMatchObject({ email: "test.joiner@applus.test", employeeNumber: "2077" });
   });
 
   it("marks the employee inactive when offboarding finishes", async () => {

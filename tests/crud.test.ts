@@ -119,7 +119,7 @@ describe("create, read and update for every register", () => {
   });
 
   it("employees, joiners and leavers", async () => {
-    const input = { name: "Test Person", email: "test.person@applus.test", department: "sales", location: "jeddah", jobTitle: "Account Manager", phone: null, active: true };
+    const input = { name: "Test Person", email: "test.person@applus.test", department: "sales", location: "jeddah", jobTitle: "Account Manager", employeeNumber: "4321", phone: null, active: true };
     const created = await people.createEmployee(input, user);
     expect((await people.updateEmployee(created.id, { ...input, jobTitle: "Sales Lead" }, user)).jobTitle).toBe("Sales Lead");
     expect((await people.listEmployees()).length).toBe(66);

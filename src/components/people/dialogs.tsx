@@ -40,6 +40,7 @@ export function EmployeeDialog({ employee, onClose }: { employee?: Employee; onC
         <TextField name="jobTitle" label={t("jobTitle")} />
         <TextField name="email" label={t("email")} type="email" dir="ltr" />
         <TextField name="phone" label={t("phone")} dir="ltr" optional />
+        <TextField name="employeeNumber" label={t("employeeNumber")} dir="ltr" optional />
         <SelectField name="department" label={t("department")} options={lookups.options("department")} />
         <SelectField name="location" label={t("location")} options={lookups.options("location")} />
       </div>
@@ -68,6 +69,7 @@ export function JoinerDialog({ onClose }: { onClose: () => void }) {
         <TextField name="jobTitle" label={t("jobTitle")} />
         <TextField name="email" label={t("email")} type="email" dir="ltr" />
         <DateField name="startDate" label={t("onboarding.startDate")} />
+        <TextField name="employeeNumber" label={t("employeeNumber")} dir="ltr" optional />
         <SelectField name="department" label={t("department")} options={lookups.options("department")} />
         <SelectField name="location" label={t("location")} options={lookups.options("location")} />
       </div>

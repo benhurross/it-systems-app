@@ -384,6 +384,7 @@ Requested by the owner. The company runs its own Exchange Server, so mail goes o
 - [x] Whoever a ticket is assigned to gets an email, unless they assigned it to themselves
 - [x] Settings → Email shows the outbox beside the settings on wide screens, as a compact list with a filter (all, failed, held, sent). Sent and held emails and old email links are deleted after 90 days (adjustable); failed emails are kept
 - [x] Documents on assets, purchases and contracts: PDF, JPG or PNG up to 10 MB, told apart by their content (a renamed file is refused), stored under random names in UPLOADS_DIR (an "uploads" folder by default) with their details in the database. IT staff and admins only; each upload and deletion is in the record's audit trail. An asset bought through a purchase also shows that purchase's documents
+- [x] Employee ID numbers: shown and edited in the directory (and set on new joiners), flagged when two current employees share one. Read from the staff list's EmpID column, dropped for people who have left; `npm run people:ids "<file.xlsx>"` fills them in for people already loaded, changing nothing else
 
 ### Phase 11 - Handover
 - [ ] Minimal README: prerequisites (Node, Docker), setup, scripts, and where the demo accounts are defined

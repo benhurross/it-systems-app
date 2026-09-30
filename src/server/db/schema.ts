@@ -97,6 +97,8 @@ export const employees = pgTable("employees", {
   department: text().notNull(),
   location: text().notNull(),
   jobTitle: text().notNull(),
+  /** The company ID number printed on the ID card. Not unique: old lists hold duplicates to correct. */
+  employeeNumber: text(),
   phone: text(),
   active: boolean().notNull().default(true),
   createdAt: createdAt(),
@@ -167,6 +169,7 @@ export const joiners = pgTable("joiners", {
   department: text().notNull(),
   location: text().notNull(),
   jobTitle: text().notNull(),
+  employeeNumber: text(),
   startDate: day().notNull(),
   tasks: jsonb().$type<Record<string, boolean>>().notNull().default({}),
   employeeId: integer().references(() => employees.id, { onDelete: "set null" }),

@@ -24,6 +24,7 @@ describe("staff list loader", () => {
         department: "finance",
         location: "jeddah",
         jobTitle: "Accountant",
+        employeeNumber: "1000",
         phone: null,
         active: true,
         role: null,
@@ -31,6 +32,27 @@ describe("staff list loader", () => {
       },
     ]);
     expect(notes).toEqual([]);
+  });
+
+  it("keeps ID numbers as written, drops them for people who left, and notes one held twice", () => {
+    const withIds = [
+      ["EmpID", "Full Name", "Department", "Email", "active"],
+      [1234, "Kept Number", "Sales", "kept@example.test", "YES"],
+      ["AP-0042", "Lettered Number", "Sales", "lettered@example.test", "YES"],
+      [null, "No Number", "Sales", "none@example.test", "YES"],
+      [5555, "Left Person", "Sales", "left@example.test", "NO"],
+      [1234, "Same Number", "Sales", "same@example.test", "YES"],
+    ];
+    const { people, notes } = cleanPeople(withIds);
+    expect(people.map((p) => [p.name, p.employeeNumber])).toEqual([
+      ["Kept Number", "1234"],
+      ["Lettered Number", "AP-0042"],
+      ["No Number", null],
+      ["Left Person", null],
+      ["Same Number", "1234"],
+    ]);
+    expect(notes).toContain("Left Person: ID 5555 is not kept, because they are inactive.");
+    expect(notes).toContain("ID 1234 is used by Kept Number and Same Number; correct it in the directory.");
   });
 
   it("finds columns under other spellings and orders, and builds the name from its parts", () => {
@@ -115,7 +137,7 @@ describe("staff list loader", () => {
     const values = ["YES", "no", "Resigned", "", "maybe"];
     const { people, notes } = cleanPeople(sheet(...values.map((active, i) => ({ ...person, active, email: `p${i}@example.test`, full: `P${i}` }))));
     expect(people.map((p) => p.active)).toEqual([true, false, false, true, true]);
-    expect(notes).toEqual(["P3: active is blank, so they are counted as active.", 'P4: active is "maybe", so they are counted as active.']);
+    expect(notes.filter((n) => !n.includes(" ID "))).toEqual(["P3: active is blank, so they are counted as active.", 'P4: active is "maybe", so they are counted as active.']);
   });
 
   it("gives accounts only to active people with a real email and a known role", () => {
@@ -128,7 +150,7 @@ describe("staff list loader", () => {
     ];
     const { people, notes } = cleanPeople(sheet(...rows));
     expect(people.map((p) => p.role)).toEqual(["admin", "it_staff", null, null, null]);
-    expect(notes).toEqual([
+    expect(notes.filter((n) => !n.includes(" ID "))).toEqual([
       "Gone One: no account, because they are inactive.",
       `No Mail: no email, so no.mail@${PLACEHOLDER_DOMAIN} is used.`,
       "No Mail: no account, because they have no email.",
