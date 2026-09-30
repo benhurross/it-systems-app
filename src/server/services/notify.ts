@@ -1,11 +1,13 @@
-import { eq } from "drizzle-orm";
+import { and, eq, inArray, isNull, or } from "drizzle-orm";
 import { ref } from "@/lib/domain";
 import { isPlaceholderEmail } from "@/lib/people";
 import { db } from "../db";
-import { employees, tickets, users } from "../db/schema";
+import type { Actor } from "../audit";
+import { employees, lookups, tickets, users } from "../db/schema";
 import { getMailConfig } from "../mail/config";
 import { queueEmail } from "../mail/outbox";
-import { resolutionEmail } from "../mail/templates";
+import { assignedEmail, newTicketEmail, resolutionEmail, type Locale, type TicketFacts } from "../mail/templates";
+import { listStaff } from "./people";
 import { autoCloseAt, createResolutionLink } from "./respond";
 
 type Ticket = typeof tickets.$inferSelect;
@@ -41,5 +43,71 @@ export function notifyResolved(ticket: Ticket, now = new Date()) {
       link: (locale, answer) => `${appUrl}/${locale}/respond/${token}?answer=${answer}`,
     });
     await queueEmail([{ kind: "resolution", to: requester.email, ticketId: ticket.id, ...email }]);
+  });
+}
+
+/** The ticket as IT emails describe it, with list labels in both languages. */
+async function factsOf(ticket: Ticket): Promise<TicketFacts> {
+  const [[requester], labels] = await Promise.all([
+    db.select().from(employees).where(eq(employees.id, ticket.requesterId)),
+    db.select().from(lookups).where(inArray(lookups.list, ["department", "location", "issue_type"])),
+  ]);
+  const label = (list: string, code: string): Record<Locale, string> => {
+    const row = labels.find((l) => l.list === list && l.code === code);
+    return { en: row?.labelEn ?? code, ar: row?.labelAr ?? code };
+  };
+  return {
+    ref: ref("ticket", ticket.id),
+    type: ticket.type,
+    subject: ticket.subject,
+    description: ticket.description,
+    requester: requester?.name ?? "",
+    department: label("department", requester?.department ?? ""),
+    location: label("location", ticket.location),
+    issueType: label("issue_type", ticket.issueType),
+    priority: ticket.priority,
+  };
+}
+
+const active = or(isNull(users.banned), eq(users.banned, false));
+const ticketUrl = (appUrl: string, id: number) => (locale: Locale) => `${appUrl}/${locale}/tickets/${id}`;
+
+/**
+ * A ticket that arrived with nobody assigned goes to every admin but the one who opened it, with
+ * links to accept it or hand it to someone on the team. The links need the admin to sign in.
+ */
+export function notifyNewTicket(ticket: Ticket, createdBy: string | null) {
+  return quietly("new ticket", async () => {
+    const admins = (await db.select().from(users).where(and(eq(users.role, "admin"), active))).filter(
+      (a) => a.id !== createdBy && !isPlaceholderEmail(a.email),
+    );
+    if (admins.length === 0) return;
+    const [facts, staff, { appUrl }] = await Promise.all([factsOf(ticket), listStaff(), getMailConfig()]);
+    await queueEmail(
+      admins.map((admin) => ({
+        kind: "new_request" as const,
+        to: admin.email,
+        ticketId: ticket.id,
+        ...newTicketEmail({
+          ticket: facts,
+          staff: staff.filter((s) => s.id !== admin.id),
+          link: (locale, to) => `${appUrl}/${locale}/tickets/${ticket.id}/assign?to=${encodeURIComponent(to)}`,
+          open: ticketUrl(appUrl, ticket.id),
+        }),
+      })),
+    );
+  });
+}
+
+/** Tells the person a ticket was just assigned to, unless they took it themselves. */
+export function notifyAssigned(ticket: Ticket, by: Actor) {
+  return quietly("assignment", async () => {
+    if (!ticket.assigneeId || ticket.assigneeId === by.id) return;
+    const [assignee] = await db.select().from(users).where(and(eq(users.id, ticket.assigneeId), active));
+    if (!assignee || isPlaceholderEmail(assignee.email)) return;
+    const [facts, { appUrl }] = await Promise.all([factsOf(ticket), getMailConfig()]);
+    await queueEmail([
+      { kind: "assigned", to: assignee.email, ticketId: ticket.id, ...assignedEmail({ ticket: facts, by: by.name, open: ticketUrl(appUrl, ticket.id) }) },
+    ]);
   });
 }

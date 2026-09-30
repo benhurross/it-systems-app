@@ -4,8 +4,9 @@ import { useLocale } from "next-intl";
 import { useEffect, type ReactNode } from "react";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useRouter } from "@/i18n/navigation";
+import { usePathname, useRouter } from "@/i18n/navigation";
 import { authClient } from "@/lib/auth-client";
+import { signInFor } from "@/lib/next-path";
 import { AppSidebar } from "./app-sidebar";
 import { CurrentUserProvider } from "./current-user";
 import { Topbar } from "./topbar";
@@ -13,11 +14,13 @@ import { Topbar } from "./topbar";
 export function AppShell({ children }: { children: ReactNode }) {
   const { data: session, isPending } = authClient.useSession();
   const router = useRouter();
+  const pathname = usePathname();
   const locale = useLocale();
 
   useEffect(() => {
-    if (!isPending && !session) router.replace("/sign-in");
-  }, [isPending, session, router]);
+    // A session that ended while the page was open: sign in again and come back here.
+    if (!isPending && !session) router.replace(signInFor(`${pathname}${window.location.search}`));
+  }, [isPending, session, router, pathname]);
 
   if (!session) {
     return (

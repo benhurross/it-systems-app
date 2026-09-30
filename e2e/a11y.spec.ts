@@ -1,7 +1,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 import { session } from "./env";
-import { resolvedTicket } from "./helpers";
+import { resolvedTicket, signedOut } from "./helpers";
 import { ALLOWED, resolve } from "./routes";
 
 // axe finds no serious or critical problem on any page. English in the light theme and Arabic in
@@ -63,7 +63,7 @@ test.describe("from a resolution email", () => {
 
   test("the answer page has no serious accessibility problems", async ({ page, browser }, info) => {
     const { token } = await resolvedTicket(page, `Answer page check ${info.project.name}`);
-    const visitor = await (await browser.newContext()).newPage();
+    const visitor = await (await signedOut(browser)).newPage();
     const found: string[] = [];
     for (const mode of MODES) {
       await open(visitor, `/respond/${token}`, mode);

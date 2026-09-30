@@ -70,7 +70,7 @@ describe("the resolution email", () => {
       .returning();
     const ticket = await tickets.createTicket(it_, { ...input, requesterId: person.id });
     await tickets.updateTicket(it_, ticket.id, { status: "resolved", resolution: "Done." });
-    expect(await db.select().from(s.emails).where(eq(s.emails.ticketId, ticket.id))).toEqual([]);
+    expect(await db.select().from(s.emails).where(and(eq(s.emails.ticketId, ticket.id), eq(s.emails.kind, "resolution")))).toEqual([]);
   });
 });
 

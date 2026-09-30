@@ -1,5 +1,5 @@
 import { createServer, type AddressInfo } from "node:net";
-import { expect, type Page, type TestInfo } from "@playwright/test";
+import { expect, type Browser, type Page, type TestInfo } from "@playwright/test";
 
 /** Fails the test if the page logs an error to the console. */
 export function watchConsole(page: Page) {
@@ -14,6 +14,12 @@ export function watchConsole(page: Page) {
   });
   return { assertClean: () => expect(errors, errors.join("\n")).toEqual([]) };
 }
+
+/**
+ * A browser context with nobody signed in. Contexts made in a test otherwise start with the
+ * session that test uses, which would hide sign-in from a journey that needs it.
+ */
+export const signedOut = (browser: Browser) => browser.newContext({ storageState: { cookies: [], origins: [] } });
 
 /** Signs in through the form, as a person would. */
 export async function signIn(page: Page, email: string, password: string, locale = "en") {

@@ -380,8 +380,8 @@ Requested by the owner. The company runs its own Exchange Server, so mail goes o
 - [x] Email over the Exchange server's SMTP (587 with STARTTLS, 465 with TLS, or a relay on 25), set in Settings → Email with a test button. The password is stored encrypted and never shown again. Until sending is on, messages are held in the outbox instead of being sent; the outbox lists every message with a preview. Failed sends are retried every minute, five times at most. Emails are in English and Arabic
 - [x] When IT resolves a ticket, the requester gets an email with "Yes, it's fixed" and "No, still a problem" links that work without signing in: each opens a short page (rating, or a reason), works once and expires when the ticket would close by itself. Outlook's link scanners open links on their own, so opening a link never acts by itself. Only a hash of each link's token is stored, and a newer email's link replaces an older one
 - [x] A resolved ticket the requester has not answered closes itself after 3 days (Settings → Service desk), recorded in its history as the system; the requester sees the date on the ticket and in the email
-- [ ] A new request nobody is assigned to emails every admin, with "Take it" and "Assign to" links for each IT staff member. These need the admin to sign in, and come back to the ticket afterwards
-- [ ] Whoever a ticket is assigned to gets an email, unless they assigned it to themselves
+- [x] A new ticket nobody is assigned to emails every admin (except one who opened it), with "Accept (assign to me)" and "Assign to …" links for each IT staff member. The links need sign-in and come back afterwards (only to paths inside the app); the page they open shows the ticket and asks to confirm
+- [x] Whoever a ticket is assigned to gets an email, unless they assigned it to themselves
 
 ### Phase 11 - Handover
 - [ ] Minimal README: prerequisites (Node, Docker), setup, scripts, and where the demo accounts are defined

@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { session } from "./env";
-import { choose, signIn, unique, watchConsole } from "./helpers";
+import { choose, signedOut, signIn, unique, watchConsole } from "./helpers";
 
 test.describe("as an admin", () => {
   test.use({ storageState: session("admin") });
@@ -31,7 +31,7 @@ test.describe("as an admin", () => {
     await expect(page.getByRole("cell", { name: email })).toBeVisible();
 
     // The new account signs in and has no Settings.
-    const context = await browser.newContext();
+    const context = await signedOut(browser);
     const other = await context.newPage();
     await signIn(other, email, password);
     await expect(other.getByRole("heading", { name: "Dashboard" })).toBeVisible();
@@ -44,7 +44,7 @@ test.describe("as an admin", () => {
     await page.getByRole("dialog").getByRole("button", { name: "Save" }).click();
     await expect(page.getByRole("row", { name: new RegExp(email) })).toContainText("Deactivated");
 
-    const blocked = await browser.newContext();
+    const blocked = await signedOut(browser);
     const again = await blocked.newPage();
     await signIn(again, email, password);
     await expect(again.getByText("This account has been deactivated.")).toBeVisible();

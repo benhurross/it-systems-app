@@ -12,7 +12,7 @@ import { assets, auditLog, employees, ticketComments, tickets, users } from "../
 import { badRequest, forbidden, notFound, one } from "../http";
 import { getSetting } from "../settings";
 import { heldAsset } from "./me";
-import { notifyResolved } from "./notify";
+import { notifyAssigned, notifyNewTicket, notifyResolved } from "./notify";
 import { autoCloseAt } from "./respond";
 
 const columns = {
@@ -89,6 +89,7 @@ export async function createTicket(user: SessionUser, input: z.infer<typeof tick
       .returning(),
   );
   await audit(user, "create", "ticket", row.id, `Opened ${ref("ticket", row.id)}: ${row.subject}`);
+  await (row.assigneeId ? notifyAssigned(row, user) : notifyNewTicket(row, user.id));
   return row;
 }
 
@@ -147,6 +148,7 @@ export async function updateTicket(user: SessionUser, id: number, input: z.infer
   const row = one(await db.update(tickets).set(changes).where(eq(tickets.id, id)).returning());
   await audit(user, "update", "ticket", id, `Updated ${ref("ticket", id)}: ${notes.join(", ")}`);
   if (changes.status === "resolved") await notifyResolved(row);
+  if (changes.assigneeId) await notifyAssigned(row, user);
   return row;
 }
 

@@ -1,6 +1,7 @@
 import { expect, test, type Browser } from "@playwright/test";
 import { session } from "./env";
-import { choose, unique, watchConsole } from "./helpers";
+import { DEMO_PASSWORD } from "../src/server/seed/demo-data";
+import { choose, signedOut, unique, watchConsole } from "./helpers";
 
 /** Opens a page signed in as another role, alongside the test's own. */
 async function as(browser: Browser, role: "admin" | "it" | "employee") {
@@ -219,5 +220,55 @@ test.describe("employees", () => {
     await expect(page.getByRole("heading", { name: "اطلب المساعدة من فريق التقنية" })).toBeVisible();
     await page.getByRole("button", { name: "إرسال الطلب" }).click();
     await expect(page.getByText("هذا الحقل مطلوب").first()).toBeVisible();
+  });
+});
+
+test.describe("admins", () => {
+  test.use({ storageState: session("admin") });
+
+  test("a new request's email links lead through sign-in to accepting it, or assigning it to IT staff", async ({ page, browser }, info) => {
+    const subject = unique(info, "Access to the finance share");
+    const employee = await as(browser, "employee");
+    const created = await employee.page.request.post("/api/tickets", {
+      data: { type: "request", subject, description: "Read access, please.", issueType: "software", location: "jeddah" },
+    });
+    expect(created.ok()).toBe(true);
+    const { id } = (await created.json()) as { id: number };
+    await employee.close();
+
+    // The email every admin gets, held in the outbox while sending is off.
+    const outbox = (await (await page.request.get("/api/settings/email/outbox")).json()) as { id: number; ticketId: number; kind: string; recipient: string }[];
+    const email = outbox.find((e) => e.ticketId === id && e.kind === "new_request")!;
+    expect(email.recipient).toBe("admin@applus.test");
+    const { html } = (await (await page.request.get(`/api/settings/email/outbox/${email.id}`)).json()) as { html: string };
+    const links = [...html.matchAll(/href="([^"]+)"/g)].map((m) => m[1].replaceAll("&amp;", "&"));
+    const accept = links.find((l) => l.endsWith(`/en/tickets/${id}/assign?to=me`))!;
+    const toStaff = links.find((l) => new RegExp(`/en/tickets/${id}/assign\\?to=(?!me)`).test(l))!;
+    const users = (await (await page.request.get("/api/settings/users")).json()) as { email: string; name: string }[];
+    const adminName = users.find((u) => u.email === "admin@applus.test")!.name;
+
+    // Signed out, the link asks for sign-in, then comes back to it.
+    const visitor = await (await signedOut(browser)).newPage();
+    await visitor.goto(accept);
+    await expect(visitor).toHaveURL(/\/en\/sign-in\?next=/);
+    await visitor.getByLabel("Email").fill("admin@applus.test");
+    await visitor.getByLabel("Password").fill(DEMO_PASSWORD);
+    await visitor.getByRole("button", { name: "Sign in" }).click();
+    await expect(visitor).toHaveURL(new RegExp(`/en/tickets/${id}/assign\\?to=me$`));
+    await expect(visitor.getByText(subject)).toBeVisible();
+    await visitor.getByRole("button", { name: "Accept (assign to me)" }).click();
+    await expect(visitor).toHaveURL(new RegExp(`/en/tickets/${id}$`));
+    await expect(visitor.getByRole("combobox", { name: "Assigned to" })).toContainText(adminName);
+    await visitor.context().close();
+
+    // Handing it to someone on the team, who is told by email.
+    const console = watchConsole(page);
+    await page.goto(toStaff);
+    await expect(page.getByText(`${adminName} has it at the moment. Assigning it replaces them.`)).toBeVisible();
+    await page.getByRole("button", { name: /^Assign to / }).click();
+    await expect(page).toHaveURL(new RegExp(`/en/tickets/${id}$`));
+    const after = (await (await page.request.get("/api/settings/email/outbox")).json()) as { ticketId: number; kind: string }[];
+    expect(after.some((e) => e.ticketId === id && e.kind === "assigned")).toBe(true);
+    console.assertClean();
   });
 });

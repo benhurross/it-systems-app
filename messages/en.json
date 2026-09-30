@@ -1237,6 +1237,28 @@
       "fixed": "Yes, it's fixed",
       "notFixed": "No, still a problem",
       "note": "If we don't hear from you, the request closes by itself on {date}. Each link works once, only for this request, and opens a page where you confirm before anything changes."
+    },
+    "ticket": {
+      "subject": "Subject",
+      "from": "From",
+      "location": "Location",
+      "issueType": "Issue type",
+      "priority": "Priority",
+      "description": "Description",
+      "open": "Open the ticket"
+    },
+    "newTicket": {
+      "subject": "{type, select, incident {New incident} other {New request}} {ref}: {subject}",
+      "heading": "{type, select, incident {New incident} other {New request}} {ref}",
+      "body": "{name} raised this and nobody is assigned yet. Accept it, or assign it to someone on the IT team.",
+      "accept": "Accept (assign to me)",
+      "assignTo": "Assign to {name}",
+      "note": "Each link asks you to sign in if you are not signed in already, then to confirm."
+    },
+    "assigned": {
+      "subject": "{ref} is assigned to you: {subject}",
+      "heading": "{ref} is assigned to you",
+      "body": "{name} assigned this ticket to you."
     }
   },
   "respond": {
@@ -1259,5 +1281,22 @@
     "answered": "{ref} is no longer waiting for your answer.",
     "notFound": "This link does not work. Check that it was copied in full.",
     "signIn": "Sign in to see your requests"
+  },
+  "assign": {
+    "title": "Assign {ref}",
+    "accept": "Accept (assign to me)",
+    "assignTo": "Assign to {name}",
+    "current": "Assigned to",
+    "unassigned": "Nobody yet",
+    "replaces": "{name} has it at the moment. Assigning it replaces them.",
+    "already": "{ref} is already assigned to {name}.",
+    "gone": "That person is no longer on the IT team. Choose someone on the ticket instead.",
+    "done": "{ref} is assigned to {name}.",
+    "open": "Open the ticket",
+    "requester": "From",
+    "issueType": "Issue type",
+    "priority": "Priority",
+    "created": "Opened",
+    "description": "Description"
   }
 }

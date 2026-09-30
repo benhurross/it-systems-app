@@ -10,7 +10,8 @@ function flatten(value: object, prefix = ""): [string, string][] {
   });
 }
 
-const placeholders = (text: string) => [...text.matchAll(/\{(\w+)/g)].map((m) => m[1]).sort();
+// A placeholder is a name closed by "}" or followed by ","; the words inside a select branch are not.
+const placeholders = (text: string) => [...text.matchAll(/\{(\w+)\s*[,}]/g)].map((m) => m[1]).sort();
 
 describe("messages", () => {
   const english = new Map(flatten(en));

@@ -8,9 +8,9 @@ test("a signed-out visitor is sent to sign-in", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Sign in" })).toBeVisible();
 });
 
-test("the Arabic sign-in page is right to left", async ({ page }) => {
+test("the Arabic sign-in page is right to left, and comes back to the page asked for", async ({ page }) => {
   await page.goto("/ar/tickets");
-  await expect(page).toHaveURL(/\/ar\/sign-in$/);
+  await expect(page).toHaveURL(/\/ar\/sign-in\?next=%2Ftickets$/);
   await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
   await expect(page.getByRole("heading", { name: "تسجيل الدخول" })).toBeVisible();
 });

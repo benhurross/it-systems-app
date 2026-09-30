@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { session } from "./env";
 import { BASE_URL } from "./env";
-import { addTcpDevice, choose, listen, mailSink, resolvedTicket } from "./helpers";
+import { addTcpDevice, choose, listen, mailSink, resolvedTicket, signedOut } from "./helpers";
 
 // Journeys that change system-wide settings. They run once, in their own project, so parallel
 // browsers never race over the same value.
@@ -111,7 +111,7 @@ test("a resolved ticket's email reaches the requester, and its links answer with
   const put = (enabled: boolean) =>
     page.request.put("/api/settings/email", { data: { ...email, hasPassword: undefined, enabled, host: "127.0.0.1", port: sink.port, security: "none" } });
   expect((await put(true)).ok()).toBe(true);
-  const visitor = await (await browser.newContext()).newPage();
+  const visitor = await (await signedOut(browser)).newPage();
   try {
     // Fixed, with a rating, in English.
     const fixed = await resolvedTicket(page, "Printer offline on the second floor");

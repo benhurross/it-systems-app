@@ -3,6 +3,7 @@ import { hasLocale } from "next-intl";
 import createMiddleware from "next-intl/middleware";
 import { NextResponse, type NextRequest } from "next/server";
 import { routing } from "./i18n/routing";
+import { signInFor } from "./lib/next-path";
 
 const intl = createMiddleware(routing);
 
@@ -17,7 +18,10 @@ export default function proxy(request: NextRequest) {
   const [, first, second] = request.nextUrl.pathname.split("/");
   const locale = hasLocale(routing.locales, first) ? first : null;
   if (!(locale && PUBLIC.includes(second)) && !getSessionCookie(request)) {
-    return NextResponse.redirect(new URL(`/${locale ?? routing.defaultLocale}/sign-in`, request.url));
+    // Come back to the page asked for (a link in an email, say) once signed in.
+    const { pathname, search } = request.nextUrl;
+    const path = locale ? pathname.slice(locale.length + 1) || "/" : pathname;
+    return NextResponse.redirect(new URL(`/${locale ?? routing.defaultLocale}${signInFor(`${path}${search}`)}`, request.url));
   }
   return intl(request);
 }

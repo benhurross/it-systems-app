@@ -44,7 +44,8 @@ test("offboarding counts down mail forwarding and marks the person as left", asy
   const person = leaver(info);
   await page.goto("/en/people/offboarding");
   await page.getByRole("button", { name: "New leaver" }).click();
-  const dialog = page.getByRole("dialog");
+  // By name: the employee picker's pop-over is a dialog too, and can still be closing.
+  const dialog = page.getByRole("dialog", { name: "New leaver" });
   await dialog.getByRole("combobox", { name: "Employee" }).click();
   await page.getByPlaceholder("Search").fill(person);
   await page.getByRole("option", { name: new RegExp(`^${person} `) }).click();

@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { useRouter } from "@/i18n/navigation";
 import { authClient } from "@/lib/auth-client";
 import { homeFor } from "@/lib/nav";
+import { safeNext } from "@/lib/next-path";
 
 // The browser checks required fields; the server decides whether the credentials are right.
 const schema = z.object({ email: z.string().min(1), password: z.string().min(1) });
@@ -43,7 +44,8 @@ export default function SignInPage() {
       });
       return;
     }
-    router.replace(homeFor(data.user.role));
+    // Back to the page that asked for sign-in (a link in an email, say), or to the person's start page.
+    router.replace(safeNext(new URLSearchParams(window.location.search).get("next")) ?? homeFor(data.user.role));
   });
 
   return (

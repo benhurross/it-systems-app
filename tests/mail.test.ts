@@ -131,7 +131,7 @@ describe("templates", () => {
   it("write English then Arabic, right to left, and escape what comes from records", () => {
     const email = bilingual((t, locale) => ({
       subject: locale === "en" ? "Subject" : "الموضوع",
-      heading: t("test.heading"),
+      heading: t("email.test.heading"),
       paragraphs: ['<script>alert("x")</script>'],
       details: [["Ticket", "Printer & scanner <b>jam</b>"]],
       buttons: [{ label: "Open", href: "http://app/x?a=1&b=2", primary: true }],

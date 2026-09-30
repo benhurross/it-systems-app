@@ -9,6 +9,7 @@ export const IT = [
   "/tickets",
   "/tickets/new",
   "/tickets/:ticket",
+  "/tickets/:ticket/assign",
   "/knowledge/new",
   "/knowledge/:article/edit",
   "/changes",
