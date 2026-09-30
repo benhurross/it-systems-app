@@ -94,6 +94,11 @@ export const DAILY_CHECKS = [
   "printers",
 ] as const;
 
+export const EMAIL_KINDS = ["test", "resolution", "new_request", "assigned"] as const;
+/** held: kept in the outbox because sending is off; sending: claimed by a delivery run. */
+export const EMAIL_STATUSES = ["pending", "sending", "sent", "held", "failed"] as const;
+export const SMTP_SECURITY = ["starttls", "tls", "none"] as const;
+
 export const KPI_KEYS = ["tat", "complaints", "training_hours", "iso_ncs", "satisfaction"] as const;
 /** KPIs entered by hand each quarter; the rest are computed from tickets. */
 export const MANUAL_KPIS = ["training_hours", "iso_ncs"] as const;
@@ -121,6 +126,9 @@ export type KpiKey = (typeof KPI_KEYS)[number];
 export type OnboardingTask = (typeof ONBOARDING_TASKS)[number]["key"];
 export type OffboardingTask = (typeof OFFBOARDING_TASKS)[number];
 export type DailyCheck = (typeof DAILY_CHECKS)[number];
+export type EmailKind = (typeof EMAIL_KINDS)[number];
+export type EmailStatus = (typeof EMAIL_STATUSES)[number];
+export type SmtpSecurity = (typeof SMTP_SECURITY)[number];
 
 /** Display references in the workbook's style: IT000351, AST-0142, LIC-001. */
 export const REF_PREFIX = {

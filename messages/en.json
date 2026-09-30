@@ -404,6 +404,19 @@
       "3": "Moderate",
       "4": "Major",
       "5": "Severe"
+    },
+    "emailStatus": {
+      "pending": "Waiting",
+      "sending": "Sending",
+      "sent": "Sent",
+      "held": "Held",
+      "failed": "Failed"
+    },
+    "emailKind": {
+      "test": "Test",
+      "resolution": "Confirm a fix",
+      "new_request": "New request",
+      "assigned": "Assigned"
     }
   },
   "validation": {
@@ -427,7 +440,8 @@
       "monitoring": "Monitoring",
       "kpis": "KPI targets",
       "organisation": "Organization",
-      "audit": "Audit log"
+      "audit": "Audit log",
+      "email": "Email"
     },
     "users": {
       "add": "Add user",
@@ -515,7 +529,52 @@
       "from": "From",
       "to": "To"
     },
-    "saved": "Settings saved."
+    "saved": "Settings saved.",
+    "email": {
+      "title": "Email",
+      "description": "How the app sends email through your Exchange server. Until sending is on, messages are kept in the outbox below and not sent.",
+      "enabled": "Send emails",
+      "enabledHint": "Off: messages are kept in the outbox and not sent.",
+      "host": "Mail server",
+      "hostHint": "Its name or address, for example mail.applus.com.sa.",
+      "port": "Port",
+      "security": "Connection security",
+      "securityOptions": {
+        "starttls": "STARTTLS (usually port 587)",
+        "tls": "SSL/TLS (usually port 465)",
+        "none": "None (a relay on port 25)"
+      },
+      "username": "User name",
+      "usernameHint": "The mailbox the app signs in as, such as itsupport@applus.com.sa or APPLUS\\itsupport. Leave blank for a relay that needs no sign-in.",
+      "password": "Password",
+      "passwordSaved": "A password is saved. Leave this blank to keep it.",
+      "passwordNone": "No password is saved.",
+      "allowInvalidCert": "Accept the server's own certificate",
+      "allowInvalidCertHint": "Turn on only if sending fails with a certificate error because the server's certificate comes from the company's own authority.",
+      "fromName": "Sender name",
+      "fromAddress": "Sender address",
+      "appUrl": "App address for links",
+      "appUrlHint": "What people open from links in emails, as they would type it in a browser, for example http://192.168.0.159:3200.",
+      "testTitle": "Send a test email",
+      "testDescription": "Uses the saved settings, even while sending is off.",
+      "testTo": "Send to",
+      "testSend": "Send test",
+      "testSent": "Test email sent to {to}.",
+      "testFailed": "The test email was not sent: {error}",
+      "outbox": "Outbox",
+      "outboxDescription": "The latest emails, newest first.",
+      "to": "To",
+      "subject": "Subject",
+      "kind": "Type",
+      "status": "Status",
+      "attempts": "Attempts",
+      "queued": "Queued",
+      "sent": "Sent",
+      "error": "Error",
+      "view": "View",
+      "preview": "Email preview",
+      "empty": "No emails yet."
+    }
   },
   "kpi": {
     "tat": "Tickets resolved within SLA",
@@ -1153,5 +1212,13 @@
     "report": "Report a problem",
     "reportFor": "Report a problem with {device}",
     "notLinked": "Your account is not linked to an employee record yet. Ask IT to link it."
+  },
+  "email": {
+    "footer": "Sent automatically by AP Plus IT Systems.",
+    "test": {
+      "subject": "Test email from AP Plus IT Systems",
+      "heading": "Email is working",
+      "body": "{name} sent this test from Settings, Email. The app can reach your mail server."
+    }
   }
 }

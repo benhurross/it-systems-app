@@ -377,7 +377,7 @@ The sweeps found and fixed:
 ### Self-service dashboard and email (added after Phase 10)
 Requested by the owner. The company runs its own Exchange Server, so mail goes out over SMTP.
 - [x] Employees start on their own dashboard: open requests, fixes waiting for them to confirm, requests closed in the last 90 days, their latest requests and the devices assigned to them. "Report a problem" on a device opens a request about it at the device's location; a request can name only the person's own devices
-- [ ] Email over the Exchange server's SMTP, set in Settings → Email with a test button. Until it is set up, messages are kept in an outbox in the app instead of being sent. Emails are in English and Arabic
+- [x] Email over the Exchange server's SMTP (587 with STARTTLS, 465 with TLS, or a relay on 25), set in Settings → Email with a test button. The password is stored encrypted and never shown again. Until sending is on, messages are held in the outbox instead of being sent; the outbox lists every message with a preview. Failed sends are retried every minute, five times at most. Emails are in English and Arabic
 - [ ] When IT resolves a ticket, the requester gets an email with "Yes, it's fixed" and "No, still a problem" links that work without signing in: each opens a short page (rating, or a reason), works once and expires. Outlook's link scanners open links on their own, so opening a link never acts by itself
 - [ ] A resolved ticket the requester has not answered closes itself after 3 days (a Service desk setting)
 - [ ] A new request nobody is assigned to emails every admin, with "Take it" and "Assign to" links for each IT staff member. These need the admin to sign in, and come back to the ticket afterwards

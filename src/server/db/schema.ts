@@ -17,6 +17,8 @@ import type {
   ChangeStatus,
   Criticality,
   DeviceStatus,
+  EmailKind,
+  EmailStatus,
   KbStatus,
   LicenseType,
   LookupList,
@@ -572,3 +574,45 @@ export const kpiActuals = pgTable(
   },
   (t) => [unique().on(t.year, t.quarter, t.kpi)],
 );
+
+// ---------------------------------------------------------------- email
+
+/** Every email the app sends, kept as an outbox: what went, to whom, and whether it arrived at the mail server. */
+export const emails = pgTable(
+  "emails",
+  {
+    id: id(),
+    kind: text().$type<EmailKind>().notNull(),
+    recipient: text().notNull(),
+    subject: text().notNull(),
+    html: text().notNull(),
+    text: text().notNull(),
+    status: text().$type<EmailStatus>().notNull().default("pending"),
+    attempts: smallint().notNull().default(0),
+    error: text(),
+    ticketId: integer().references(() => tickets.id, { onDelete: "set null" }),
+    createdAt: createdAt(),
+    lastAttemptAt: timestamp({ withTimezone: true }),
+    sentAt: timestamp({ withTimezone: true }),
+  },
+  (t) => [index().on(t.status), index().on(t.createdAt)],
+);
+
+/**
+ * A link in an email that acts without signing in. Only a hash of its token is stored, so the
+ * table cannot be used to forge one. Each works once, for one person and one ticket, until it expires.
+ */
+export const emailLinks = pgTable("email_links", {
+  id: id(),
+  tokenHash: text().notNull().unique(),
+  kind: text().$type<"resolution">().notNull(),
+  ticketId: integer()
+    .notNull()
+    .references(() => tickets.id, { onDelete: "cascade" }),
+  employeeId: integer()
+    .notNull()
+    .references(() => employees.id, { onDelete: "cascade" }),
+  expiresAt: timestamp({ withTimezone: true }).notNull(),
+  usedAt: timestamp({ withTimezone: true }),
+  createdAt: createdAt(),
+});

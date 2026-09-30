@@ -13,6 +13,8 @@ import type * as kpis from "@/server/services/kpis";
 import type * as licenses from "@/server/services/licenses";
 import type * as lookups from "@/server/services/lookups";
 import type * as me from "@/server/services/me";
+import type * as mailConfig from "@/server/mail/config";
+import type * as outbox from "@/server/mail/outbox";
 import type * as monitoring from "@/server/services/monitoring";
 import type * as people from "@/server/services/people";
 import type * as projects from "@/server/services/projects";
@@ -69,3 +71,6 @@ export type DailyChecklist = {
   history: Item<typeof dailyChecks.dailyHistory>[];
 };
 export type MySummary = Result<typeof me.mySummary>;
+export type EmailSettings = Result<typeof mailConfig.getEmailSettings>;
+export type OutboxEmail = Item<typeof outbox.listOutbox>;
+export type OutboxEmailDetail = Result<typeof outbox.getEmail>;

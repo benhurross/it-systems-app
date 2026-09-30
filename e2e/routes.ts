@@ -45,6 +45,7 @@ export const SETTINGS = [
   "/settings/lists",
   "/settings/service-desk",
   "/settings/monitoring",
+  "/settings/email",
   "/settings/kpis",
   "/settings/organisation",
   "/settings/audit",

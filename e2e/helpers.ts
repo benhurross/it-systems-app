@@ -61,3 +61,44 @@ export async function addTcpDevice(page: Page, name: string, port: number) {
   });
   expect(res.ok()).toBe(true);
 }
+
+/**
+ * A mail server on this machine that accepts every message and keeps it, for checking what the app
+ * sends. It speaks just enough SMTP for a plain connection with no sign-in.
+ */
+export async function mailSink() {
+  const messages: string[] = [];
+  const server = createServer((socket) => {
+    socket.setEncoding("utf8");
+    let buffer = "";
+    let body: string[] | null = null;
+    socket.write("220 sink ESMTP\r\n");
+    socket.on("data", (chunk: string) => {
+      buffer += chunk;
+      for (let end = buffer.indexOf("\r\n"); end >= 0; end = buffer.indexOf("\r\n")) {
+        const line = buffer.slice(0, end);
+        buffer = buffer.slice(end + 2);
+        if (body) {
+          if (line === ".") {
+            messages.push(body.join("\n"));
+            body = null;
+            socket.write("250 Queued\r\n");
+          } else body.push(line);
+          continue;
+        }
+        const command = line.slice(0, 4).toUpperCase();
+        if (command === "DATA") {
+          body = [];
+          socket.write("354 Go ahead\r\n");
+        } else if (command === "QUIT") socket.end("221 Bye\r\n");
+        else socket.write("250 OK\r\n");
+      }
+    });
+  });
+  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+  return {
+    port: (server.address() as AddressInfo).port,
+    messages,
+    close: () => new Promise((resolve) => server.close(resolve)),
+  };
+}

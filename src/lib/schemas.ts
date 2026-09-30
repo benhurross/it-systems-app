@@ -18,6 +18,7 @@ import {
   RELATION_TYPES,
   RISK_STATUSES,
   SEVERITIES,
+  SMTP_SECURITY,
   SUPPORT_STATUSES,
   TASK_STATUSES,
   TICKET_STATUSES,
@@ -297,6 +298,33 @@ export const monitorSettings = z.object({
   degradedMs: z.number().int().min(10).max(10_000),
   retentionDays: z.number().int().min(1).max(365),
 });
+
+/**
+ * How the app reaches the mail server. The password is write-only: left blank, the saved one is kept.
+ * Turning sending on needs a server, a sender address and the address links in emails open.
+ */
+export const emailSettings = z
+  .object({
+    enabled: z.boolean(),
+    host: z.string().trim().max(200),
+    port: z.number().int().min(1).max(65_535),
+    security: z.enum(SMTP_SECURITY),
+    username: z.string().trim().max(200),
+    password: z.string().max(200).optional(),
+    fromName: z.string().trim().max(100),
+    fromAddress: z.union([z.literal(""), z.email()]),
+    appUrl: z.union([z.literal(""), z.url({ protocol: /^https?$/ })]).transform((v) => v.replace(/\/+$/, "")),
+    allowInvalidCert: z.boolean(),
+  })
+  .superRefine((v, ctx) => {
+    if (!v.enabled) return;
+    for (const field of ["host", "fromAddress", "appUrl"] as const) {
+      if (!v[field]) ctx.addIssue({ code: "custom", path: [field], message: "validation.required" });
+    }
+  });
+
+/** The address a test email goes to. */
+export const emailTestInput = z.object({ to: z.email() });
 
 export const organisationSettings = z.object({
   name,

@@ -46,6 +46,8 @@ const APIS = {
     "/api/settings/users",
     "/api/settings/lists",
     "/api/settings/sla",
+    "/api/settings/email",
+    "/api/settings/email/outbox",
     `/api/settings/kpi-targets?year=${new Date().getFullYear()}`,
   ],
 };

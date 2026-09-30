@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { session } from "./env";
-import { addTcpDevice, listen } from "./helpers";
+import { BASE_URL } from "./env";
+import { addTcpDevice, choose, listen, mailSink } from "./helpers";
 
 // Journeys that change system-wide settings. They run once, in their own project, so parallel
 // browsers never race over the same value.
@@ -63,4 +64,41 @@ test("turning network checks on in Settings starts them without a restart", asyn
 
   await toggle("60");
   await close();
+});
+
+test("email settings are saved, a test email reaches the mail server, and the outbox shows it", async ({ page }) => {
+  const sink = await mailSink();
+  try {
+    await page.goto("/en/settings/email");
+    await expect(page.getByRole("switch", { name: "Send emails" })).toHaveAttribute("aria-checked", "false");
+    await page.getByLabel("Mail server").fill("127.0.0.1");
+    await page.getByLabel("Port").fill(String(sink.port));
+    await choose(page, "Connection security", "None (a relay on port 25)");
+    await page.getByLabel("Sender address").fill("itsupport@applus.test");
+    await page.getByLabel("App address for links").fill(BASE_URL);
+    await page.getByRole("button", { name: "Save" }).click();
+    await expect(page.getByText("Settings saved.")).toBeVisible();
+    await page.reload();
+    await expect(page.getByLabel("Mail server")).toHaveValue("127.0.0.1");
+
+    await expect(page.getByLabel("Send to")).toHaveValue("admin@applus.test");
+    await page.getByRole("button", { name: "Send test" }).click();
+    await expect(page.getByText("Test email sent to admin@applus.test.")).toBeVisible();
+    expect(sink.messages).toHaveLength(1);
+    expect(sink.messages[0]).toContain("To: admin@applus.test");
+    expect(sink.messages[0]).toContain("From: AP Plus IT <itsupport@applus.test>");
+
+    const row = page.getByRole("row").filter({ hasText: "admin@applus.test" }).first();
+    await expect(row).toContainText("Test");
+    await expect(row).toContainText("Sent");
+    await row.getByRole("button", { name: "View" }).click();
+    await expect(page.getByTitle("Email preview")).toBeVisible();
+    await page.keyboard.press("Escape");
+
+    await page.goto("/en/settings/audit");
+    await page.getByRole("textbox", { name: "Filter rows" }).fill("Changed email settings");
+    await expect(page.getByRole("cell", { name: "Changed email settings: sending off" })).toBeVisible();
+  } finally {
+    await sink.close();
+  }
 });
