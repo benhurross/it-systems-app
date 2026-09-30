@@ -15,6 +15,7 @@ import {
 import { quarterOf } from "@/lib/kpis";
 import type { Role } from "@/lib/permissions";
 import { DEFAULT_MONITOR_SETTINGS } from "@/lib/monitor";
+import { isPlaceholderEmail } from "@/lib/people";
 import { DEFAULT_SLA } from "@/lib/sla";
 import { auth } from "../auth";
 import { db } from "../db";
@@ -35,7 +36,6 @@ import {
   VULNERABILITIES,
 } from "./demo-data";
 import type { Person } from "./people";
-import { PLACEHOLDER_DOMAIN } from "./people";
 import { seedReference } from "./reference";
 
 export { DEMO_PASSWORD } from "./demo-data";
@@ -851,7 +851,7 @@ export async function seedDemo(now = new Date(), options: { people?: Person[] } 
   if (options.people) {
     // The newest hires (the last in the list) finished onboarding. Only people already inactive are
     // shown leaving, so no one still working here appears to have resigned.
-    const real = (e: (typeof employees)[number]) => !e.email.endsWith(`@${PLACEHOLDER_DOMAIN}`);
+    const real = (e: (typeof employees)[number]) => !isPlaceholderEmail(e.email);
     const newest = nonIt.filter(real).slice(-3);
     if (newest.length) {
       await db.insert(s.joiners).values(

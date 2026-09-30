@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus, Wand2 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm, useFormContext } from "react-hook-form";
 import { z } from "zod";
 import { useCurrentUser } from "@/components/app-shell/current-user";
@@ -16,6 +16,7 @@ import { useApi, useApiMutation } from "@/hooks/use-api";
 import { useFormat } from "@/hooks/use-format";
 import { api } from "@/lib/api";
 import type { Employee, UserRow } from "@/lib/api-types";
+import { isPlaceholderEmail } from "@/lib/people";
 import { ROLES, type Role } from "@/lib/permissions";
 import { userCreate, userUpdate } from "@/lib/schemas";
 
@@ -109,6 +110,7 @@ export default function UsersPage() {
         <AddUserDialog
           onClose={() => setAdding(false)}
           roleOptions={roleOptions}
+          employees={employees}
           employeeOptions={employeeOptions}
         />
       )}
@@ -151,10 +153,12 @@ function PasswordField({ name, label }: { name: string; label: string }) {
 function AddUserDialog({
   onClose,
   roleOptions,
+  employees,
   employeeOptions,
 }: {
   onClose: () => void;
   roleOptions: Options;
+  employees: Employee[];
   employeeOptions: Options;
 }) {
   const t = useTranslations("settings.users");
@@ -162,6 +166,28 @@ function AddUserDialog({
     resolver: zodResolver(userCreate),
     defaultValues: { name: "", email: "", role: "employee", employeeId: null, password: generatePassword() },
   });
+  const [noEmail, setNoEmail] = useState(false);
+
+  // Choosing the person fills in their name and email. A placeholder address (no email on record)
+  // is left out, for the admin to enter the one they will sign in with.
+  useEffect(
+    () =>
+      form.subscribe({
+        name: "employeeId",
+        exact: true,
+        formState: { values: true },
+        callback: ({ values }) => {
+          const person = employees.find((e) => e.id === values.employeeId);
+          if (!person) return;
+          const missing = isPlaceholderEmail(person.email);
+          setNoEmail(missing);
+          form.setValue("name", person.name, { shouldDirty: true, shouldValidate: true });
+          form.setValue("email", missing ? "" : person.email, { shouldDirty: true, shouldValidate: !missing });
+          if (missing) form.clearErrors("email");
+        },
+      }),
+    [form, employees],
+  );
   const create = useApiMutation((values: z.output<typeof userCreate>) => api("/settings/users", { body: values }), {
     success: t("created"),
     form,
@@ -170,10 +196,17 @@ function AddUserDialog({
 
   return (
     <FormDialog open onOpenChange={onClose} title={t("add")} form={form} onSubmit={(v) => create.mutate(v)} pending={create.isPending}>
+      <SelectField name="employeeId" label={t("employee")} description={t("employeeHint")} options={employeeOptions} optional />
       <TextField name="name" label={t("name")} autoComplete="off" />
-      <TextField name="email" label={t("email")} type="email" dir="ltr" autoComplete="off" />
+      <TextField
+        name="email"
+        label={t("email")}
+        description={noEmail ? t("noEmailOnRecord") : undefined}
+        type="email"
+        dir="ltr"
+        autoComplete="off"
+      />
       <SelectField name="role" label={t("role")} options={roleOptions} />
-      <SelectField name="employeeId" label={t("employee")} options={employeeOptions} optional />
       <PasswordField name="password" label={t("password")} />
     </FormDialog>
   );

@@ -1,6 +1,11 @@
 import { addDays, daysBetween } from "./dates";
 import { FORWARDING_DAYS, OFFBOARDING_TASKS, ONBOARDING_PHASES, ONBOARDING_TASKS } from "./domain";
 
+/** The domain of made-up addresses for people with no email on record. `.invalid` is reserved and
+ * never delivers, so a placeholder can't reach a real mailbox. */
+export const PLACEHOLDER_DOMAIN = "no-email.invalid";
+export const isPlaceholderEmail = (email: string) => email.endsWith(`@${PLACEHOLDER_DOMAIN}`);
+
 type Tasks = Record<string, boolean>;
 
 export function onboardingProgress(tasks: Tasks) {

@@ -1,4 +1,5 @@
 import type { Role } from "@/lib/permissions";
+import { PLACEHOLDER_DOMAIN } from "@/lib/people";
 import { REFERENCE } from "./reference";
 
 /**
@@ -27,8 +28,7 @@ type Cell = string | number | boolean | Date | null | undefined | object;
 export const DEFAULT_DEPARTMENT = "operations";
 export const DEFAULT_LOCATION = "jeddah";
 export const DEFAULT_JOB_TITLE = "Employee";
-/** `.invalid` is reserved and never delivers, so a placeholder can't reach a real mailbox. */
-export const PLACEHOLDER_DOMAIN = "no-email.invalid";
+export { PLACEHOLDER_DOMAIN };
 
 /** Header spellings each field accepts, compared without case, spaces or punctuation. */
 const COLUMNS = {

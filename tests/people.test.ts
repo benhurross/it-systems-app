@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 vi.mock("@/server/db", () => ({ db: {} }));
 
 const { cleanPeople, DEFAULT_DEPARTMENT, DEFAULT_JOB_TITLE, PLACEHOLDER_DOMAIN } = await import("@/server/seed/people");
+const { isPlaceholderEmail } = await import("@/lib/people");
 
 const HEADER = ["EmpID", "FirstName", "lastName", "Designation", "Department", "Email", "Full Name", "Role", "active"];
 type Row = { first?: string; last?: string; title?: string; dept?: string; email?: string; full?: string; role?: string; active?: string };
@@ -96,6 +97,12 @@ describe("staff list loader", () => {
       [`bo.li@${PLACEHOLDER_DOMAIN}`, true],
     ]);
     expect(notes).toContain(`Bo Li: "not an email" is not an email address, so bo.li@${PLACEHOLDER_DOMAIN} is used.`);
+  });
+
+  it("marks its placeholder emails so the app can tell them from real ones", () => {
+    const { people } = cleanPeople(sheet({ ...person, email: "" }, { ...person, full: "Real Mail", email: "real@applus.com.sa" }));
+    expect(people.map((p) => isPlaceholderEmail(p.email))).toEqual([true, false]);
+    expect(isPlaceholderEmail("someone@no-email.invalid.example.com")).toBe(false);
   });
 
   it("skips a row whose email is already taken, ignoring case", () => {

@@ -435,6 +435,8 @@
       "email": "Email",
       "role": "Role",
       "employee": "Employee record",
+      "employeeHint": "Choosing a person fills in their name and email.",
+      "noEmailOnRecord": "This person has no email on record. Enter the address they will sign in with.",
       "noEmployee": "Not linked",
       "password": "Temporary password",
       "passwordHint": "Share it privately. The user can change it from their user menu.",

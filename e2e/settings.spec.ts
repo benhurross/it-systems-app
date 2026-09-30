@@ -57,6 +57,40 @@ test.describe("as an admin", () => {
     await expect(page.getByRole("cell", { name: `Updated ${name}: deactivated` })).toBeVisible();
   });
 
+  test("choosing an employee record fills in the new user's name and email", async ({ page }, info) => {
+    const [person] = (await (await page.request.get("/api/employees")).json()) as { name: string; email: string }[];
+    // Someone from the staff list with no email on record has a placeholder address.
+    const unrecorded = unique(info, "No Mail");
+    const res = await page.request.post("/api/employees", {
+      data: {
+        name: unrecorded,
+        email: `no.mail.${info.project.name}.${Date.now()}@no-email.invalid`,
+        department: "operations",
+        location: "jeddah",
+        jobTitle: "Employee",
+        phone: null,
+        active: true,
+      },
+    });
+    expect(res.ok()).toBe(true);
+
+    await page.goto("/en/settings/users");
+    await page.getByRole("button", { name: "Add user" }).click();
+    const dialog = page.getByRole("dialog");
+    await choose(page, "Employee record", `${person.name} (${person.email})`);
+    await expect(dialog.getByLabel("Full name")).toHaveValue(person.name);
+    await expect(dialog.getByLabel("Email")).toHaveValue(person.email);
+
+    // The placeholder is not filled in; the admin is asked for the real address instead.
+    await choose(page, "Employee record", new RegExp(unrecorded));
+    await expect(dialog.getByLabel("Full name")).toHaveValue(unrecorded);
+    await expect(dialog.getByLabel("Email")).toHaveValue("");
+    await expect(dialog.getByText("This person has no email on record.", { exact: false })).toBeVisible();
+    await dialog.getByRole("button", { name: "Save" }).click();
+    await expect(dialog.getByLabel("Email")).toHaveAttribute("aria-invalid", "true");
+    await expect(dialog).toBeVisible();
+  });
+
   test("a new list value is saved, survives a reload, reaches the forms and is in the audit log", async ({ page }, info) => {
     const label = unique(info, "Branch");
     const code = `branch_${info.project.name}_${Date.now() % 100_000}`;
