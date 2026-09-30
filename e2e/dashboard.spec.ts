@@ -26,6 +26,17 @@ test("the dashboard shows the headline figures and what needs attention", async 
   await expect(down.getByRole("link", { name: "AP-RYD-03" })).toBeVisible();
   await expect(page.getByRole("region", { name: "Licences expiring or expired" })).toBeVisible();
 
+  for (const title of ["Tickets opened and closed", "Tickets by issue type", "Assets by category", "Budget and committed"]) {
+    await expect(page.getByRole("heading", { name: title })).toBeVisible();
+  }
+  // Every chart can be read as a table instead.
+  const assets = page.locator('[data-slot="card"]').filter({ has: page.getByRole("heading", { name: "Assets by category" }) });
+  await assets.getByRole("button", { name: "Show as table" }).click();
+  await expect(assets.getByRole("columnheader", { name: "Category" })).toBeVisible();
+  await expect(assets.getByRole("rowheader", { name: "End-User Devices" })).toBeVisible();
+  await assets.getByRole("button", { name: "Show as chart" }).click();
+  await expect(assets.getByRole("table")).toBeHidden();
+
   await page.getByRole("link", { name: /Open tickets/ }).click();
   await expect(page).toHaveURL(/\/en\/tickets$/);
   console.assertClean();

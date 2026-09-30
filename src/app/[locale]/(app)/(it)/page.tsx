@@ -4,6 +4,7 @@ import { Activity, AppWindow, Boxes, Clock, Gauge, ShieldAlert, Ticket, Wallet }
 import { useTranslations } from "next-intl";
 import { useCurrentUser } from "@/components/app-shell/current-user";
 import { AttentionPanel } from "@/components/dashboard/attention-panel";
+import { DashboardCharts } from "@/components/dashboard/dashboard-charts";
 import { PageHeader } from "@/components/page-header";
 import { StatCard } from "@/components/stat-card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -81,7 +82,15 @@ export default function DashboardPage() {
               href="/risk/register"
             />
           </div>
-          <AttentionPanel groups={data.attention} />
+          {/* Needs attention comes first on small screens, and sits beside the charts on wide ones. */}
+          <div className="grid grid-cols-[minmax(0,1fr)] gap-6 xl:grid-cols-[minmax(0,1fr)_24rem]">
+            <div className="min-w-0 xl:order-2">
+              <AttentionPanel groups={data.attention} />
+            </div>
+            <div className="min-w-0 xl:order-1">
+              <DashboardCharts charts={data.charts} fiscalYear={data.tiles.fiscalYear} />
+            </div>
+          </div>
         </>
       )}
     </>

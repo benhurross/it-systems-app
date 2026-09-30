@@ -54,7 +54,7 @@ export function AttentionPanel({ groups }: { groups: DashboardData["attention"] 
             <ul className="divide-y text-sm">
               {group.items.map((item) => (
                 <li key={item.id} className="flex items-baseline justify-between gap-3 py-1.5">
-                  <Link href={item.href} className="min-w-0 truncate hover:text-primary">
+                  <Link href={item.href} className="min-w-0 [overflow-wrap:anywhere] hover:text-primary">
                     {item.label}
                   </Link>
                   {item.date && group.kind !== "down" && (

@@ -329,15 +329,17 @@ The demo seed can use the real staff list in place of invented people, for testi
 - [x] `npm run db:seed:demo "<file.xlsx>"` (or `-- --people <file.xlsx>`) loads those people and accounts (one-time password each) in place of the invented ones. The IT work goes to the account holders outside Executive: an IT admin approves, IT staff take the helpdesk, the rest share the queue. Only people already inactive get offboarding records; the newest hires get finished onboarding records. Without `--people` the demo data is unchanged
 
 ### Phase 9 - Dashboard and KPIs
-- [ ] Tiles:
+- [x] Tiles:
   - open tickets, SLA compliance, average resolution and network availability
   - assets in use, licence compliance, budget utilisation and open high risks
-- [ ] Charts (load the `dataviz` skill first), with light and dark series colours: tickets opened vs closed over 12 months, tickets by issue type, assets by category, budget vs committed
-- [ ] "Needs attention" list: SLA breaches, down devices, expiring licences, contracts and warranties, overdue vulnerabilities, offboarding due
+- [x] Charts (load the `dataviz` skill first), with light and dark series colours: tickets opened vs closed over 12 months, tickets by issue type, assets by category, budget vs committed
+- [x] "Needs attention" list: SLA breaches, down devices, expiring licences, contracts and warranties, overdue vulnerabilities, offboarding due
 - [ ] KPIs page shows the five KPIs with baseline and target from Settings, Q1-Q4 actuals and RAG status:
   - TAT, complaints and satisfaction are computed from tickets
   - training hours and ISO 9001 non-conformities are entered by IT staff
-- [ ] Closing a ticket or approving a purchase updates the dashboard without a reload
+- [x] Closing a ticket or approving a purchase updates the dashboard without a reload
+
+The charts use the app's chart tokens, which pass the dataviz validator in both themes (worst adjacent CVD ΔE 10.6 light, 11.5 dark). Bar charts are HTML, so they mirror in Arabic and scale with text size; the monthly line chart keeps time running left to right. Every chart card switches to a table.
 
 ### Phase 10 - Integration testing (Playwright)
 - [ ] Runs on Chromium, Firefox and WebKit against the production build and a fresh `ap_it_test` database (migrated and seeded in global setup). Signed-in sessions are prepared once per role, and specs that change settings run serially
