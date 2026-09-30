@@ -800,5 +800,15 @@
     "taskDeleted": "Task deleted.",
     "empty": "No tasks",
     "noProjects": "No projects yet."
+  },
+  "finance": {
+    "title": "Finance",
+    "intro": "Budget, purchases, contracts and vendors for the fiscal year.",
+    "tabs": {
+      "budget": "Budget",
+      "purchases": "Purchases",
+      "contracts": "Contracts",
+      "vendors": "Vendors"
+    }
   }
 }
