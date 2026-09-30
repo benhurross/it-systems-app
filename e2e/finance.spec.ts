@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { session } from "./env";
-import { choose, watchConsole } from "./helpers";
+import { choose, unique, watchConsole } from "./helpers";
 
 test.use({ storageState: session("it") });
 
@@ -26,5 +26,44 @@ test("the budget compares allocation with commitments and lists renewals due", a
   const year = Number((await picker.textContent())!.replace(/\D/g, ""));
   await choose(page, "Fiscal year", `FY${year - 1}`);
   await expect(hardware).toContainText("162,000");
+  console.assertClean();
+});
+
+test("a hardware purchase goes from request to the inventory", async ({ page }, info) => {
+  const console = watchConsole(page);
+  const item = unique(info, "Docking station");
+  await page.goto("/en/finance/purchases");
+  await page.getByRole("button", { name: "New request" }).click();
+  const dialog = page.getByRole("dialog");
+  await dialog.getByLabel("Item").fill(item);
+  await choose(page, "Budget category", "Hardware");
+  await dialog.getByLabel("Quantity").fill("2");
+  await dialog.getByLabel("Total amount").fill("1800");
+  await dialog.getByRole("switch", { name: "Hardware" }).click();
+  await dialog.getByRole("button", { name: "Save" }).click();
+
+  const row = page.getByRole("row").filter({ hasText: item });
+  await expect(row).toContainText("Requested");
+  const ref = (await row.getByRole("cell").first().textContent())!.trim();
+  for (const [step, status] of [
+    ["Approve", "Approved"],
+    ["Mark as ordered", "Ordered"],
+    ["Mark as received", "Received"],
+  ]) {
+    await row.getByRole("button", { name: `Actions for ${ref}` }).click();
+    await page.getByRole("menuitem", { name: step }).click();
+    await expect(row).toContainText(status);
+  }
+
+  await row.getByRole("button", { name: `Actions for ${ref}` }).click();
+  await page.getByRole("menuitem", { name: "Add to inventory" }).click();
+  await expect(dialog.getByLabel("Purchase cost")).toHaveValue("900");
+  await dialog.getByLabel("Name").fill(item);
+  await choose(page, "Category", "End-User Devices");
+  await choose(page, "Type", "Laptop");
+  await choose(page, "Location", "Jeddah Head Office");
+  await dialog.getByRole("button", { name: "Save" }).click();
+  await expect(page).toHaveURL(/\/en\/assets\/\d+$/);
+  await expect(page.getByRole("link", { name: ref })).toBeVisible();
   console.assertClean();
 });

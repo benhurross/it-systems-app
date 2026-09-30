@@ -837,6 +837,37 @@
       "ends": "ينتهي في {date} · متبقٍ {days} يومًا",
       "perYear": "{amount} سنويًا",
       "autoRenew": "يتجدد تلقائيًا"
+    },
+    "purchases": {
+      "ref": "المرجع",
+      "new": "طلب جديد",
+      "edit": "تعديل الطلب",
+      "item": "الصنف",
+      "category": "فئة الميزانية",
+      "vendor": "المورد",
+      "requestedFor": "مطلوب لـ",
+      "requestedBy": "مقدم الطلب",
+      "quantity": "الكمية",
+      "amount": "المبلغ الإجمالي",
+      "hardware": "أجهزة",
+      "hardwareHint": "يمكن إضافة الأجهزة إلى المخزون بعد استلامها.",
+      "date": "تاريخ الطلب",
+      "status": "الحالة",
+      "actionsFor": "إجراءات {ref}",
+      "approve": "اعتماد",
+      "reject": "رفض",
+      "markOrdered": "تسجيل الطلب",
+      "markReceived": "تسجيل الاستلام",
+      "addToInventory": "إضافة إلى المخزون",
+      "saved": "تم حفظ طلب الشراء.",
+      "updated": "تم تحديث طلب الشراء.",
+      "fromPurchase": "من {ref}: {title}",
+      "summary": {
+        "awaiting": "بانتظار الاعتماد",
+        "onOrder": "معتمد أو قيد الطلب",
+        "received": "المستلم هذا العام",
+        "value": "بقيمة {amount}"
+      }
     }
   }
 }

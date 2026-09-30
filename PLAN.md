@@ -313,7 +313,7 @@ Each phase ends with a local git commit. There is no remote.
 
 ### Phase 8 - Finance, Risk & Security, People
 - [x] Budget: allocation vs committed per category for the fiscal year, utilisation bars, and renewals in the next 90 days
-- [ ] Purchases: requested, then approved or rejected, then ordered, then received. A received hardware purchase offers "Add to inventory"
+- [x] Purchases: requested, then approved or rejected, then ordered, then received. A received hardware purchase offers "Add to inventory"
 - [ ] Contracts register with renewal status, and a Vendors directory
 - [ ] Risk register with a 5x5 heatmap, treatment, owner and review date
 - [ ] Vulnerability log with severity, deadline and overdue flag

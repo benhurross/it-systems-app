@@ -837,6 +837,37 @@
       "ends": "Ends {date} · {days} days left",
       "perYear": "{amount} a year",
       "autoRenew": "Auto-renews"
+    },
+    "purchases": {
+      "ref": "Ref.",
+      "new": "New request",
+      "edit": "Edit request",
+      "item": "Item",
+      "category": "Budget category",
+      "vendor": "Vendor",
+      "requestedFor": "Requested for",
+      "requestedBy": "Requested by",
+      "quantity": "Quantity",
+      "amount": "Total amount",
+      "hardware": "Hardware",
+      "hardwareHint": "Hardware can be added to the inventory once it is received.",
+      "date": "Requested",
+      "status": "Status",
+      "actionsFor": "Actions for {ref}",
+      "approve": "Approve",
+      "reject": "Reject",
+      "markOrdered": "Mark as ordered",
+      "markReceived": "Mark as received",
+      "addToInventory": "Add to inventory",
+      "saved": "Purchase request saved.",
+      "updated": "Purchase updated.",
+      "fromPurchase": "From {ref}: {title}",
+      "summary": {
+        "awaiting": "Awaiting approval",
+        "onOrder": "Approved or on order",
+        "received": "Received this year",
+        "value": "Worth {amount}"
+      }
     }
   }
 }
