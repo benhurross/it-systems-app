@@ -15,6 +15,54 @@ const LOCALES = [
 
 const heading = (page: Page) => page.getByRole("heading", { level: 1 });
 
+/** What the pages read from the API, by the area of the app allowed to read it. */
+const APIS = {
+  request: ["/api/tickets", "/api/kb", "/api/lookups"],
+  it: [
+    "/api/dashboard",
+    "/api/kpis",
+    "/api/changes",
+    "/api/assets",
+    "/api/discovery",
+    "/api/relationships",
+    "/api/licenses",
+    "/api/network",
+    "/api/alerts",
+    "/api/daily-checks",
+    "/api/projects",
+    "/api/budgets",
+    "/api/purchases",
+    "/api/contracts",
+    "/api/vendors",
+    "/api/risks",
+    "/api/vulnerabilities",
+    "/api/employees",
+    "/api/joiners",
+    "/api/leavers",
+    "/api/staff",
+  ],
+  settings: [
+    "/api/audit",
+    "/api/settings/users",
+    "/api/settings/lists",
+    "/api/settings/sla",
+    `/api/settings/kpi-targets?year=${new Date().getFullYear()}`,
+  ],
+};
+const AREAS = { admin: ["request", "it", "settings"], it: ["request", "it"], employee: ["request"] } as const;
+
+/** Each API that answers other than expected, with what it answered. */
+async function unexpectedAnswers(page: Page, expected: (area: keyof typeof APIS) => number) {
+  const wrong: string[] = [];
+  for (const [area, urls] of Object.entries(APIS) as [keyof typeof APIS, string[]][]) {
+    for (const url of urls) {
+      const status = (await page.request.get(url)).status();
+      if (status !== expected(area)) wrong.push(`${url} answered ${status}, expected ${expected(area)}`);
+    }
+  }
+  return wrong;
+}
+
 for (const role of ["admin", "it", "employee"] as const) {
   test.describe(`as ${role}`, () => {
     test.use({ storageState: session(role) });
@@ -37,6 +85,12 @@ for (const role of ["admin", "it", "employee"] as const) {
         console.assertClean();
       });
     }
+
+    test("the API answers for the role's areas and refuses the rest", async ({ page }) => {
+      const areas: readonly string[] = AREAS[role];
+      const wrong = await unexpectedAnswers(page, (area) => (areas.includes(area) ? 200 : 403));
+      expect(wrong, wrong.join("\n")).toEqual([]);
+    });
 
     const denied = ALL.filter((r) => !ALLOWED[role].includes(r) && r !== "/");
     for (const route of denied) {
@@ -72,4 +126,9 @@ test.describe("as it", () => {
       await expect(heading(page)).toHaveText(messages.errors.notFoundTitle);
     }
   });
+});
+
+test("the API refuses a signed-out visitor", async ({ page }) => {
+  const wrong = await unexpectedAnswers(page, () => 401);
+  expect(wrong, wrong.join("\n")).toEqual([]);
 });

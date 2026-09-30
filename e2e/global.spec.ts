@@ -14,6 +14,8 @@ test("an SLA change applies to tickets opened afterwards", async ({ page }) => {
   await critical.fill("2");
   await page.getByRole("button", { name: "Save" }).click();
   await expect(page.getByText("Settings saved.")).toBeVisible();
+  await page.reload();
+  await expect(critical).toHaveValue("2");
 
   const [employee] = (await (await page.request.get("/api/employees")).json()) as { id: number }[];
   const res = await page.request.post("/api/tickets", {
@@ -33,6 +35,11 @@ test("an SLA change applies to tickets opened afterwards", async ({ page }) => {
   await critical.fill("4");
   await page.getByRole("button", { name: "Save" }).click();
   await expect(page.getByText("Settings saved.").last()).toBeVisible();
+
+  // Both saves are in the audit log.
+  await page.goto("/en/settings/audit");
+  await page.getByRole("textbox", { name: "Filter rows" }).fill("Changed sla settings");
+  await expect(page.getByRole("cell", { name: "Changed sla settings" })).toHaveCount(2);
 });
 
 test("turning network checks on in Settings starts them without a restart", async ({ page }) => {

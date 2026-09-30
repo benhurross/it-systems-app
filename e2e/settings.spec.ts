@@ -57,7 +57,7 @@ test.describe("as an admin", () => {
     await expect(page.getByRole("cell", { name: `Updated ${name}: deactivated` })).toBeVisible();
   });
 
-  test("a new list value is saved and shown", async ({ page }, info) => {
+  test("a new list value is saved, survives a reload, reaches the forms and is in the audit log", async ({ page }, info) => {
     const label = unique(info, "Branch");
     const code = `branch_${info.project.name}_${Date.now() % 100_000}`;
     await page.goto("/en/settings/lists");
@@ -68,6 +68,18 @@ test.describe("as an admin", () => {
     await dialog.getByLabel("Arabic label").fill("فرع");
     await dialog.getByRole("button", { name: "Save" }).click();
     await expect(page.getByRole("cell", { name: label })).toBeVisible();
+    await page.reload();
+    await expect(page.getByRole("cell", { name: label })).toBeVisible();
+
+    // The new location is offered wherever a location is chosen.
+    await page.goto("/en/tickets/new");
+    await page.getByRole("combobox", { name: "Location" }).click();
+    await expect(page.getByRole("option", { name: label })).toBeVisible();
+    await page.keyboard.press("Escape");
+
+    await page.goto("/en/settings/audit");
+    await page.getByRole("textbox", { name: "Filter rows" }).fill(label);
+    await expect(page.getByRole("cell", { name: `Added "${label}" to location` })).toBeVisible();
   });
 
   test("the list code is checked before saving", async ({ page }) => {

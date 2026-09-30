@@ -1,4 +1,4 @@
-import { expect, test, type TestInfo } from "@playwright/test";
+import { expect, test, type Page, type TestInfo } from "@playwright/test";
 import { session } from "./env";
 import { choose, unique, watchConsole } from "./helpers";
 
@@ -7,15 +7,26 @@ const slot = (info: TestInfo) => ["chromium", "firefox", "webkit"].indexOf(info.
 
 test.use({ storageState: session("it") });
 
-test("a purchase goes from request to approval, receipt and the inventory", async ({ page }, info) => {
+/** The approved purchases on a category's budget line this fiscal year, as the budget page shows them. */
+async function budgetedPurchases(page: Page, category: string) {
+  await page.goto("/en/finance/budget");
+  await expect(page.getByRole("table")).toBeVisible();
+  const row = page.getByRole("row").filter({ has: page.getByRole("cell", { name: category, exact: true }) });
+  if ((await row.count()) === 0) return 0;
+  return Number((await row.getByRole("cell").nth(3).textContent())!.replace(/[^\d.]/g, ""));
+}
+
+test("a purchase goes from request to approval, its budget line, receipt and the inventory", async ({ page }, info) => {
   const console = watchConsole(page);
   const item = unique(info, "Rugged laptops");
   const laptop = unique(info, "LT-RUGGED");
+  const category = ["Hardware", "Software and licences", "Cloud and hosting"][slot(info)];
+  const before = await budgetedPurchases(page, category);
   await page.goto("/en/finance/purchases");
   await page.getByRole("button", { name: "New request" }).click();
   const dialog = page.getByRole("dialog");
   await dialog.getByLabel("Item").fill(item);
-  await choose(page, "Budget category", "Hardware");
+  await choose(page, "Budget category", category);
   await dialog.getByLabel("Quantity").fill("2");
   await dialog.getByLabel("Total (SAR)").fill("9000");
   await dialog.getByRole("switch", { name: "Hardware for the inventory" }).click();
@@ -35,6 +46,11 @@ test("a purchase goes from request to approval, receipt and the inventory", asyn
     await expect(row).toContainText(status);
   }
   await expect(row).toContainText("In inventory: 0 of 2");
+
+  // Approved spend counts against its budget line.
+  expect(await budgetedPurchases(page, category)).toBe(before + 9000);
+  await page.goto("/en/finance/purchases");
+  await page.getByRole("textbox", { name: "Filter rows" }).fill(item);
 
   await row.getByRole("button", { name: `Actions for ${item}` }).click();
   await page.getByRole("menuitem", { name: "Add to inventory" }).click();
