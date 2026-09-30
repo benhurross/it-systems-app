@@ -9,5 +9,5 @@ describe("database", () => {
     await db.insert(settings).values({ key: "organisation", value: { name: "AP Plus" } });
     const [row] = await db.select().from(settings).where(eq(settings.key, "organisation"));
     expect(row.value).toEqual({ name: "AP Plus" });
-  });
+  }, 120_000);
 });

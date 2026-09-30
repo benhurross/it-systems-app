@@ -321,6 +321,11 @@ Each phase ends with a local git commit. There is no remote.
 - [ ] Onboarding: joiner record with a three-phase checklist; completing it creates the employee
 - [ ] Offboarding: leaver record with a checklist and a 90-day forwarding countdown
 
+### Staff list for local testing
+The demo seed can use the real staff list in place of invented people, for testing on the owner's machine. The list holds real names and emails, so it stays on that machine and is never committed (`*.xlsx` is ignored). Tickets, assets and the other records stay fictional, and tests keep using the invented people.
+- [x] `npm run people:check -- <file.xlsx>` reads the list and reports how it will load. Departments are matched to the list; missing emails get `@no-email.invalid` placeholders, missing titles "Employee", and everyone is in Jeddah unless a Location column says otherwise. Accounts go only to active people with a real email and a Role of admin or IT staff
+- [ ] `npm run db:seed:demo -- --people <file.xlsx>` loads those people and accounts (one-time password each) in place of the invented ones. Only inactive people get offboarding records; the newest hires get onboarding records
+
 ### Phase 9 - Dashboard and KPIs
 - [ ] Tiles:
   - open tickets, SLA compliance, average resolution and network availability
