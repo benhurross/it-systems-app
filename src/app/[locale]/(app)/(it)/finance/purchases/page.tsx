@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
 import { AssetDialog } from "@/components/assets/asset-dialog";
+import { AttachmentsButton, AttachmentsDialog } from "@/components/attachments";
 import { EnumBadge } from "@/components/badges";
 import { columnHelper, DataTable } from "@/components/data-table";
 import { PurchaseDialog } from "@/components/finance/dialogs";
@@ -41,6 +42,8 @@ export default function PurchasesPage() {
   const lookups = useLookups();
   const [dialog, setDialog] = useState<{ kind: "new" } | { kind: "edit" | "inventory"; purchase: Purchase } | null>(null);
   const { data = [], isLoading } = useApi<Purchase[]>("/purchases");
+  const { data: documents } = useApi<Record<number, number>>("/attachments/counts?entity=purchase");
+  const [documentsFor, setDocumentsFor] = useState<{ id: number; name: string } | null>(null);
   const move = useApiMutation(
     async ({ purchase, status }: { purchase: Purchase; status: PurchaseStatus }) => {
       await api(`/purchases/${purchase.id}/status`, { body: { status } });
@@ -85,6 +88,17 @@ export default function PurchasesPage() {
       cell: (info) => <EnumBadge kind="purchaseStatus" value={info.getValue()} />,
     }),
     col.accessor("createdAt", { header: t("finance.purchases.requestedOn"), cell: (info) => format.date(info.getValue()) }),
+    col.display({
+      id: "documents",
+      header: t("finance.documents"),
+      cell: (info) => (
+        <AttachmentsButton
+          name={`${ref("purchase", info.row.original.id)} ${info.row.original.title}`}
+          count={documents?.[info.row.original.id] ?? 0}
+          onOpen={() => setDocumentsFor({ id: info.row.original.id, name: `${ref("purchase", info.row.original.id)} ${info.row.original.title}` })}
+        />
+      ),
+    }),
     col.display({
       id: "actions",
       header: () => <span className="sr-only">{t("common.actions")}</span>,
@@ -176,6 +190,9 @@ export default function PurchasesPage() {
           }}
           onClose={() => setDialog(null)}
         />
+      )}
+      {documentsFor && (
+        <AttachmentsDialog entity="purchase" entityId={documentsFor.id} name={documentsFor.name} onClose={() => setDocumentsFor(null)} />
       )}
     </>
   );

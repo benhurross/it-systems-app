@@ -40,6 +40,8 @@ const APIS = {
     "/api/joiners",
     "/api/leavers",
     "/api/staff",
+    "/api/attachments?entity=asset&id=1",
+    "/api/attachments/counts?entity=purchase",
   ],
   settings: [
     "/api/audit",

@@ -20,6 +20,9 @@ next-env.d.ts
 # the source workbook holds real employee data and credentials
 *.xlsx
 
+# uploaded files (invoices, contracts, ID photos) stay on the machine that holds them
+/uploads
+
 # local tool settings
 .claude/settings.local.json
 

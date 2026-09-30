@@ -417,6 +417,17 @@
       "resolution": "تأكيد الإصلاح",
       "new_request": "طلب جديد",
       "assigned": "إسناد"
+    },
+    "attachmentKind": {
+      "invoice": "فاتورة",
+      "warranty": "شهادة ضمان",
+      "delivery_note": "إشعار تسليم",
+      "quotation": "عرض سعر",
+      "purchase_order": "أمر شراء",
+      "contract": "عقد موقّع",
+      "renewal_quote": "عرض تجديد",
+      "photo": "صورة",
+      "other": "أخرى"
     }
   },
   "validation": {
@@ -1062,7 +1073,8 @@
       "inactive": "غير نشط",
       "notes": "ملاحظات",
       "saved": "تم حفظ المورد."
-    }
+    },
+    "documents": "المستندات"
   },
   "risk": {
     "title": "المخاطر والأمن",
@@ -1304,5 +1316,30 @@
     "priority": "الأولوية",
     "created": "فُتحت",
     "description": "الوصف"
+  },
+  "attachments": {
+    "title": "المستندات",
+    "empty": "لا توجد مستندات بعد.",
+    "type": "النوع",
+    "file": "الملف",
+    "hint": "PDF أو JPG أو PNG، بحد أقصى 10 ميجابايت.",
+    "upload": "رفع",
+    "uploaded": "تم رفع المستند.",
+    "download": "تنزيل {name}",
+    "delete": "حذف {name}",
+    "confirmDelete": "حذف {name}؟",
+    "confirmDeleteText": "سيُحذف الملف نهائياً.",
+    "keep": "إبقاء",
+    "remove": "حذف",
+    "deleted": "تم حذف المستند.",
+    "fromPurchase": "من طلب الشراء {ref}",
+    "open": "مستندات {name}: {count}",
+    "errors": {
+      "fileType": "يمكن رفع ملفات PDF وJPG وPNG فقط.",
+      "fileSize": "هذا الملف أكبر من 10 ميجابايت.",
+      "fileEmpty": "اختر ملفاً أولاً.",
+      "fileKind": "اختر نوع المستند.",
+      "generic": "تعذر رفع الملف. حاول مرة أخرى."
+    }
   }
 }

@@ -99,6 +99,25 @@ export const EMAIL_KINDS = ["test", "resolution", "new_request", "assigned"] as 
 export const EMAIL_STATUSES = ["pending", "sending", "sent", "held", "failed"] as const;
 export const SMTP_SECURITY = ["starttls", "tls", "none"] as const;
 
+export const ATTACHMENT_ENTITIES = ["asset", "purchase", "contract"] as const;
+export const ATTACHMENT_KINDS = [
+  "invoice",
+  "warranty",
+  "delivery_note",
+  "quotation",
+  "purchase_order",
+  "contract",
+  "renewal_quote",
+  "photo",
+  "other",
+] as const;
+/** The kinds of document each record takes, in the order they are offered. */
+export const ATTACHMENT_KINDS_FOR = {
+  asset: ["invoice", "warranty", "delivery_note", "photo", "other"],
+  purchase: ["quotation", "purchase_order", "invoice", "delivery_note", "other"],
+  contract: ["contract", "renewal_quote", "invoice", "other"],
+} as const satisfies Record<(typeof ATTACHMENT_ENTITIES)[number], readonly (typeof ATTACHMENT_KINDS)[number][]>;
+
 export const KPI_KEYS = ["tat", "complaints", "training_hours", "iso_ncs", "satisfaction"] as const;
 /** KPIs entered by hand each quarter; the rest are computed from tickets. */
 export const MANUAL_KPIS = ["training_hours", "iso_ncs"] as const;
@@ -129,6 +148,8 @@ export type DailyCheck = (typeof DAILY_CHECKS)[number];
 export type EmailKind = (typeof EMAIL_KINDS)[number];
 export type EmailStatus = (typeof EMAIL_STATUSES)[number];
 export type SmtpSecurity = (typeof SMTP_SECURITY)[number];
+export type AttachmentEntity = (typeof ATTACHMENT_ENTITIES)[number];
+export type AttachmentKind = (typeof ATTACHMENT_KINDS)[number];
 
 /** Display references in the workbook's style: IT000351, AST-0142, LIC-001. */
 export const REF_PREFIX = {

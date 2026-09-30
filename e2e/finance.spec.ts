@@ -125,3 +125,28 @@ test("a vendor is added and later marked inactive", async ({ page }, info) => {
   await dialog.getByRole("button", { name: "Save" }).click();
   await expect(row).toContainText("Inactive");
 });
+
+test("a purchase's documents open from the list, and show on the asset it became", async ({ page }, info) => {
+  const purchases = (await (await page.request.get("/api/purchases")).json()) as { id: number; title: string }[];
+  const assets = (await (await page.request.get("/api/assets")).json()) as { id: number; purchaseId: number | null }[];
+  const asset = assets.find((a) => a.purchaseId !== null)!;
+  const purchase = purchases.find((p) => p.id === asset.purchaseId)!;
+  const name = `${unique(info, "Quotation").replace(/\s+/g, "-")}.pdf`;
+
+  await page.goto("/en/finance/purchases");
+  await page.getByRole("textbox", { name: "Filter rows" }).fill(purchase.title);
+  const row = page.getByRole("row").filter({ hasText: purchase.title }).first();
+  await row.getByRole("button", { name: /^Documents for / }).click();
+  const dialog = page.getByRole("dialog");
+  await choose(page, "Type", "Quotation");
+  await dialog.getByLabel("File").setInputFiles({ name, mimeType: "application/pdf", buffer: Buffer.from("%PDF-1.4\n%%EOF\n") });
+  await dialog.getByRole("button", { name: "Upload" }).click();
+  await expect(dialog.getByRole("listitem").filter({ hasText: name })).toContainText("Quotation");
+  await page.keyboard.press("Escape");
+
+  // The asset bought with it shows the purchase's documents too, to read but not delete.
+  await page.goto(`/en/assets/${asset.id}`);
+  const fromPurchase = page.locator("section").filter({ hasText: /^From purchase PR-/ });
+  await expect(fromPurchase.getByRole("listitem").filter({ hasText: name })).toBeVisible();
+  await expect(fromPurchase.getByRole("button", { name: `Delete ${name}` })).toHaveCount(0);
+});

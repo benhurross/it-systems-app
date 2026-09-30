@@ -3,6 +3,7 @@
 import { Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
+import { AttachmentsButton, AttachmentsDialog } from "@/components/attachments";
 import { EnumBadge } from "@/components/badges";
 import { columnHelper, DataTable } from "@/components/data-table";
 import { ContractDialog } from "@/components/finance/dialogs";
@@ -25,6 +26,8 @@ export default function ContractsPage() {
   const lookups = useLookups();
   const [dialog, setDialog] = useState<Contract | "new" | null>(null);
   const { data = [], isLoading } = useApi<Contract[]>("/contracts");
+  const { data: documents } = useApi<Record<number, number>>("/attachments/counts?entity=contract");
+  const [documentsFor, setDocumentsFor] = useState<{ id: number; name: string } | null>(null);
   const today = isoDate();
   const rows: Row[] = data.map((c) => ({ ...c, state: contractState(c, today) }));
 
@@ -58,6 +61,17 @@ export default function ContractsPage() {
       header: t("finance.contracts.state"),
       filterFn: "arrHas",
       cell: (info) => <EnumBadge kind="contractState" value={info.getValue()} />,
+    }),
+    col.display({
+      id: "documents",
+      header: t("finance.documents"),
+      cell: (info) => (
+        <AttachmentsButton
+          name={info.row.original.title}
+          count={documents?.[info.row.original.id] ?? 0}
+          onOpen={() => setDocumentsFor({ id: info.row.original.id, name: info.row.original.title })}
+        />
+      ),
     }),
   ];
 
@@ -101,6 +115,9 @@ export default function ContractsPage() {
       />
       {dialog === "new" && <ContractDialog onClose={() => setDialog(null)} />}
       {dialog && dialog !== "new" && <ContractDialog contract={dialog} onClose={() => setDialog(null)} />}
+      {documentsFor && (
+        <AttachmentsDialog entity="contract" entityId={documentsFor.id} name={documentsFor.name} onClose={() => setDocumentsFor(null)} />
+      )}
     </>
   );
 }

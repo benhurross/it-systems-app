@@ -3,6 +3,7 @@
  * JSON turns dates into strings, which `Json` reflects. Type-only imports: nothing server-side is bundled.
  */
 import type * as assets from "@/server/services/assets";
+import type * as attachments from "@/server/services/attachments";
 import type * as auditLog from "@/server/services/audit-log";
 import type * as changes from "@/server/services/changes";
 import type * as dailyChecks from "@/server/services/daily-checks";
@@ -74,3 +75,4 @@ export type MySummary = Result<typeof me.mySummary>;
 export type EmailSettings = Result<typeof mailConfig.getEmailSettings>;
 export type OutboxEmail = Item<typeof outbox.listOutbox>;
 export type OutboxEmailDetail = Result<typeof outbox.getEmail>;
+export type Attachment = Item<typeof attachments.listAttachments>;

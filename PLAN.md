@@ -383,6 +383,7 @@ Requested by the owner. The company runs its own Exchange Server, so mail goes o
 - [x] A new ticket nobody is assigned to emails every admin (except one who opened it), with "Accept (assign to me)" and "Assign to …" links for each IT staff member. The links need sign-in and come back afterwards (only to paths inside the app); the page they open shows the ticket and asks to confirm
 - [x] Whoever a ticket is assigned to gets an email, unless they assigned it to themselves
 - [x] Settings → Email shows the outbox beside the settings on wide screens, as a compact list with a filter (all, failed, held, sent). Sent and held emails and old email links are deleted after 90 days (adjustable); failed emails are kept
+- [x] Documents on assets, purchases and contracts: PDF, JPG or PNG up to 10 MB, told apart by their content (a renamed file is refused), stored under random names in UPLOADS_DIR (an "uploads" folder by default) with their details in the database. IT staff and admins only; each upload and deletion is in the record's audit trail. An asset bought through a purchase also shows that purchase's documents
 
 ### Phase 11 - Handover
 - [ ] Minimal README: prerequisites (Node, Docker), setup, scripts, and where the demo accounts are defined

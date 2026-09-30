@@ -3,6 +3,7 @@
 import { ArrowLeft, ArrowRightLeft, Archive, Network, Pencil } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { use, useState, type ReactNode } from "react";
+import { AttachmentList, AttachmentsCard } from "@/components/attachments";
 import { AssetDialog, toAssetInput } from "@/components/assets/asset-dialog";
 import { MoveDialog } from "@/components/assets/move-dialog";
 import { EnumBadge } from "@/components/badges";
@@ -176,6 +177,14 @@ export default function AssetPage({ params }: PageProps<"/[locale]/assets/[id]">
         </div>
 
         <div className="space-y-6">
+          <AttachmentsCard entity="asset" entityId={asset.id}>
+            {asset.purchaseId && (
+              <section className="space-y-2">
+                <h3 className="text-sm font-medium">{t("attachments.fromPurchase", { ref: ref("purchase", asset.purchaseId) })}</h3>
+                <AttachmentList entity="purchase" entityId={asset.purchaseId} readOnly />
+              </section>
+            )}
+          </AttachmentsCard>
           <Card>
             <CardHeader>
               <CardTitle>{t("assets.relationships")}</CardTitle>

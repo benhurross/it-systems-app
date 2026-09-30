@@ -417,6 +417,17 @@
       "resolution": "Confirm a fix",
       "new_request": "New request",
       "assigned": "Assigned"
+    },
+    "attachmentKind": {
+      "invoice": "Invoice",
+      "warranty": "Warranty certificate",
+      "delivery_note": "Delivery note",
+      "quotation": "Quotation",
+      "purchase_order": "Purchase order",
+      "contract": "Signed contract",
+      "renewal_quote": "Renewal quote",
+      "photo": "Photo",
+      "other": "Other"
     }
   },
   "validation": {
@@ -1062,7 +1073,8 @@
       "inactive": "Inactive",
       "notes": "Notes",
       "saved": "Vendor saved."
-    }
+    },
+    "documents": "Documents"
   },
   "risk": {
     "title": "Risk & Security",
@@ -1304,5 +1316,30 @@
     "priority": "Priority",
     "created": "Opened",
     "description": "Description"
+  },
+  "attachments": {
+    "title": "Documents",
+    "empty": "No documents yet.",
+    "type": "Type",
+    "file": "File",
+    "hint": "PDF, JPG or PNG, up to 10 MB.",
+    "upload": "Upload",
+    "uploaded": "Document uploaded.",
+    "download": "Download {name}",
+    "delete": "Delete {name}",
+    "confirmDelete": "Delete {name}?",
+    "confirmDeleteText": "The file is removed for good.",
+    "keep": "Keep it",
+    "remove": "Delete",
+    "deleted": "Document deleted.",
+    "fromPurchase": "From purchase {ref}",
+    "open": "Documents for {name}: {count}",
+    "errors": {
+      "fileType": "Only PDF, JPG and PNG files can be uploaded.",
+      "fileSize": "This file is larger than 10 MB.",
+      "fileEmpty": "Choose a file first.",
+      "fileKind": "Choose what kind of document this is.",
+      "generic": "The file could not be uploaded. Try again."
+    }
   }
 }

@@ -14,6 +14,8 @@ import {
 } from "drizzle-orm/pg-core";
 import type {
   AssetStatus,
+  AttachmentEntity,
+  AttachmentKind,
   ChangeStatus,
   Criticality,
   DeviceStatus,
@@ -616,3 +618,27 @@ export const emailLinks = pgTable("email_links", {
   usedAt: timestamp({ withTimezone: true }),
   createdAt: createdAt(),
 });
+
+// ---------------------------------------------------------------- files
+
+/**
+ * A document attached to an asset, purchase or contract. The file itself is on disk under
+ * UPLOADS_DIR, at `storageKey`, a random name; the name shown is the one it was uploaded with.
+ */
+export const attachments = pgTable(
+  "attachments",
+  {
+    id: id(),
+    entity: text().$type<AttachmentEntity>().notNull(),
+    entityId: integer().notNull(),
+    kind: text().$type<AttachmentKind>().notNull(),
+    name: text().notNull(),
+    contentType: text().notNull(),
+    size: integer().notNull(),
+    storageKey: text().notNull().unique(),
+    uploadedBy: text().references(() => users.id, { onDelete: "set null" }),
+    uploadedByName: text().notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [index().on(t.entity, t.entityId)],
+);

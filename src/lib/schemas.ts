@@ -1,6 +1,8 @@
 import { z } from "zod";
 import {
   ASSET_STATUSES,
+  ATTACHMENT_ENTITIES,
+  ATTACHMENT_KINDS,
   CHANGE_RESULTS,
   CHANGE_RISKS,
   CHANGE_STATUSES,
@@ -384,3 +386,12 @@ export const userUpdate = z
     password: password.nullish(),
   })
   .partial();
+
+/** Which record's documents: from the query string of the attachments list. */
+export const attachmentOwner = z.object({ entity: z.enum(ATTACHMENT_ENTITIES), id: z.coerce.number().int().positive() });
+/** The fields sent with an uploaded file. */
+export const attachmentUpload = z.object({
+  entity: z.enum(ATTACHMENT_ENTITIES),
+  entityId: z.coerce.number().int().positive(),
+  kind: z.enum(ATTACHMENT_KINDS),
+});

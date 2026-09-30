@@ -163,3 +163,35 @@ test("software tracks seats against installs and exports an audit report", async
   await expect(page.getByText("Compliant", { exact: true })).toBeVisible();
   console.assertClean();
 });
+
+test("documents are attached to an asset, open and download, and a disguised file is refused", async ({ page }, info) => {
+  const console = watchConsole(page);
+  const [asset] = (await (await page.request.get("/api/assets")).json()) as { id: number }[];
+  const name = `${unique(info, "Invoice").replace(/\s+/g, "-")}.pdf`;
+  const pdf = Buffer.from("%PDF-1.4\n1 0 obj << >> endobj\ntrailer << >>\n%%EOF\n");
+  await page.goto(`/en/assets/${asset.id}`);
+  const documents = page.locator("[data-slot=card]").filter({ has: page.locator("[data-slot=card-title]", { hasText: /^Documents$/ }) });
+
+  // A web page renamed .pdf is refused, by its content.
+  await documents.getByLabel("File").setInputFiles({ name: "fake.pdf", mimeType: "application/pdf", buffer: Buffer.from("<html><body>not a pdf</body></html>") });
+  await documents.getByRole("button", { name: "Upload" }).click();
+  await expect(documents.getByRole("alert")).toHaveText("Only PDF, JPG and PNG files can be uploaded.");
+
+  await documents.getByLabel("File").setInputFiles({ name, mimeType: "application/pdf", buffer: pdf });
+  await documents.getByRole("button", { name: "Upload" }).click();
+  await expect(page.getByText("Document uploaded.")).toBeVisible();
+  const item = documents.getByRole("listitem").filter({ hasText: name });
+  await expect(item).toContainText("Invoice");
+
+  const download = await item.getByRole("link", { name: `Download ${name}` }).getAttribute("href");
+  const res = await page.request.get(download!);
+  expect(res.headers()["content-type"]).toBe("application/pdf");
+  expect(res.headers()["content-disposition"]).toContain("attachment");
+  expect(Buffer.from(await res.body())).toEqual(pdf);
+
+  await item.getByRole("button", { name: `Delete ${name}` }).click();
+  await page.getByRole("alertdialog").getByRole("button", { name: "Delete" }).click();
+  await expect(page.getByText("Document deleted.")).toBeVisible();
+  await expect(item).toHaveCount(0);
+  console.assertClean();
+});
