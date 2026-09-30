@@ -1,4 +1,4 @@
-import { and, count, desc, eq } from "drizzle-orm";
+import { and, count, desc, eq, gte, inArray } from "drizzle-orm";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import { ONBOARDING_TASKS, OFFBOARDING_TASKS } from "@/lib/domain";
 import { vulnerabilityInput } from "@/lib/schemas";
@@ -22,6 +22,7 @@ const people = await import("@/server/services/people");
 const lookups = await import("@/server/services/lookups");
 const settings = await import("@/server/settings");
 const { listAudit } = await import("@/server/services/audit-log");
+const { dashboard } = await import("@/server/services/dashboard");
 
 type User = Awaited<ReturnType<typeof asUser>>;
 let admin: User;
@@ -319,5 +320,28 @@ describe("settings and reference lists", () => {
     expect(entries[0]).toMatchObject({ userName: "Sara Al-Harbi", action: "update" });
     const [{ n }] = await db.select({ n: count() }).from(s.auditLog).where(eq(s.auditLog.entity, "settings"));
     expect(n).toBeGreaterThan(0);
+  });
+});
+
+describe("dashboard", () => {
+  it("agrees with the records it summarises", async () => {
+    const data = await dashboard(NOW);
+    const [{ n: open }] = await db
+      .select({ n: count() })
+      .from(s.tickets)
+      .where(inArray(s.tickets.status, ["open", "in_progress", "on_hold"]));
+    expect(data.tiles.openTickets).toBe(open);
+    expect(data.tiles.slaCompliance).toBeGreaterThan(0);
+    expect(data.tiles.availability).toBeGreaterThan(0.9);
+    expect(data.tiles.fiscalYear).toBe(2026);
+    expect(data.attention.find((g) => g.kind === "down")!.items.map((i) => i.label)).toEqual(["AP-RYD-03"]);
+    expect(data.attention.find((g) => g.kind === "licenses")!.count).toBeGreaterThan(0);
+    expect(data.charts.ticketsByMonth).toHaveLength(12);
+    const [{ n: lastYear }] = await db
+      .select({ n: count() })
+      .from(s.tickets)
+      .where(gte(s.tickets.createdAt, new Date("2025-10-01T00:00:00+03:00")));
+    expect(data.charts.ticketsByMonth.reduce((n, m) => n + m.opened, 0)).toBe(lastYear);
+    expect(data.charts.budget.map((l) => l.category)).toContain("hardware");
   });
 });

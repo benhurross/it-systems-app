@@ -26,6 +26,7 @@ const routes = {
   check: await import("@/app/api/network/[id]/check/route"),
   acknowledge: await import("@/app/api/alerts/[id]/acknowledge/route"),
   dailyChecks: await import("@/app/api/daily-checks/route"),
+  dashboard: await import("@/app/api/dashboard/route"),
 };
 
 const request = (method: string, body?: unknown) =>
@@ -66,6 +67,7 @@ describe("access", () => {
     expect((await routes.audit.GET(request("GET"), params())).status).toBe(403);
     expect((await routes.network.GET(request("GET"), params())).status).toBe(403);
     expect((await routes.dailyChecks.PUT(request("PUT", {}), params())).status).toBe(403);
+    expect((await routes.dashboard.GET(request("GET"), params())).status).toBe(403);
     expect((await routes.lookups.GET(request("GET"), params())).status).toBe(200);
   });
 
@@ -74,6 +76,7 @@ describe("access", () => {
     expect((await routes.settingsKey.GET(request("GET"), params({ key: "sla" }))).status).toBe(403);
     expect((await routes.lists.POST(request("POST", {}), params())).status).toBe(403);
     expect((await routes.assets.GET(request("GET"), params())).status).toBe(200);
+    expect((await routes.dashboard.GET(request("GET"), params())).status).toBe(200);
   });
 
   it("lets admins into Settings, and only for known keys", async () => {
