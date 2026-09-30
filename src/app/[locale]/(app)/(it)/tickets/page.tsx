@@ -7,7 +7,7 @@ import { EnumBadge, SlaIndicator } from "@/components/badges";
 import { columnHelper, DataTable } from "@/components/data-table";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useApi } from "@/hooks/use-api";
 import { useFormat } from "@/hooks/use-format";
 import { useLookups } from "@/hooks/use-lookups";
@@ -107,7 +107,7 @@ export default function TicketsPage() {
           </>
         }
       />
-      <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)} className="mb-4">
+      <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)} className="gap-4">
         {/* Wraps onto a second row when the counts do not fit across a phone at large text sizes. */}
         <TabsList className="max-w-full flex-wrap group-data-horizontal/tabs:h-auto">
           <TabsTrigger value="all">
@@ -120,44 +120,47 @@ export default function TicketsPage() {
             {t("tickets.requests")} ({count("request")})
           </TabsTrigger>
         </TabsList>
+        {/* The list is the panel of the selected tab, so each tab points at what it shows. */}
+        <TabsContent value={tab} className="text-base">
+          <DataTable
+            key={tab}
+            data={rows}
+            columns={columns}
+            loading={isLoading}
+            rowHref={(x) => `/tickets/${x.id}`}
+            facets={[
+              { column: "status", label: t("tickets.status"), options: TICKET_STATUSES.map((s) => ({ value: s, label: t(`enums.ticketStatus.${s}`) })) },
+              { column: "priority", label: t("tickets.priority"), options: PRIORITIES.map((p) => ({ value: p, label: t(`enums.priority.${p}`) })) },
+              { column: "issueType", label: t("tickets.issueType"), options: lookups.options("issue_type") },
+              { column: "location", label: t("tickets.location"), options: lookups.options("location") },
+              {
+                column: "assignee",
+                label: t("tickets.assignee"),
+                options: [{ value: UNASSIGNED, label: t("tickets.unassigned") }, ...staff.map((s) => ({ value: s.id, label: s.name }))],
+              },
+            ]}
+            csv={{
+              filename: "tickets.csv",
+              columns: [
+                { header: "Ticket", value: (x) => ref("ticket", x.id) },
+                { header: "Opened", value: (x) => x.createdAt },
+                { header: "Type", value: (x) => x.type },
+                { header: "Status", value: (x) => x.status },
+                { header: "Priority", value: (x) => x.priority },
+                { header: "Issue type", value: (x) => lookups.label("issue_type", x.issueType) },
+                { header: "Location", value: (x) => lookups.label("location", x.location) },
+                { header: "Requester", value: (x) => x.requesterName },
+                { header: "Assigned to", value: (x) => x.assigneeName },
+                { header: "Subject", value: (x) => x.subject },
+                { header: "Due", value: (x) => x.dueAt },
+                { header: "Resolved", value: (x) => x.resolvedAt },
+                { header: "Closed", value: (x) => x.closedAt },
+                { header: "Rating", value: (x) => x.satisfaction },
+              ],
+            }}
+          />
+        </TabsContent>
       </Tabs>
-      <DataTable
-        key={tab}
-        data={rows}
-        columns={columns}
-        loading={isLoading}
-        rowHref={(x) => `/tickets/${x.id}`}
-        facets={[
-          { column: "status", label: t("tickets.status"), options: TICKET_STATUSES.map((s) => ({ value: s, label: t(`enums.ticketStatus.${s}`) })) },
-          { column: "priority", label: t("tickets.priority"), options: PRIORITIES.map((p) => ({ value: p, label: t(`enums.priority.${p}`) })) },
-          { column: "issueType", label: t("tickets.issueType"), options: lookups.options("issue_type") },
-          { column: "location", label: t("tickets.location"), options: lookups.options("location") },
-          {
-            column: "assignee",
-            label: t("tickets.assignee"),
-            options: [{ value: UNASSIGNED, label: t("tickets.unassigned") }, ...staff.map((s) => ({ value: s.id, label: s.name }))],
-          },
-        ]}
-        csv={{
-          filename: "tickets.csv",
-          columns: [
-            { header: "Ticket", value: (x) => ref("ticket", x.id) },
-            { header: "Opened", value: (x) => x.createdAt },
-            { header: "Type", value: (x) => x.type },
-            { header: "Status", value: (x) => x.status },
-            { header: "Priority", value: (x) => x.priority },
-            { header: "Issue type", value: (x) => lookups.label("issue_type", x.issueType) },
-            { header: "Location", value: (x) => lookups.label("location", x.location) },
-            { header: "Requester", value: (x) => x.requesterName },
-            { header: "Assigned to", value: (x) => x.assigneeName },
-            { header: "Subject", value: (x) => x.subject },
-            { header: "Due", value: (x) => x.dueAt },
-            { header: "Resolved", value: (x) => x.resolvedAt },
-            { header: "Closed", value: (x) => x.closedAt },
-            { header: "Rating", value: (x) => x.satisfaction },
-          ],
-        }}
-      />
     </>
   );
 }
