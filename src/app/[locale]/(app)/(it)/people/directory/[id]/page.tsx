@@ -77,8 +77,8 @@ export default function EmployeePage({ params }: PageProps<"/[locale]/people/dir
             ) : (
               <ul className="divide-y text-sm">
                 {person.assets.map((asset) => (
-                  <li key={asset.id} className="flex items-center justify-between gap-3 py-2">
-                    <Link href={`/assets/${asset.id}`} className="min-w-0 truncate hover:text-primary">
+                  <li key={asset.id} className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 py-2">
+                    <Link href={`/assets/${asset.id}`} className="min-w-0 break-words hover:text-primary">
                       <span className="font-medium">{asset.name}</span>{" "}
                       <span className="text-muted-foreground">· {lookups.label("asset_type", asset.type)}</span>
                     </Link>
@@ -99,8 +99,8 @@ export default function EmployeePage({ params }: PageProps<"/[locale]/people/dir
             ) : (
               <ul className="divide-y text-sm">
                 {person.tickets.map((ticket) => (
-                  <li key={ticket.id} className="flex items-center justify-between gap-3 py-2">
-                    <Link href={`/tickets/${ticket.id}`} className="min-w-0 truncate hover:text-primary">
+                  <li key={ticket.id} className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 py-2">
+                    <Link href={`/tickets/${ticket.id}`} className="min-w-0 break-words hover:text-primary">
                       <span className="font-mono text-muted-foreground">{ref("ticket", ticket.id)}</span> {ticket.subject}
                     </Link>
                     <span className="flex shrink-0 items-center gap-2">

@@ -268,7 +268,7 @@ function History({ ticket }: { ticket: TicketDetail }) {
 
 function Row({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <div className="grid grid-cols-[8rem_1fr] items-center gap-2 py-1.5 text-sm">
+    <div className="grid gap-1 py-1.5 text-sm @[16rem]:grid-cols-[8rem_1fr] @[16rem]:items-center @[16rem]:gap-2">
       <dt className="text-muted-foreground">{label}</dt>
       <dd className="min-w-0">{children}</dd>
     </div>
@@ -307,7 +307,7 @@ function Details({ ticket, mode }: { ticket: TicketDetail; mode: Mode }) {
         <CardTitle>{t("tickets.details")}</CardTitle>
       </CardHeader>
       <CardContent>
-        <dl className="divide-y">
+        <dl className="@container divide-y">
           <Row label={t("tickets.requester")}>
             <span className="block truncate font-medium">{ticket.requesterName}</span>
             <span className="block truncate text-xs text-muted-foreground">

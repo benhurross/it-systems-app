@@ -99,7 +99,7 @@ export default function AssetPage({ params }: PageProps<"/[locale]/assets/[id]">
                 <CardTitle>{t("assets.specs")}</CardTitle>
               </CardHeader>
               <CardContent>
-                <dl className="divide-y text-sm">
+                <dl className="@container divide-y text-sm">
                   <Row label={t("assets.category")}>{lookups.label("asset_category", asset.category)}</Row>
                   <Row label={t("assets.model")}>
                     {[lookups.label("manufacturer", asset.manufacturer), asset.model].filter(Boolean).join(" ") || dash}
@@ -121,7 +121,7 @@ export default function AssetPage({ params }: PageProps<"/[locale]/assets/[id]">
                 <CardTitle>{t("assets.lifecycle")}</CardTitle>
               </CardHeader>
               <CardContent>
-                <dl className="divide-y text-sm">
+                <dl className="@container divide-y text-sm">
                   <Row label={t("assets.purchaseDate")}>{asset.purchaseDate ? format.date(asset.purchaseDate) : dash}</Row>
                   <Row label={t("assets.purchaseCost")}>{asset.purchaseCost !== null ? format.currency(asset.purchaseCost) : dash}</Row>
                   {asset.purchaseId && (
@@ -231,8 +231,8 @@ export default function AssetPage({ params }: PageProps<"/[locale]/assets/[id]">
               ) : (
                 <ul className="space-y-2 text-sm">
                   {asset.tickets.map((x) => (
-                    <li key={x.id} className="flex items-center justify-between gap-2">
-                      <Link href={`/tickets/${x.id}`} className="truncate text-primary hover:underline">
+                    <li key={x.id} className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
+                      <Link href={`/tickets/${x.id}`} className="min-w-0 break-words text-primary hover:underline">
                         <span className="font-mono">{ref("ticket", x.id)}</span> {x.subject}
                       </Link>
                       <EnumBadge kind="ticketStatus" value={x.status} />
@@ -252,7 +252,7 @@ export default function AssetPage({ params }: PageProps<"/[locale]/assets/[id]">
 
 function Row({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <div className="grid grid-cols-[9rem_1fr] gap-2 py-2">
+    <div className="grid gap-1 py-2 @[16rem]:grid-cols-[9rem_1fr] @[16rem]:gap-2">
       <dt className="text-muted-foreground">{label}</dt>
       <dd className="min-w-0 break-words">{children}</dd>
     </div>

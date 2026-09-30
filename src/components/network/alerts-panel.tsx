@@ -47,7 +47,7 @@ export function AlertsPanel({ alerts }: { alerts: Alert[] }) {
               <li key={alert.id} className="space-y-2 rounded-lg border p-3">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <Link href={`/assets/${alert.assetId}`} className="block truncate font-medium hover:text-primary">
+                    <Link href={`/assets/${alert.assetId}`} className="block font-medium break-words hover:text-primary">
                       {alert.assetName}
                     </Link>
                     <p className="text-xs text-muted-foreground">

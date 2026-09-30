@@ -108,7 +108,8 @@ export default function TicketsPage() {
         }
       />
       <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)} className="mb-4">
-        <TabsList>
+        {/* Wraps onto a second row when the counts do not fit across a phone at large text sizes. */}
+        <TabsList className="max-w-full flex-wrap group-data-horizontal/tabs:h-auto">
           <TabsTrigger value="all">
             {t("tickets.all")} ({count()})
           </TabsTrigger>

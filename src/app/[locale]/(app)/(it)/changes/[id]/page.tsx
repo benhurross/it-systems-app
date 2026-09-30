@@ -99,7 +99,7 @@ export default function ChangePage({ params }: PageProps<"/[locale]/changes/[id]
             <CardTitle>{t("tickets.details")}</CardTitle>
           </CardHeader>
           <CardContent>
-            <dl className="divide-y text-sm">
+            <dl className="@container divide-y text-sm">
               <Row label={t("changes.asset")}>
                 {change.assetId ? (
                   <Link href={`/assets/${change.assetId}`} className="text-primary hover:underline">
@@ -133,7 +133,7 @@ export default function ChangePage({ params }: PageProps<"/[locale]/changes/[id]
 
 function Row({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <div className="grid grid-cols-[8rem_1fr] gap-2 py-2">
+    <div className="grid gap-1 py-2 @[16rem]:grid-cols-[8rem_1fr] @[16rem]:gap-2">
       <dt className="text-muted-foreground">{label}</dt>
       <dd className="min-w-0">{children}</dd>
     </div>

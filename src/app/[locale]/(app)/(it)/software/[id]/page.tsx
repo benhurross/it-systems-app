@@ -60,7 +60,7 @@ export default function LicensePage({ params }: PageProps<"/[locale]/software/[i
             <CardTitle>{t("tickets.details")}</CardTitle>
           </CardHeader>
           <CardContent>
-            <dl className="divide-y text-sm">
+            <dl className="@container divide-y text-sm">
               <Row label={t("software.vendor")}>{license.vendorName ?? "—"}</Row>
               <Row label={t("software.version")}>{license.version ?? "—"}</Row>
               <Row label={t("software.type")}>{t(`enums.licenseType.${license.type}`)}</Row>
@@ -91,7 +91,7 @@ export default function LicensePage({ params }: PageProps<"/[locale]/software/[i
               <ul className="grid gap-x-6 gap-y-1 text-sm sm:grid-cols-2">
                 {license.devices.map((d) => (
                   <li key={d.id} className="flex items-center justify-between gap-2 border-b py-1.5">
-                    <Link href={`/assets/${d.assetId}`} className="min-w-0 truncate hover:text-primary">
+                    <Link href={`/assets/${d.assetId}`} className="min-w-0 break-words hover:text-primary">
                       <span className="font-medium">{d.name}</span>
                       {d.assignedName && <span className="text-muted-foreground"> · {d.assignedName}</span>}
                     </Link>
@@ -118,7 +118,7 @@ export default function LicensePage({ params }: PageProps<"/[locale]/software/[i
 
 function Row({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <div className="grid grid-cols-[9rem_1fr] gap-2 py-2">
+    <div className="grid gap-1 py-2 @[16rem]:grid-cols-[9rem_1fr] @[16rem]:gap-2">
       <dt className="text-muted-foreground">{label}</dt>
       <dd className="min-w-0 break-words">{children}</dd>
     </div>

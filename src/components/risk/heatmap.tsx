@@ -59,7 +59,7 @@ export function Heatmap({
                     title={label}
                     onClick={() => onSelect(active ? null : { likelihood, impact })}
                     className={cn(
-                      "grid aspect-[4/3] min-h-9 place-items-center rounded-md text-sm font-semibold tabular-nums transition-[box-shadow,opacity] outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                      "grid aspect-[4/3] min-h-9 w-full min-w-0 place-items-center rounded-md text-sm font-semibold tabular-nums transition-[box-shadow,opacity] outline-none focus-visible:ring-2 focus-visible:ring-ring",
                       LEVEL_STYLE[level],
                       n === 0 && "opacity-45",
                       active && "ring-2 ring-foreground ring-offset-2 ring-offset-card",
