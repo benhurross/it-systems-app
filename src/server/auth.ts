@@ -1,11 +1,18 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { admin } from "better-auth/plugins";
+import { parseOrigins } from "@/lib/origins";
 import { ac, authRoles } from "@/lib/permissions";
 import { db } from "./db";
 import * as schema from "./db/schema";
 
+// The app's own address, then the others people may sign in from, such as this computer's address
+// on the office network. Either setting may list several; the first address is the app's own.
+const [baseURL, ...otherOrigins] = parseOrigins(process.env.BETTER_AUTH_URL, process.env.BETTER_AUTH_TRUSTED_ORIGINS);
+
 export const auth = betterAuth({
+  baseURL,
+  trustedOrigins: otherOrigins,
   database: drizzleAdapter(db, { provider: "pg", schema, usePlural: true }),
   // Accounts are created by admins in Settings; nobody signs themselves up.
   emailAndPassword: { enabled: true, disableSignUp: true, minPasswordLength: 10 },
