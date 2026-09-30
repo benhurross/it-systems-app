@@ -314,12 +314,14 @@ Each phase ends with a local git commit. There is no remote.
 ### Phase 8 - Finance, Risk & Security, People
 - [x] Budget: allocation vs committed per category for the fiscal year, utilisation bars, and renewals in the next 90 days
 - [x] Purchases: requested, then approved or rejected, then ordered, then received. A received hardware purchase offers "Add to inventory"
-- [ ] Contracts register with renewal status, and a Vendors directory
-- [ ] Risk register with a 5x5 heatmap, treatment, owner and review date
-- [ ] Vulnerability log with severity, deadline and overdue flag
-- [ ] Directory: employees, used as requesters and asset holders
-- [ ] Onboarding: joiner record with a three-phase checklist; completing it creates the employee
-- [ ] Offboarding: leaver record with a checklist and a 90-day forwarding countdown
+- [x] Contracts register with renewal status, and a Vendors directory
+- [x] Risk register with a 5x5 heatmap, treatment, owner and review date
+- [x] Vulnerability log with severity, deadline and overdue flag
+- [x] Directory: employees, used as requesters and asset holders
+- [x] Onboarding: joiner record with a three-phase checklist; completing it creates the employee
+- [x] Offboarding: leaver record with a checklist and a 90-day forwarding countdown
+
+Phase 8 was written in a local session that ran out of credit before it was pushed; it was recovered from that commit and merged. Its Budget and Purchases tabs replaced a second version rebuilt in the meantime.
 
 ### Staff list for local testing
 The demo seed can use the real staff list in place of invented people, for testing on the owner's machine. The list holds real names and emails, so it stays on that machine and is never committed (`*.xlsx` is ignored). Tickets, assets and the other records stay fictional, and tests keep using the invented people.

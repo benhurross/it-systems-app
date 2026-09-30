@@ -1,4 +1,4 @@
-import type { Severity, VulnStatus } from "./domain";
+import type { RiskStatus, Severity, VulnStatus } from "./domain";
 
 export const riskScore = (likelihood: number, impact: number) => likelihood * impact;
 
@@ -14,4 +14,9 @@ const OPEN: readonly VulnStatus[] = ["open", "in_progress"];
 
 export function isOverdue(vulnerability: { status: VulnStatus; deadline: string }, today: string): boolean {
   return OPEN.includes(vulnerability.status) && vulnerability.deadline < today;
+}
+
+/** A risk still in play whose review date has come. */
+export function reviewDue(risk: { status: RiskStatus; reviewDate: string | null }, today: string): boolean {
+  return risk.status !== "closed" && risk.reviewDate !== null && risk.reviewDate <= today;
 }

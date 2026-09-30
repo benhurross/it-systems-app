@@ -1,10 +1,10 @@
 import { employeeInput } from "@/lib/schemas";
 import { body, handler, idParam, requireUser } from "@/server/http";
-import { getEmployee, updateEmployee } from "@/server/services/people";
+import { employeeProfile, updateEmployee } from "@/server/services/people";
 
 export const GET = handler(async (_req, ctx: RouteContext<"/api/employees/[id]">) => {
   await requireUser("it");
-  return getEmployee(await idParam(ctx));
+  return employeeProfile(await idParam(ctx));
 });
 
 export const PATCH = handler(async (req, ctx: RouteContext<"/api/employees/[id]">) => {

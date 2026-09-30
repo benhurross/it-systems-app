@@ -30,11 +30,14 @@ export function useApiMutation<TInput, TResult = unknown>(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     form?: Pick<UseFormReturn<any, any, any>, "setError">;
     onSuccess?: (result: TResult) => void;
+    /** Mutations sharing a scope run one at a time, in order, so later saves always land last. */
+    scope?: string;
   } = {},
 ) {
   const t = useTranslations();
   return useMutation({
     mutationFn,
+    scope: options.scope ? { id: options.scope } : undefined,
     onSuccess: (result) => {
       if (options.success) toast.success(options.success);
       options.onSuccess?.(result);

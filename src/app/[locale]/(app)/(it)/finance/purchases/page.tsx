@@ -1,14 +1,14 @@
 "use client";
 
-import { CircleCheck, Hourglass, MoreHorizontal, PackageCheck, Plus } from "lucide-react";
+import { MoreHorizontal, PackagePlus, Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
-import { AssetDialog, type AssetInput } from "@/components/assets/asset-dialog";
+import { toast } from "sonner";
+import { AssetDialog } from "@/components/assets/asset-dialog";
 import { EnumBadge } from "@/components/badges";
 import { columnHelper, DataTable } from "@/components/data-table";
+import { PurchaseDialog } from "@/components/finance/dialogs";
 import { FinanceHeader } from "@/components/finance/finance-header";
-import { PurchaseDialog } from "@/components/finance/purchase-dialog";
-import { StatCard } from "@/components/stat-card";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -27,59 +27,45 @@ import { PURCHASE_STATUSES, ref, type PurchaseStatus } from "@/lib/domain";
 import { nextPurchaseStatuses } from "@/lib/workflows";
 
 const col = columnHelper<Purchase>();
-
-/** The menu label for moving a purchase on to each status. */
-const STEP: Partial<Record<PurchaseStatus, "approve" | "reject" | "markOrdered" | "markReceived">> = {
+const ACTION: Record<PurchaseStatus, "approve" | "reject" | "order" | "receive" | null> = {
   approved: "approve",
   rejected: "reject",
-  ordered: "markOrdered",
-  received: "markReceived",
+  ordered: "order",
+  received: "receive",
+  requested: null,
 };
 
 export default function PurchasesPage() {
   const t = useTranslations();
   const format = useFormat();
   const lookups = useLookups();
-  const [editing, setEditing] = useState<Purchase | "new" | null>(null);
-  const [receiving, setReceiving] = useState<Purchase | null>(null);
+  const [dialog, setDialog] = useState<{ kind: "new" } | { kind: "edit" | "inventory"; purchase: Purchase } | null>(null);
   const { data = [], isLoading } = useApi<Purchase[]>("/purchases");
   const move = useApiMutation(
-    ({ id, status }: { id: number; status: PurchaseStatus }) => api(`/purchases/${id}/status`, { body: { status } }),
-    { success: t("finance.purchases.updated") },
+    async ({ purchase, status }: { purchase: Purchase; status: PurchaseStatus }) => {
+      await api(`/purchases/${purchase.id}/status`, { body: { status } });
+      return { purchase, status };
+    },
+    {
+      onSuccess: ({ purchase, status }) =>
+        toast.success(t("finance.purchases.moved", { ref: ref("purchase", purchase.id), status: t(`enums.purchaseStatus.${status}`) })),
+    },
   );
 
-  const total = (rows: Purchase[]) => format.currency(rows.reduce((sum, p) => sum + p.amount, 0));
-  const awaiting = data.filter((p) => p.status === "requested");
-  const onOrder = data.filter((p) => p.status === "approved" || p.status === "ordered");
-  const year = isoDate().slice(0, 4);
-  const received = data.filter((p) => p.status === "received" && p.receivedAt && isoDate(p.receivedAt).startsWith(year));
-
-  const toAsset = (p: Purchase): Partial<AssetInput> => ({
-    purchaseId: p.id,
-    purchaseDate: p.receivedAt ? isoDate(p.receivedAt) : null,
-    purchaseCost: Math.round((p.amount / p.quantity) * 100) / 100,
-    assignedTo: p.requestedFor,
-    status: p.requestedFor ? "in_use" : "in_stock",
-    notes: t("finance.purchases.fromPurchase", { ref: ref("purchase", p.id), title: p.title }),
-  });
-
   const columns = [
-    col.accessor((p) => ref("purchase", p.id), {
-      id: "ref",
-      header: t("finance.purchases.ref"),
-      cell: (info) => <span className="font-mono text-muted-foreground">{info.getValue()}</span>,
-    }),
+    col.accessor((p) => ref("purchase", p.id), { id: "ref", header: t("finance.purchases.ref"), cell: (info) => <span className="font-mono">{info.getValue()}</span> }),
     col.accessor("title", {
       header: t("finance.purchases.item"),
       cell: (info) => {
         const p = info.row.original;
         return (
           <div className="min-w-48">
-            <p className="font-medium">
-              {p.title}
-              {p.quantity > 1 && <span className="text-muted-foreground"> × {format.number(p.quantity)}</span>}
-            </p>
-            {p.vendorName && <p className="text-xs text-muted-foreground">{p.vendorName}</p>}
+            <p className="font-medium">{p.title}</p>
+            {p.hardware && p.status === "received" && (
+              <p className="text-xs text-muted-foreground">
+                {t("finance.purchases.inInventory", { count: format.number(p.inInventory), quantity: format.number(p.quantity) })}
+              </p>
+            )}
           </div>
         );
       },
@@ -89,47 +75,48 @@ export default function PurchasesPage() {
       filterFn: "arrHas",
       cell: (info) => lookups.label("budget_category", info.getValue()),
     }),
-    col.accessor("requestedForName", { header: t("finance.purchases.requestedFor"), cell: (info) => info.getValue() ?? "" }),
-    col.accessor("amount", {
-      header: t("finance.purchases.amount"),
-      cell: (info) => <span className="whitespace-nowrap tabular-nums">{format.currency(info.getValue())}</span>,
-    }),
+    col.accessor("vendorName", { header: t("finance.purchases.vendor"), cell: (info) => info.getValue() ?? "—" }),
+    col.accessor("requestedForName", { header: t("finance.purchases.requestedFor"), cell: (info) => info.getValue() ?? "—" }),
+    col.accessor("quantity", { header: t("finance.purchases.quantity"), cell: (info) => <span className="tabular-nums">{format.number(info.getValue())}</span> }),
+    col.accessor("amount", { header: t("finance.purchases.amount"), cell: (info) => <span className="tabular-nums">{format.currency(info.getValue())}</span> }),
     col.accessor("status", {
       header: t("finance.purchases.status"),
       filterFn: "arrHas",
       cell: (info) => <EnumBadge kind="purchaseStatus" value={info.getValue()} />,
     }),
-    col.accessor("createdAt", {
-      header: t("finance.purchases.date"),
-      cell: (info) => <span className="whitespace-nowrap">{format.date(info.getValue())}</span>,
-    }),
+    col.accessor("createdAt", { header: t("finance.purchases.requestedOn"), cell: (info) => format.date(info.getValue()) }),
     col.display({
       id: "actions",
       header: () => <span className="sr-only">{t("common.actions")}</span>,
       cell: (info) => {
         const p = info.row.original;
-        const steps = nextPurchaseStatuses(p.status);
-        const canReceive = p.status === "received" && p.hardware;
-        if (steps.length === 0 && !canReceive) return null;
+        const next = nextPurchaseStatuses(p.status);
+        const addable = p.hardware && p.status === "received" && p.inInventory < p.quantity;
+        if (next.length === 0 && !addable) return null;
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" aria-label={t("finance.purchases.actionsFor", { ref: ref("purchase", p.id) })}>
+              <Button variant="ghost" size="icon-sm" aria-label={t("finance.purchases.actions", { item: p.title })}>
                 <MoreHorizontal />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              {steps.map((status) => (
-                <DropdownMenuItem key={status} disabled={move.isPending} onSelect={() => move.mutate({ id: p.id, status })}>
-                  {t(`finance.purchases.${STEP[status]!}`)}
+              {next.map((status) => (
+                <DropdownMenuItem key={status} onSelect={() => move.mutate({ purchase: p, status })}>
+                  {t(`finance.purchases.${ACTION[status]!}`)}
                 </DropdownMenuItem>
               ))}
-              {canReceive && <DropdownMenuItem onSelect={() => setReceiving(p)}>{t("finance.purchases.addToInventory")}</DropdownMenuItem>}
               {p.status === "requested" && (
                 <>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onSelect={() => setEditing(p)}>{t("common.edit")}</DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => setDialog({ kind: "edit", purchase: p })}>{t("common.edit")}</DropdownMenuItem>
                 </>
+              )}
+              {addable && (
+                <DropdownMenuItem onSelect={() => setDialog({ kind: "inventory", purchase: p })}>
+                  <PackagePlus />
+                  {t("finance.purchases.addToInventory")}
+                </DropdownMenuItem>
               )}
             </DropdownMenuContent>
           </DropdownMenu>
@@ -142,32 +129,12 @@ export default function PurchasesPage() {
     <>
       <FinanceHeader
         actions={
-          <Button onClick={() => setEditing("new")}>
+          <Button onClick={() => setDialog({ kind: "new" })}>
             <Plus />
             {t("finance.purchases.new")}
           </Button>
         }
       />
-      <div className="mb-6 grid gap-4 sm:grid-cols-3">
-        <StatCard
-          icon={Hourglass}
-          label={t("finance.purchases.summary.awaiting")}
-          value={format.number(awaiting.length)}
-          hint={t("finance.purchases.summary.value", { amount: total(awaiting) })}
-        />
-        <StatCard
-          icon={CircleCheck}
-          label={t("finance.purchases.summary.onOrder")}
-          value={format.number(onOrder.length)}
-          hint={t("finance.purchases.summary.value", { amount: total(onOrder) })}
-        />
-        <StatCard
-          icon={PackageCheck}
-          label={t("finance.purchases.summary.received")}
-          value={format.number(received.length)}
-          hint={t("finance.purchases.summary.value", { amount: total(received) })}
-        />
-      </div>
       <DataTable
         data={data}
         columns={columns}
@@ -181,26 +148,35 @@ export default function PurchasesPage() {
           { column: "category", label: t("finance.purchases.category"), options: lookups.options("budget_category") },
         ]}
         csv={{
-          filename: `purchases-${isoDate()}.csv`,
+          filename: "purchases.csv",
           columns: [
-            { header: "Ref", value: (p) => ref("purchase", p.id) },
+            { header: "Request", value: (p) => ref("purchase", p.id) },
             { header: "Item", value: (p) => p.title },
             { header: "Category", value: (p) => lookups.label("budget_category", p.category) },
             { header: "Vendor", value: (p) => p.vendorName },
-            { header: "Requested for", value: (p) => p.requestedForName },
-            { header: "Requested by", value: (p) => p.requestedByName },
+            { header: "For", value: (p) => p.requestedForName },
             { header: "Quantity", value: (p) => p.quantity },
-            { header: "Amount", value: (p) => p.amount },
-            { header: "Hardware", value: (p) => (p.hardware ? "Yes" : "No") },
+            { header: "Total (SAR)", value: (p) => p.amount },
             { header: "Status", value: (p) => p.status },
+            { header: "Requested by", value: (p) => p.requestedByName },
             { header: "Requested", value: (p) => isoDate(p.createdAt) },
             { header: "Decided by", value: (p) => p.approvedByName },
-            { header: "Received", value: (p) => (p.receivedAt ? isoDate(p.receivedAt) : null) },
           ],
         }}
       />
-      {editing && <PurchaseDialog purchase={editing === "new" ? undefined : editing} onClose={() => setEditing(null)} />}
-      {receiving && <AssetDialog initial={toAsset(receiving)} onClose={() => setReceiving(null)} />}
+      {dialog?.kind === "new" && <PurchaseDialog onClose={() => setDialog(null)} />}
+      {dialog?.kind === "edit" && <PurchaseDialog purchase={dialog.purchase} onClose={() => setDialog(null)} />}
+      {dialog?.kind === "inventory" && (
+        <AssetDialog
+          initial={{
+            name: "",
+            purchaseId: dialog.purchase.id,
+            purchaseDate: isoDate(dialog.purchase.receivedAt ?? dialog.purchase.createdAt),
+            purchaseCost: Math.round(dialog.purchase.amount / dialog.purchase.quantity),
+          }}
+          onClose={() => setDialog(null)}
+        />
+      )}
     </>
   );
 }

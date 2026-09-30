@@ -2,7 +2,8 @@ import { addDays, daysBetween } from "./dates";
 import type { PurchaseStatus } from "./domain";
 
 export const RENEWAL_WINDOW_DAYS = 90;
-export type ContractState = "active" | "expiring" | "expired";
+export const CONTRACT_STATES = ["active", "expiring", "expired"] as const;
+export type ContractState = (typeof CONTRACT_STATES)[number];
 
 export function contractState(contract: { endDate: string }, today: string): ContractState {
   if (contract.endDate < today) return "expired";

@@ -224,6 +224,15 @@ describe("finance", () => {
     await finance.setBudget({ fiscalYear: 2026, category: "hardware", amount: 200_000 }, admin);
     expect((await finance.budgetSummary(2026)).lines.find((l) => l.category === "hardware")!.budget).toBe(200_000);
   });
+
+  it("counts how much of a purchase is already in the inventory", async () => {
+    const list = await finance.listPurchases();
+    const laptops = list.find((p) => p.title === "Replacement laptops, lifecycle batch 1")!;
+    const [{ n }] = await db.select({ n: count() }).from(s.assets).where(eq(s.assets.purchaseId, laptops.id));
+    expect(n).toBeGreaterThan(0);
+    expect(laptops.inInventory).toBe(n);
+    expect(list.find((p) => p.title === "24-inch monitors")!.inInventory).toBe(0);
+  });
 });
 
 describe("projects", () => {
@@ -247,6 +256,18 @@ describe("risk and vulnerabilities", () => {
     const input = vulnerabilityInput.parse({ ...v, status: "resolved", resolution: "Patched" });
     const fixed = await risk.updateVulnerability(v.id, input, it_);
     expect(fixed.resolvedOn).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+});
+
+describe("directory", () => {
+  it("profiles an employee with the devices they hold and the tickets they raised", async () => {
+    const profile = await people.employeeProfile(employee.employeeId!);
+    expect(profile.name).toBe("Nora Al-Otaibi");
+    expect(profile.assets.length).toBeGreaterThan(0);
+    expect(profile.tickets.length).toBeGreaterThan(0);
+    expect(profile.tickets.length).toBeLessThanOrEqual(10);
+    const times = profile.tickets.map((t) => t.createdAt.getTime());
+    expect(times).toEqual(times.toSorted((a, b) => b - a));
   });
 });
 

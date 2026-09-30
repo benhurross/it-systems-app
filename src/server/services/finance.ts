@@ -1,4 +1,4 @@
-import { asc, desc, eq, getTableColumns } from "drizzle-orm";
+import { asc, desc, eq, getTableColumns, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import type { z } from "zod";
 import { isoDate } from "@/lib/dates";
@@ -8,7 +8,7 @@ import type { budgetInput, contractInput, purchaseInput, purchaseStatus, vendorI
 import { nextPurchaseStatuses } from "@/lib/workflows";
 import { audit, type Actor } from "../audit";
 import { db } from "../db";
-import { budgets, contracts, employees, purchases, users, vendors } from "../db/schema";
+import { assets, budgets, contracts, employees, purchases, users, vendors } from "../db/schema";
 import { badRequest, one } from "../http";
 import { getSetting } from "../settings";
 
@@ -65,6 +65,7 @@ export async function listPurchases() {
       requestedForName: employees.name,
       requestedByName: requester.name,
       approvedByName: approver.name,
+      inInventory: sql<number>`(select count(*) from ${assets} where ${assets.purchaseId} = ${purchases.id})`.mapWith(Number),
     })
     .from(purchases)
     .leftJoin(vendors, eq(vendors.id, purchases.vendorId))

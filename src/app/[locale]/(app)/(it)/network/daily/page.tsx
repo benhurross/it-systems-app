@@ -29,7 +29,10 @@ export default function DailyChecksPage() {
   const today = isoDate();
   const [date, setDate] = useState(today);
   const { data } = useApi<DailyChecklist>(`/daily-checks?date=${date}`);
-  const save = useApiMutation((input: z.input<typeof dailyCheckInput>) => api("/daily-checks", { method: "PUT", body: input }));
+  // A tick and a note on the same item each carry both values, so saves run in order.
+  const save = useApiMutation((input: z.input<typeof dailyCheckInput>) => api("/daily-checks", { method: "PUT", body: input }), {
+    scope: "daily-checks",
+  });
   const done = data?.items.filter((i) => i.done).length ?? 0;
   const total = DAILY_CHECKS.length;
 
