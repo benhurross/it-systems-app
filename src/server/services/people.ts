@@ -5,7 +5,7 @@ import { onboardingComplete } from "@/lib/people";
 import type { checklistUpdate, employeeInput, joinerInput, leaverInput } from "@/lib/schemas";
 import { audit, type Actor } from "../audit";
 import { db } from "../db";
-import { employees, joiners, leavers, users } from "../db/schema";
+import { assets, employees, joiners, leavers, tickets, users } from "../db/schema";
 import { badRequest, one } from "../http";
 
 // ---------------------------------------------------------------- employees
@@ -16,6 +16,25 @@ export async function listEmployees() {
 
 export async function getEmployee(id: number) {
   return one(await db.select().from(employees).where(eq(employees.id, id)));
+}
+
+/** A person as the directory shows them: the devices they hold and the tickets they raised. */
+export async function employeeProfile(id: number) {
+  const [employee, held, raised] = await Promise.all([
+    getEmployee(id),
+    db
+      .select({ id: assets.id, name: assets.name, category: assets.category, type: assets.type, status: assets.status })
+      .from(assets)
+      .where(eq(assets.assignedTo, id))
+      .orderBy(asc(assets.name)),
+    db
+      .select({ id: tickets.id, subject: tickets.subject, status: tickets.status, createdAt: tickets.createdAt })
+      .from(tickets)
+      .where(eq(tickets.requesterId, id))
+      .orderBy(desc(tickets.createdAt), desc(tickets.id))
+      .limit(10),
+  ]);
+  return { ...employee, assets: held, tickets: raised };
 }
 
 export async function createEmployee(input: z.infer<typeof employeeInput>, actor: Actor) {

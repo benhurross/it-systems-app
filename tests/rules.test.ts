@@ -10,7 +10,7 @@ import { assetFlags } from "@/lib/lifecycle";
 import { availability, nextState, parsePing } from "@/lib/monitor";
 import { isProjectOverdue, projectProgress } from "@/lib/projects";
 import { forwardingDaysLeft, forwardingEnds, leaverState, onboardingComplete, onboardingProgress } from "@/lib/people";
-import { isOverdue, riskLevel, riskScore } from "@/lib/risk";
+import { isOverdue, reviewDue, riskLevel, riskScore } from "@/lib/risk";
 import {
   averageResolutionHours,
   averageSatisfaction,
@@ -377,6 +377,13 @@ describe("risk", () => {
     expect(isOverdue({ status: "open", deadline: "2026-09-28" }, "2026-09-29")).toBe(true);
     expect(isOverdue({ status: "in_progress", deadline: "2026-09-29" }, "2026-09-29")).toBe(false);
     expect(isOverdue({ status: "resolved", deadline: "2026-01-01" }, "2026-09-29")).toBe(false);
+  });
+
+  it("calls a risk due for review on its review date, unless it is closed", () => {
+    expect(reviewDue({ status: "open", reviewDate: "2026-09-29" }, "2026-09-29")).toBe(true);
+    expect(reviewDue({ status: "mitigating", reviewDate: "2026-09-30" }, "2026-09-29")).toBe(false);
+    expect(reviewDue({ status: "closed", reviewDate: "2026-01-01" }, "2026-09-29")).toBe(false);
+    expect(reviewDue({ status: "accepted", reviewDate: null }, "2026-09-29")).toBe(false);
   });
 });
 

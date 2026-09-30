@@ -34,6 +34,7 @@ export type Lookup = Item<typeof lookups.listLookups>;
 export type UserRow = Item<typeof users.listUsers>;
 export type AuditEntry = Item<typeof auditLog.listAudit>;
 export type Employee = Item<typeof people.listEmployees>;
+export type EmployeeProfile = Result<typeof people.employeeProfile>;
 export type Staff = Item<typeof people.listStaff>;
 export type Joiner = Item<typeof people.listJoiners>;
 export type Leaver = Item<typeof people.listLeavers>;

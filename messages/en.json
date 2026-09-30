@@ -1,7 +1,7 @@
 {
   "app": {
     "name": "AP Plus IT Systems",
-    "tagline": "IT service and asset management"
+    "tagline": "IT Services and Assets Management"
   },
   "common": {
     "save": "Save",
@@ -307,6 +307,41 @@
       "wifi": "Wi-Fi access points",
       "test_email": "Test email sent and received",
       "printers": "Printers"
+    },
+    "onboardingTask": {
+      "create_email": "Create the email account",
+      "create_accounts": "Create system accounts",
+      "folder_permissions": "Set shared folder permissions",
+      "prepare_device": "Prepare the laptop or desktop",
+      "access_card": "Request the access card",
+      "check_accounts": "Check sign-in to every account",
+      "deliver_device": "Hand over the device",
+      "deliver_cards": "Hand over the access card",
+      "it_policies": "Walk through the IT policies",
+      "check_shares": "Confirm access to shared folders",
+      "signed_forms": "File the signed IT forms"
+    },
+    "offboardingTask": {
+      "disable_account": "Disable the user account",
+      "forward_mail": "Forward mail to the manager",
+      "collect_device": "Collect the device and access card",
+      "revoke_access": "Revoke system access",
+      "archive_mailbox": "Archive the mailbox",
+      "delete_mailbox": "Delete the mailbox after 90 days"
+    },
+    "likelihood": {
+      "1": "Rare",
+      "2": "Unlikely",
+      "3": "Possible",
+      "4": "Likely",
+      "5": "Almost certain"
+    },
+    "impact": {
+      "1": "Negligible",
+      "2": "Minor",
+      "3": "Moderate",
+      "4": "Major",
+      "5": "Severe"
     }
   },
   "validation": {
@@ -329,7 +364,7 @@
       "serviceDesk": "Service desk",
       "monitoring": "Monitoring",
       "kpis": "KPI targets",
-      "organisation": "Organisation",
+      "organisation": "Organization",
       "audit": "Audit log"
     },
     "users": {
@@ -381,12 +416,12 @@
       }
     },
     "sla": {
-      "title": "Resolution targets",
+      "title": "Resolution Targets",
       "description": "Hours allowed to resolve a ticket at each priority. A change applies to tickets opened or re-prioritised from now on.",
       "hours": "Hours"
     },
     "monitoring": {
-      "title": "Network checks",
+      "title": "Network Checks",
       "description": "The server checks every monitored device on this schedule and raises alerts when one goes down or slows.",
       "enabled": "Run checks",
       "interval": "Check every (seconds)",
@@ -395,7 +430,7 @@
       "retention": "Keep history for (days)"
     },
     "kpis": {
-      "title": "KPI baselines and targets",
+      "title": "KPI Baselines and Targets",
       "description": "Set per year. Years without their own figures use the workbook's.",
       "year": "Year",
       "kpi": "KPI",
@@ -403,8 +438,8 @@
       "target": "Target"
     },
     "organisation": {
-      "title": "Organisation",
-      "name": "Organisation name",
+      "title": "Organization",
+      "name": "Organization name",
       "fiscalStart": "Fiscal year starts in"
     },
     "audit": {
@@ -496,7 +531,7 @@
     "notFound": "This ticket does not exist or you cannot see it."
   },
   "requests": {
-    "title": "My requests",
+    "title": "My Requests",
     "description": "Everything you have asked IT for, and where it stands.",
     "new": "New request",
     "newTitle": "Ask IT for help",
@@ -800,5 +835,213 @@
     "taskDeleted": "Task deleted.",
     "empty": "No tasks",
     "noProjects": "No projects yet."
+  },
+  "finance": {
+    "title": "Finance",
+    "intro": "The IT budget, what is committed against it, and the purchases and contracts behind it.",
+    "tabs": {
+      "budget": "Budget",
+      "purchases": "Purchases",
+      "contracts": "Contracts",
+      "vendors": "Vendors"
+    },
+    "budget": {
+      "year": "FY {year}",
+      "range": "{from} to {to}",
+      "previous": "Previous year",
+      "next": "Next year",
+      "total": "Budget",
+      "committed": "Committed",
+      "used": "Used",
+      "overCount": "Categories over budget",
+      "category": "Category",
+      "contracts": "Contracts",
+      "purchases": "Purchases",
+      "remaining": "Remaining",
+      "utilisation": "Utilisation",
+      "notSet": "Not set",
+      "set": "Set budget",
+      "setFor": "Set the {category} budget",
+      "setTitle": "{category} budget, FY {year}",
+      "amount": "Amount (SAR)",
+      "saved": "Budget saved.",
+      "renewals": "Renewals in the next 90 days",
+      "noRenewals": "No contracts end in the next 90 days.",
+      "ends": "Ends {date}",
+      "autoRenews": "Renews automatically"
+    },
+    "purchases": {
+      "ref": "Request",
+      "new": "New request",
+      "edit": "Edit request",
+      "item": "Item",
+      "category": "Budget category",
+      "vendor": "Vendor",
+      "requestedFor": "For",
+      "quantity": "Quantity",
+      "amount": "Total (SAR)",
+      "hardware": "Hardware for the inventory",
+      "notes": "Notes",
+      "status": "Status",
+      "requestedBy": "Requested by",
+      "requestedOn": "Requested",
+      "saved": "Request saved.",
+      "actions": "Actions for {item}",
+      "approve": "Approve",
+      "reject": "Reject",
+      "order": "Mark as ordered",
+      "receive": "Mark as received",
+      "moved": "{ref}: {status}",
+      "addToInventory": "Add to inventory",
+      "inInventory": "In inventory: {count} of {quantity}"
+    },
+    "contracts": {
+      "ref": "Contract",
+      "add": "Add contract",
+      "edit": "Edit contract",
+      "name": "Contract",
+      "vendor": "Vendor",
+      "category": "Budget category",
+      "location": "Location",
+      "start": "Starts",
+      "end": "Ends",
+      "annualCost": "Annual cost (SAR)",
+      "autoRenew": "Renews automatically",
+      "state": "Renewal",
+      "notes": "Notes",
+      "saved": "Contract saved."
+    },
+    "vendors": {
+      "add": "Add vendor",
+      "edit": "Edit vendor",
+      "name": "Vendor",
+      "category": "Category",
+      "contact": "Contact person",
+      "email": "Email",
+      "phone": "Phone",
+      "website": "Website",
+      "active": "Active",
+      "status": "Status",
+      "inactive": "Inactive",
+      "notes": "Notes",
+      "saved": "Vendor saved."
+    }
+  },
+  "risk": {
+    "title": "Risk & Security",
+    "intro": "The risk register and the vulnerabilities found, with owners and deadlines.",
+    "tabs": {
+      "register": "Risk register",
+      "vulnerabilities": "Vulnerabilities"
+    },
+    "heatmap": "Open risks by likelihood and impact",
+    "likelihood": "Likelihood",
+    "impact": "Impact",
+    "cell": "Likelihood {likelihood}, impact {impact}. Open risks: {count}",
+    "filtered": "Showing likelihood {likelihood}, impact {impact}",
+    "showAll": "Show all",
+    "ref": "Risk",
+    "add": "Log risk",
+    "edit": "Edit risk",
+    "name": "Risk",
+    "category": "Category",
+    "asset": "Affected asset",
+    "description": "Description",
+    "controls": "Current controls",
+    "score": "Score",
+    "level": "Level",
+    "treatment": "Treatment plan",
+    "owner": "Owner",
+    "status": "Status",
+    "reviewDate": "Next review",
+    "reviewDue": "Review due",
+    "saved": "Risk saved.",
+    "scale": "{value} - {label}"
+  },
+  "vulns": {
+    "ref": "Vulnerability",
+    "add": "Log vulnerability",
+    "edit": "Edit vulnerability",
+    "name": "Vulnerability",
+    "severity": "Severity",
+    "asset": "Affected asset",
+    "description": "Description",
+    "detectedOn": "Found on",
+    "detectionMethod": "Found by",
+    "deadline": "Fix by",
+    "status": "Status",
+    "resolution": "Resolution",
+    "resolvedOn": "Resolved on",
+    "owner": "Owner",
+    "overdue": "Overdue",
+    "overdueOnly": "Overdue only",
+    "saved": "Vulnerability saved.",
+    "summary": {
+      "open": "Open",
+      "overdue": "Overdue",
+      "serious": "Critical or high, open"
+    }
+  },
+  "people": {
+    "title": "People",
+    "intro": "The staff directory, and IT's part when people join and leave.",
+    "tabs": {
+      "directory": "Directory",
+      "onboarding": "Onboarding",
+      "offboarding": "Offboarding"
+    },
+    "name": "Name",
+    "email": "Email",
+    "department": "Department",
+    "location": "Location",
+    "jobTitle": "Job title",
+    "phone": "Phone",
+    "status": "Status",
+    "progress": "Progress",
+    "directory": {
+      "add": "Add employee",
+      "edit": "Edit employee",
+      "active": "Current employee",
+      "current": "Current",
+      "left": "Left",
+      "currentOnly": "Current staff only",
+      "saved": "Employee saved.",
+      "back": "Directory",
+      "assets": "Assets held",
+      "noAssets": "No assets assigned.",
+      "tickets": "Recent tickets",
+      "noTickets": "No tickets raised."
+    },
+    "onboarding": {
+      "new": "New joiner",
+      "startDate": "Start date",
+      "inProgress": "In progress",
+      "completed": "Completed",
+      "saved": "Joiner added.",
+      "checklist": "Onboarding: {name}",
+      "open": "Open the checklist for {name}",
+      "starts": "Starts {date}",
+      "complete": "Complete onboarding",
+      "completeHint": "Finishing adds {name} to the directory.",
+      "done": "Onboarding complete. {name} is now in the directory.",
+      "viewInDirectory": "View in the directory"
+    },
+    "offboarding": {
+      "new": "New leaver",
+      "employee": "Employee",
+      "resignationDate": "Resignation date",
+      "forwardTo": "Forward mail to",
+      "notes": "Notes",
+      "saved": "Leaver added.",
+      "checklist": "Offboarding: {name}",
+      "open": "Open the checklist for {name}",
+      "forwarding": "Mail forwarding",
+      "forwardingEnds": "Forwarding ends {date}",
+      "daysLeft": "Days left: {days}",
+      "overdueBy": "Ended days ago: {days}",
+      "completeHint": "Ticking the last step completes offboarding and marks the employee as having left.",
+      "notesSaved": "Notes saved.",
+      "saveNotes": "Save notes"
+    }
   }
 }

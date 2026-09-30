@@ -98,7 +98,7 @@ test.describe("as an admin", () => {
     await page.goto("/en/settings/kpis");
     await expect(page.getByRole("group", { name: /Tickets resolved within SLA/ }).getByLabel("Target")).toHaveValue("90");
     await page.goto("/en/settings/organisation");
-    await expect(page.getByLabel("Organisation name")).toHaveValue("AP Plus");
+    await expect(page.getByLabel("Organization name")).toHaveValue("AP Plus");
   });
 
   test("Settings works in Arabic", async ({ page }) => {
