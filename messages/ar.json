@@ -809,6 +809,34 @@
       "purchases": "المشتريات",
       "contracts": "العقود",
       "vendors": "الموردون"
+    },
+    "budget": {
+      "year": "السنة المالية",
+      "fy": "{year}",
+      "range": "من {from} إلى {to}",
+      "category": "الفئة",
+      "allocated": "الميزانية",
+      "contracts": "العقود",
+      "purchases": "المشتريات",
+      "committed": "الملتزم به",
+      "utilisation": "نسبة الاستخدام",
+      "remaining": "المتبقي",
+      "notBudgeted": "بلا ميزانية",
+      "summary": {
+        "budget": "إجمالي الميزانية",
+        "committed": "الملتزم به",
+        "split": "العقود {contracts} · المشتريات {purchases}",
+        "remaining": "المتبقي",
+        "utilisation": "نسبة الاستخدام",
+        "over": "فئات تجاوزت الميزانية: {count}"
+      }
+    },
+    "renewals": {
+      "title": "التجديدات خلال {days} يومًا القادمة",
+      "none": "لا توجد عقود مستحقة للتجديد.",
+      "ends": "ينتهي في {date} · متبقٍ {days} يومًا",
+      "perYear": "{amount} سنويًا",
+      "autoRenew": "يتجدد تلقائيًا"
     }
   }
 }

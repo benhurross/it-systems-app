@@ -809,6 +809,34 @@
       "purchases": "Purchases",
       "contracts": "Contracts",
       "vendors": "Vendors"
+    },
+    "budget": {
+      "year": "Fiscal year",
+      "fy": "FY{year}",
+      "range": "{from} to {to}",
+      "category": "Category",
+      "allocated": "Budget",
+      "contracts": "Contracts",
+      "purchases": "Purchases",
+      "committed": "Committed",
+      "utilisation": "Utilisation",
+      "remaining": "Remaining",
+      "notBudgeted": "Not budgeted",
+      "summary": {
+        "budget": "Total budget",
+        "committed": "Committed",
+        "split": "Contracts {contracts} · Purchases {purchases}",
+        "remaining": "Remaining",
+        "utilisation": "Utilisation",
+        "over": "Categories over budget: {count}"
+      }
+    },
+    "renewals": {
+      "title": "Renewals in the next {days} days",
+      "none": "No contracts are due for renewal.",
+      "ends": "Ends {date} · {days} days left",
+      "perYear": "{amount} a year",
+      "autoRenew": "Auto-renews"
     }
   }
 }

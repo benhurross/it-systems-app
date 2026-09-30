@@ -312,7 +312,7 @@ Each phase ends with a local git commit. There is no remote.
 - [x] Projects: list with owner, status, due date and progress. Create a project; the detail page has a task board (To do / In progress / Done) where moving a task updates progress
 
 ### Phase 8 - Finance, Risk & Security, People
-- [ ] Budget: allocation vs committed per category for the fiscal year, utilisation bars, and renewals in the next 90 days
+- [x] Budget: allocation vs committed per category for the fiscal year, utilisation bars, and renewals in the next 90 days
 - [ ] Purchases: requested, then approved or rejected, then ordered, then received. A received hardware purchase offers "Add to inventory"
 - [ ] Contracts register with renewal status, and a Vendors directory
 - [ ] Risk register with a 5x5 heatmap, treatment, owner and review date
