@@ -136,7 +136,45 @@
   },
   "dashboard": {
     "title": "Dashboard",
-    "welcome": "Welcome, {name}"
+    "welcome": "Welcome, {name}",
+    "tiles": {
+      "openTickets": "Open tickets",
+      "breached": "{count} past SLA",
+      "slaCompliance": "Resolved within SLA",
+      "averageResolution": "Average resolution",
+      "lastDays": "Last {days} days",
+      "availability": "Network availability",
+      "devicesDown": "{count} down · last 24 hours",
+      "assetsInUse": "Assets in use",
+      "assetsOf": "of {count} not retired",
+      "licenseCompliance": "Licence compliance",
+      "budgetUtilisation": "Budget used",
+      "fiscalYear": "FY{year}",
+      "openHighRisks": "Open high risks",
+      "highOrCritical": "High or critical"
+    },
+    "attention": {
+      "title": "Needs attention",
+      "none": "Nothing needs attention right now.",
+      "more": "{count} in all",
+      "kinds": {
+        "sla": "Past SLA",
+        "down": "Devices down",
+        "licenses": "Licences expiring or expired",
+        "contracts": "Contracts due for renewal",
+        "warranties": "Warranties ending soon",
+        "vulnerabilities": "Overdue vulnerabilities",
+        "offboarding": "Offboarding overdue"
+      },
+      "when": {
+        "sla": "Due {date}",
+        "licenses": "Expires {date}",
+        "contracts": "Ends {date}",
+        "warranties": "Ends {date}",
+        "vulnerabilities": "Deadline {date}",
+        "offboarding": "Forwarding ended {date}"
+      }
+    }
   },
   "enums": {
     "ticketType": {

@@ -136,7 +136,45 @@
   },
   "dashboard": {
     "title": "لوحة المعلومات",
-    "welcome": "مرحبًا، {name}"
+    "welcome": "مرحبًا، {name}",
+    "tiles": {
+      "openTickets": "التذاكر المفتوحة",
+      "breached": "{count} متأخرة",
+      "slaCompliance": "المحلولة في الوقت المحدد",
+      "averageResolution": "متوسط وقت الحل",
+      "lastDays": "آخر {days} يومًا",
+      "availability": "توفر الشبكة",
+      "devicesDown": "{count} متوقفة · آخر 24 ساعة",
+      "assetsInUse": "الأصول قيد الاستخدام",
+      "assetsOf": "من {count} غير مستبعدة",
+      "licenseCompliance": "امتثال التراخيص",
+      "budgetUtilisation": "المستخدم من الميزانية",
+      "fiscalYear": "السنة المالية {year}",
+      "openHighRisks": "المخاطر العالية المفتوحة",
+      "highOrCritical": "عالية أو حرجة"
+    },
+    "attention": {
+      "title": "بحاجة إلى متابعة",
+      "none": "لا شيء يحتاج إلى متابعة الآن.",
+      "more": "{count} إجمالًا",
+      "kinds": {
+        "sla": "تجاوزت اتفاقية مستوى الخدمة",
+        "down": "أجهزة متوقفة",
+        "licenses": "تراخيص قاربت على الانتهاء أو انتهت",
+        "contracts": "عقود مستحقة التجديد",
+        "warranties": "ضمانات تنتهي قريبًا",
+        "vulnerabilities": "ثغرات متأخرة",
+        "offboarding": "إنهاء خدمة متأخر"
+      },
+      "when": {
+        "sla": "مستحقة {date}",
+        "licenses": "ينتهي {date}",
+        "contracts": "ينتهي {date}",
+        "warranties": "ينتهي {date}",
+        "vulnerabilities": "الموعد النهائي {date}",
+        "offboarding": "انتهت إعادة التوجيه {date}"
+      }
+    }
   },
   "enums": {
     "ticketType": {
