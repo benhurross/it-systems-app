@@ -1104,5 +1104,24 @@
       "notesSaved": "Notes saved.",
       "saveNotes": "Save notes"
     }
+  },
+  "kpis": {
+    "title": "KPIs",
+    "intro": "The IT department’s five KPIs for the year, against the baselines and targets set in Settings.",
+    "year": "Year",
+    "kpi": "KPI",
+    "baseline": "Baseline",
+    "target": "Target",
+    "quarter": "Q{n}",
+    "yearToDate": "Year so far",
+    "status": "Status",
+    "fromTickets": "From tickets",
+    "entered": "Entered by IT staff",
+    "record": "Record {kpi} for {year}",
+    "recordTitle": "{kpi}, {year}",
+    "recordHint": "Leave a quarter empty if it has no figure yet.",
+    "saved": "Figures saved.",
+    "outOf": "{value} / 5",
+    "note": "Status compares the latest quarter for SLA, complaints and satisfaction, and the year so far for training hours and ISO non-conformities. Complaints are tickets that missed their SLA deadline in the quarter."
   }
 }

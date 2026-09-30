@@ -27,6 +27,7 @@ const routes = {
   acknowledge: await import("@/app/api/alerts/[id]/acknowledge/route"),
   dailyChecks: await import("@/app/api/daily-checks/route"),
   dashboard: await import("@/app/api/dashboard/route"),
+  kpis: await import("@/app/api/kpis/route"),
 };
 
 const request = (method: string, body?: unknown) =>
@@ -68,6 +69,7 @@ describe("access", () => {
     expect((await routes.network.GET(request("GET"), params())).status).toBe(403);
     expect((await routes.dailyChecks.PUT(request("PUT", {}), params())).status).toBe(403);
     expect((await routes.dashboard.GET(request("GET"), params())).status).toBe(403);
+    expect((await routes.kpis.GET(request("GET"), params())).status).toBe(403);
     expect((await routes.lookups.GET(request("GET"), params())).status).toBe(200);
   });
 
@@ -77,6 +79,9 @@ describe("access", () => {
     expect((await routes.lists.POST(request("POST", {}), params())).status).toBe(403);
     expect((await routes.assets.GET(request("GET"), params())).status).toBe(200);
     expect((await routes.dashboard.GET(request("GET"), params())).status).toBe(200);
+    expect((await routes.kpis.GET(request("GET"), params())).status).toBe(200);
+    // Only training hours and ISO non-conformities are entered by hand.
+    expect((await routes.kpis.PUT(request("PUT", { year: 2026, kpi: "tat", quarters: [1, 1, 1, 1] }), params())).status).toBe(400);
   });
 
   it("lets admins into Settings, and only for known keys", async () => {

@@ -272,13 +272,6 @@ export const dailyCheckInput = z.object({
   note: optionalText,
 });
 
-export const kpiActualInput = z.object({
-  year: z.number().int().min(2000).max(2100),
-  quarter: z.number().int().min(1).max(4),
-  kpi: z.enum(MANUAL_KPIS),
-  value: z.number().min(0).max(1_000_000),
-});
-
 export const discoveryStart = z.object({ cidr: z.string().trim().min(1).max(40) });
 
 export const lookupInput = z.object({
@@ -311,6 +304,13 @@ export const organisationSettings = z.object({
 });
 
 const kpiTarget = z.object({ baseline: z.number().min(0), target: z.number().min(0) });
+/** A year's quarterly figures for a KPI entered by hand; null clears a quarter. */
+export const kpiActualsInput = z.object({
+  year: z.number().int().min(2000).max(2100),
+  kpi: z.enum(MANUAL_KPIS),
+  quarters: z.array(z.number().min(0).max(1_000_000).nullable()).length(4),
+});
+
 export const kpiTargetsInput = z.object({
   year: z.number().int().min(2000).max(2100),
   targets: z.object({

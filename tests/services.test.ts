@@ -23,6 +23,7 @@ const lookups = await import("@/server/services/lookups");
 const settings = await import("@/server/settings");
 const { listAudit } = await import("@/server/services/audit-log");
 const { dashboard } = await import("@/server/services/dashboard");
+const kpis = await import("@/server/services/kpis");
 
 type User = Awaited<ReturnType<typeof asUser>>;
 let admin: User;
@@ -343,5 +344,24 @@ describe("dashboard", () => {
       .where(gte(s.tickets.createdAt, new Date("2025-10-01T00:00:00+03:00")));
     expect(data.charts.ticketsByMonth.reduce((n, m) => n + m.opened, 0)).toBe(lastYear);
     expect(data.charts.budget.map((l) => l.category)).toContain("hardware");
+  });
+});
+
+describe("KPIs", () => {
+  it("reports the year from tickets and the figures IT staff entered", async () => {
+    const { rows } = await kpis.kpis(2026, NOW);
+    const training = rows.find((r) => r.kpi === "training_hours")!;
+    expect(training).toMatchObject({ quarters: [42, 38, 45, null], year: 125, status: "amber" });
+    const tat = rows.find((r) => r.kpi === "tat")!;
+    expect(tat.quarters.slice(0, 3).every((q) => q !== null && q > 0 && q <= 1)).toBe(true);
+    expect(tat.quarters[3]).toBeNull();
+  });
+
+  it("records and clears quarterly figures, with an audit entry", async () => {
+    await kpis.setKpiActuals({ year: 2024, kpi: "iso_ncs", quarters: [2, null, 1, null] }, it_);
+    expect((await kpis.kpis(2024, NOW)).rows.find((r) => r.kpi === "iso_ncs")!.quarters).toEqual([2, null, 1, null]);
+    await kpis.setKpiActuals({ year: 2024, kpi: "iso_ncs", quarters: [null, 0, 1, null] }, it_);
+    expect((await kpis.kpis(2024, NOW)).rows.find((r) => r.kpi === "iso_ncs")!.quarters).toEqual([null, 0, 1, null]);
+    expect((await lastAudit("kpi")).summary).toBe("Recorded iso_ncs for 2024: Q1 –, Q2 0, Q3 1, Q4 –");
   });
 });
