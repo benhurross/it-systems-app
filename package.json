@@ -20,7 +20,8 @@
     "db:seed:demo": "tsx --env-file-if-exists=.env.local scripts/seed-demo.ts",
     "admin:create": "tsx --env-file-if-exists=.env.local scripts/create-admin.ts",
     "people:check": "tsx --env-file-if-exists=.env.local scripts/people-check.ts",
-    "people:ids": "tsx --env-file-if-exists=.env.local scripts/people-ids.ts"
+    "people:ids": "tsx --env-file-if-exists=.env.local scripts/people-ids.ts",
+    "tickets:import": "tsx --env-file-if-exists=.env.local scripts/tickets-import.ts"
   },
   "overrides": {
     "@swc/core": "1.16.2"

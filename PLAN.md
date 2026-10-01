@@ -390,6 +390,12 @@ Requested by the owner. The company runs its own Exchange Server, so mail goes o
 - [x] The printer prints one side at a time, so each side is its own one-page PDF at card size, with the steps (Actual size, then put the card back turned over along its long edge). Printing waits for unsaved changes. "Mark as printed" resolves the employee's ticket (they get the usual email asking them to confirm) or ticks the joiner's step. Photos are stored like documents, in UPLOADS_DIR, and removed when replaced or when the card is deleted
 - [x] Once a card is printed, the employee's dashboard shows it with a Preview of both sides exactly as printed (only their own latest card and photo): "Ready to collect from IT", with a link to confirm on their request ("Have you received your ID card? Yes, I have it"), then a green "Printed and handed over" once they confirm, or once the request closes by itself after 3 days. A card nobody asked for (a joiner's, or one IT started) is marked handed over by IT. A request still with IT shows on the dashboard too
 
+### The real ticket log (added after Phase 10)
+- [x] `npm run tickets:import "<file.xlsx>"` reads the IT ticket log exported from the old system and reports what it would load, changing nothing; adding `replace` removes every ticket in the database (with its comments, email links and history) and loads the log's in their place. The log itself is never in the repository
+- [x] Ticket numbers are kept (IT000001 stays IT000001) and new tickets carry on after the last one. Times are Riyadh's. Dates Excel had read month first (any day of 12 or less) are put back, choosing the reading that keeps tickets in number order
+- [x] Requesters are found in the directory by name, without middle names, or one letter apart; shared mailboxes ("Finance Finance", "Sales Team") become one entry each ("Finance team"), and names not on the staff list are added as people who have left. "Closed by" finds the IT account by name, a first name only one person has, or its mailbox ("Helpdesk" for helpdesk@...); without an account the ticket stays unassigned and its history still names who closed it
+- [x] The log has no priority (all Medium, so the SLA is 24 hours), no resolution notes and no ratings. How a request came in (phone, email, WhatsApp...) goes in the description until the app has a field for it
+
 ### Phase 11 - Handover
 - [ ] Minimal README: prerequisites (Node, Docker), setup, scripts, and where the demo accounts are defined
 - [ ] Lint, typecheck, unit, build and e2e all green, with no skipped tests
