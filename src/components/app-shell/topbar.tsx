@@ -21,7 +21,7 @@ export function Topbar() {
   return (
     <header className="sticky top-0 z-20 flex h-16 items-center gap-2 border-b bg-background/85 px-3 backdrop-blur md:px-4">
       <SidebarTrigger aria-label={t("common.toggleSidebar")} />
-      <Separator orientation="vertical" className="h-6" />
+      <Separator orientation="vertical" className="h-6 data-vertical:self-center" />
       <CommandMenu />
       <div className="ms-auto flex shrink-0 items-center gap-1">
         <Button asChild size="sm" className="hidden md:inline-flex">
