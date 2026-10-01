@@ -24,8 +24,8 @@
   --secondary: #eef3fb;
   --secondary-foreground: #21325b;
   --muted: #f1f4f9;
-  /* A touch darker than the brand grey, so it keeps 4.5:1 over the brightest part of the mesh. */
-  --muted-foreground: #526070;
+  /* A touch darker than the brand grey, so it keeps 4.5:1 where two glows of the mesh meet. */
+  --muted-foreground: #4d5a6b;
   --accent: #e6efff;
   --accent-foreground: #08305a;
   --destructive: #b3244b;
@@ -54,11 +54,12 @@
 
   --radius: 0.625rem;
 
-  /* The mesh behind the pages (brand blue, accent teal, violet) and the glass over it. */
-  --mesh-1: rgb(0 71 186 / 0.13);
-  --mesh-2: rgb(0 201 167 / 0.13);
-  --mesh-3: rgb(142 78 198 / 0.1);
-  --glass: rgb(255 255 255 / 0.66);
+  /* The mesh behind the pages (blue, the brand's teal, violet, a little pink) and the glass over it. */
+  --mesh-1: rgb(59 130 246 / 0.22);
+  --mesh-2: rgb(0 201 167 / 0.2);
+  --mesh-3: rgb(139 92 246 / 0.15);
+  --mesh-4: rgb(236 72 153 / 0.1);
+  --glass: rgb(255 255 255 / 0.6);
   --glass-shadow: inset 0 1px 0 rgb(255 255 255 / 0.8), 0 1px 2px rgb(16 24 40 / 0.04), 0 10px 30px -14px rgb(16 24 40 / 0.16);
 
   --sidebar: #21325b;
@@ -105,10 +106,11 @@
   --neutral: #b4bfd0;
   --neutral-soft: rgb(148 163 184 / 0.14);
 
-  --mesh-1: rgb(63 134 242 / 0.26);
-  --mesh-2: rgb(20 168 140 / 0.16);
-  --mesh-3: rgb(139 116 224 / 0.2);
-  --glass: rgb(19 28 48 / 0.6);
+  --mesh-1: rgb(59 130 246 / 0.28);
+  --mesh-2: rgb(20 184 166 / 0.18);
+  --mesh-3: rgb(139 92 246 / 0.22);
+  --mesh-4: rgb(236 72 153 / 0.1);
+  --glass: rgb(19 28 48 / 0.58);
   --glass-shadow: inset 0 1px 0 rgb(255 255 255 / 0.05), 0 10px 30px -14px rgb(0 0 0 / 0.55);
 
   --chart-1: #3f86f2;
@@ -227,18 +229,25 @@
 }
 
 /*
- * The mesh: three soft glows that drift slowly behind the pages. They are gradients rather than
+ * The mesh: four soft glows that drift slowly behind the pages. They are gradients rather than
  * blurred shapes, and only move, so the browser draws them once and slides them along.
  */
 @layer components {
   .mesh {
     background-color: var(--background);
   }
+  /* A faint, still grain over the glows: it hides the steps soft gradients show on some screens. */
+  .mesh::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    opacity: 0.05;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
   .mesh-glow {
     position: absolute;
     border-radius: 9999px;
     will-change: transform;
-    animation: 40s ease-in-out infinite alternate;
   }
   .mesh-glow-1 {
     width: 70vmax;
@@ -246,7 +255,7 @@
     top: -32vmax;
     left: -14vmax;
     background: radial-gradient(closest-side, var(--mesh-1), transparent);
-    animation-name: mesh-drift-1;
+    animation: mesh-drift-1 40s ease-in-out infinite alternate;
   }
   .mesh-glow-2 {
     width: 62vmax;
@@ -254,8 +263,7 @@
     bottom: -30vmax;
     right: -18vmax;
     background: radial-gradient(closest-side, var(--mesh-2), transparent);
-    animation-name: mesh-drift-2;
-    animation-duration: 48s;
+    animation: mesh-drift-2 48s ease-in-out infinite alternate;
   }
   .mesh-glow-3 {
     width: 48vmax;
@@ -263,8 +271,15 @@
     top: 22%;
     left: 38%;
     background: radial-gradient(closest-side, var(--mesh-3), transparent);
-    animation-name: mesh-drift-3;
-    animation-duration: 56s;
+    animation: mesh-drift-3 56s ease-in-out infinite alternate;
+  }
+  .mesh-glow-4 {
+    width: 40vmax;
+    height: 40vmax;
+    top: -12vmax;
+    right: 8vw;
+    background: radial-gradient(closest-side, var(--mesh-4), transparent);
+    animation: mesh-drift-4 64s ease-in-out infinite alternate;
   }
 }
 
@@ -281,6 +296,11 @@
 @keyframes mesh-drift-3 {
   to {
     transform: translate3d(-18vw, 14vh, 0) scale(1.18);
+  }
+}
+@keyframes mesh-drift-4 {
+  to {
+    transform: translate3d(-10vw, 22vh, 0) scale(1.2);
   }
 }
 

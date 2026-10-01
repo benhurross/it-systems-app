@@ -10,6 +10,7 @@ export function MeshBackground({ className }: { className?: string }) {
       <div className="mesh-glow mesh-glow-1" />
       <div className="mesh-glow mesh-glow-2" />
       <div className="mesh-glow mesh-glow-3" />
+      <div className="mesh-glow mesh-glow-4" />
     </div>
   );
 }
