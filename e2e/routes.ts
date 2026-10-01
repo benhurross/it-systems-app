@@ -11,9 +11,7 @@ export const REQUEST = [
   "/knowledge",
   "/knowledge/:article",
   "/tools",
-  "/tools/pdf-merge",
-  "/tools/pdf-split",
-  "/tools/pdf-organize",
+  "/tools/pdf",
   "/tools/images-to-pdf",
   "/tools/pdf-stamp",
 ];

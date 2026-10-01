@@ -4,9 +4,9 @@ import { Hash } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useId, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { ChosenPdf, Choices } from "@/components/tools/controls";
+import { Choices, FileChip, Opening, ToolPanel } from "@/components/tools/controls";
 import { FileProblems } from "@/components/tools/file-list";
-import { baseName, downloadBytes, FileDrop, type OnePdf, recordUse, useFileProblem, useOnePdf } from "@/components/tools/files";
+import { baseName, downloadBytes, FileDrop, type OnePdf, recordUse, useFileProblem, useOnePdf, useSizeLimit } from "@/components/tools/files";
 import { PdfThumb, usePdfDocument } from "@/components/tools/pdf-preview";
 import { ToolPage } from "@/components/tools/tool-page";
 import { Button } from "@/components/ui/button";
@@ -29,14 +29,16 @@ export default function StampPdfPage() {
 }
 
 function Stamp() {
-  const t = useTranslations("tools.files");
+  const t = useTranslations("tools");
   const one = useOnePdf();
+  const limit = useSizeLimit();
   if (one.pdf) return <StampPages key={one.pdf.id} pdf={one.pdf} onClear={one.clear} />;
   return (
-    <div className="space-y-4">
-      <FileDrop accept="application/pdf,.pdf" label={t("chooseOne")} hint={t("dropOne")} onFiles={one.choose} />
+    <ToolPanel icon={Hash} title={t("names.pdf_stamp")} description={t("stamp.hint")}>
+      <FileDrop accept="application/pdf,.pdf" title={t("files.dropFile")} button={t("files.chooseOne")} hint={t("files.pdfOneLimit", { size: limit })} onFiles={one.choose} />
+      <Opening name={one.opening} />
       <FileProblems problems={one.problems} />
-    </div>
+    </ToolPanel>
   );
 }
 
@@ -115,6 +117,7 @@ function StampPages({ pdf, onClear }: { pdf: OnePdf; onClear: () => void }) {
     };
   }, [firstPage, options, pdf.pages]);
   const preview = usePdfDocument(options ? (stamped ?? firstPage) : firstPage);
+  const first = usePdfDocument(firstPage);
 
   const run = async () => {
     if (!options) return;
@@ -132,9 +135,21 @@ function StampPages({ pdf, onClear }: { pdf: OnePdf; onClear: () => void }) {
   };
 
   return (
-    <div className="space-y-6">
-      <ChosenPdf name={pdf.name} size={pdf.size} pages={pdf.pages} onClear={onClear} />
-      <p className="text-sm text-muted-foreground">{t("stamp.hint")}</p>
+    <ToolPanel
+      icon={Hash}
+      title={t("names.pdf_stamp")}
+      description={t("stamp.hint")}
+      footer={
+        <>
+          <span className="text-sm text-muted-foreground">{!numbersOn && !watermarkOn ? t("stamp.nothing") : ""}</span>
+          <Button size="lg" disabled={!options || busy} onClick={run}>
+            <Hash />
+            {busy ? t("files.working") : t("stamp.action")}
+          </Button>
+        </>
+      }
+    >
+      <FileChip name={pdf.name} size={pdf.size} pages={pdf.pages} onClear={onClear} preview={<PdfThumb doc={first} page={1} size={64} />} />
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_auto]">
         <div className="min-w-0 space-y-8">
           <div className="space-y-5">
@@ -190,20 +205,13 @@ function StampPages({ pdf, onClear }: { pdf: OnePdf; onClear: () => void }) {
           </div>
         </div>
         <figure className="space-y-2 lg:sticky lg:top-20 lg:self-start">
-          <div className="flex aspect-square w-full max-w-72 items-center justify-center rounded-lg border bg-muted/40 p-3">
+          <div className="flex aspect-square w-full max-w-72 items-center justify-center rounded-xl border bg-muted/40 p-3">
             <PdfThumb doc={preview} page={1} size={264} label={t("stamp.preview")} />
           </div>
           <figcaption className="text-center text-sm text-muted-foreground">{t("stamp.preview")}</figcaption>
         </figure>
       </div>
       <FileProblems problems={problems} />
-      <div className="flex flex-wrap items-center gap-3">
-        <Button disabled={!options || busy} onClick={run}>
-          <Hash />
-          {busy ? t("files.working") : t("stamp.action")}
-        </Button>
-        {!numbersOn && !watermarkOn && <span className="text-sm text-muted-foreground">{t("stamp.nothing")}</span>}
-      </div>
-    </div>
+    </ToolPanel>
   );
 }

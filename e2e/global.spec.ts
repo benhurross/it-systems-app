@@ -220,24 +220,29 @@ test("a tool that needs approval is asked for, granted by IT, and then opens", a
   await page.getByRole("button", { name: "Save" }).click();
   await expect(page.getByText("Tool settings saved.")).toBeVisible();
 
-  // The employee asks for it.
+  // The employee asks for it: the toolkit still opens, with Merge locked.
   const context = await signedOut(browser);
   expect((await context.request.post("/api/auth/sign-in/email", { data: { email: "employee@applus.test", password: DEMO_PASSWORD }, headers: { origin: BASE_URL } })).ok()).toBe(true);
   const employee = await context.newPage();
   await employee.goto("/en/tools");
-  const card = employee.locator('[data-slot="card"]').filter({ hasText: "Merge PDFs" });
-  await expect(card).toContainText("Needs approval from IT");
-  await expect(employee.getByRole("link", { name: "Open" })).toHaveCount(4);
-  await card.getByRole("button", { name: "Request access" }).click();
+  await expect(employee.getByRole("link", { name: "Open" })).toHaveCount(3);
+  await expect(employee.getByRole("list", { name: "Choose a tool" }).getByRole("img", { name: "Needs approval" })).toHaveCount(1);
+  await employee.goto("/en/tools/pdf?mode=merge");
+  const mergeTab = employee.getByRole("tab", { name: /^Merge/ });
+  await expect(mergeTab).toContainText("Needs approval");
+  const panel = employee.getByRole("tabpanel");
+  await expect(panel).toContainText("Needs approval from IT");
+  await panel.getByRole("button", { name: "Request access" }).click();
   await employee.getByLabel(/Why do you need it/).fill("Monthly reports come in several parts.");
   await employee.getByRole("button", { name: "Send request" }).click();
   await expect(employee.getByText(/^Request IT\d+ sent to IT\.$/)).toBeVisible();
-  await expect(card).toContainText("Requested");
-  const requestLink = card.getByRole("link", { name: /^View request IT\d+$/ });
+  await expect(mergeTab).toContainText("Requested");
+  const requestLink = panel.getByRole("link", { name: /^View request IT\d+$/ });
   const ticketId = Number(/\/requests\/(\d+)/.exec((await requestLink.getAttribute("href"))!)![1]);
-  await employee.goto("/en/tools/pdf-merge");
-  await expect(employee.getByText("Requested")).toBeVisible();
-  await expect(employee.getByLabel("Choose files")).toBeHidden();
+  await expect(panel.getByLabel("Choose files")).toHaveCount(0);
+  // The other modes are open as before.
+  await employee.getByRole("tab", { name: /^Split/ }).click();
+  await expect(employee.getByRole("tabpanel").getByLabel("Choose a PDF")).toBeAttached();
 
   // IT grants it; the request's ticket is resolved with the answer.
   await page.reload();
@@ -253,8 +258,9 @@ test("a tool that needs approval is asked for, granted by IT, and then opens", a
   expect(ticket.status).toBe("resolved");
   expect(ticket.resolution).toContain("The Merge PDFs tool is now switched on for you.");
 
-  await employee.reload();
-  await expect(employee.getByLabel("Choose files")).toBeAttached();
+  await employee.goto("/en/tools/pdf?mode=merge");
+  await expect(employee.getByRole("tab", { name: /^Merge/ })).not.toContainText("Requested");
+  await expect(employee.getByRole("tabpanel").getByLabel("Choose files")).toBeAttached();
 
   // Put back as it was.
   await people.getByRole("button", { name: "Remove the exception for Nora Al-Otaibi" }).click();

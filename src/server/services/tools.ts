@@ -1,7 +1,7 @@
 import { and, count, desc, eq, gte } from "drizzle-orm";
 import type { z } from "zod";
 import type { toolException } from "@/lib/schemas";
-import { DEFAULT_TOOL_SETTING, TOOLS, type ToolKey, type ToolSetting, toolStatus } from "@/lib/tools";
+import { DEFAULT_TOOL_SETTING, TOOL_KEYS, type ToolKey, type ToolSetting, toolStatus } from "@/lib/tools";
 import ar from "../../../messages/ar.json";
 import en from "../../../messages/en.json";
 import { audit, type Actor } from "../audit";
@@ -34,7 +34,7 @@ export async function myTools(user: SessionUser) {
     departmentOf(user),
     db.select().from(toolAccess).where(eq(toolAccess.userId, user.id)),
   ]);
-  return TOOLS.map(({ key }) => {
+  return TOOL_KEYS.map((key) => {
     const exception = exceptions.find((e) => e.tool === key) ?? null;
     return { key, status: toolStatus(setting(key), department, exception?.state ?? null), ticketId: exception?.state === "requested" ? exception.ticketId : null };
   });
@@ -107,7 +107,7 @@ export async function toolsOverview(now = new Date()) {
   ]);
   return {
     days: USAGE_DAYS,
-    tools: TOOLS.map(({ key }) => ({
+    tools: TOOL_KEYS.map((key) => ({
       key,
       ...setting(key),
       recentUses: recent.find((r) => r.tool === key)?.n ?? 0,

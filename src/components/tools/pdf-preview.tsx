@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 // pdf.js draws page thumbnails; it is loaded only when a tool needs it, with its worker beside it.
 // Its "legacy" build carries what older browsers lack (the plain build fails in some still in use).
 let lib: Promise<typeof import("pdfjs-dist/legacy/build/pdf.mjs")> | null = null;
-function pdfjs() {
+export function loadPdfJs() {
   lib ??= import("pdfjs-dist/legacy/build/pdf.mjs").then((m) => {
     m.GlobalWorkerOptions.workerPort = new Worker(new URL("pdfjs-dist/legacy/build/pdf.worker.min.mjs", import.meta.url), { type: "module" });
     return m;
@@ -23,7 +23,7 @@ export function usePdfDocument(bytes: Uint8Array | null) {
     let live = true;
     let doc: PDFDocumentProxy | null = null;
     // pdf.js takes the buffer it is given, so it gets a copy.
-    pdfjs()
+    loadPdfJs()
       .then((m) => m.getDocument({ data: bytes.slice() }).promise)
       .then((d) => {
         doc = d;

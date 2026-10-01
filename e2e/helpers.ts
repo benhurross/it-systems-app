@@ -185,20 +185,28 @@ export async function pdfFile(name: string, pages: number, base = 500) {
 
 /** Each PDF tool with files chosen, as far as its every setting showing, in either language. */
 export const TOOLS_IN_USE: Record<string, (page: Page) => Promise<void>> = {
-  "/tools/pdf-merge": async (page) => {
-    await page.locator('input[type="file"]').setInputFiles([await pdfFile("first-quarter-report.pdf", 2), await pdfFile("second.pdf", 3)]);
-    await expect(page.locator("ol > li")).toHaveCount(2);
+  "/tools/pdf?mode=merge": async (page) => {
+    const panel = page.getByRole("tabpanel");
+    await panel.locator('input[type="file"]').setInputFiles([await pdfFile("first-quarter-report.pdf", 2), await pdfFile("second.pdf", 3)]);
+    await expect(panel.locator("ol > li")).toHaveCount(2);
   },
-  "/tools/pdf-split": async (page) => {
-    await page.locator('input[type="file"]').setInputFiles(await pdfFile("annual-budget-overview.pdf", 6));
-    await expect(page.locator("button[aria-pressed]")).toHaveCount(6);
-    await page.locator("button[aria-pressed]").nth(1).click();
+  "/tools/pdf?mode=split": async (page) => {
+    const panel = page.getByRole("tabpanel");
+    await panel.locator('input[type="file"]').setInputFiles(await pdfFile("annual-budget-overview.pdf", 6));
+    await expect(panel.locator("button[aria-pressed]")).toHaveCount(6);
+    await panel.locator("button[aria-pressed]").nth(1).click();
   },
-  "/tools/pdf-organize": async (page) => {
-    await page.locator('input[type="file"]').setInputFiles(await pdfFile("scan.pdf", 3));
-    await expect(page.locator("ol > li")).toHaveCount(3);
+  "/tools/pdf?mode=organize": async (page) => {
+    const panel = page.getByRole("tabpanel");
+    await panel.locator('input[type="file"]').setInputFiles(await pdfFile("scan.pdf", 3));
+    await expect(panel.locator("ol > li")).toHaveCount(3);
     // One page removed, to show its button to put it back.
-    await page.locator("ol > li").nth(1).locator("button").last().click();
+    await panel.locator("ol > li").nth(1).locator("button").last().click();
+  },
+  "/tools/pdf?mode=word": async (page) => {
+    const panel = page.getByRole("tabpanel");
+    await panel.locator('input[type="file"]').setInputFiles(await pdfFile("network-policy.pdf", 2));
+    await expect(panel.getByRole("switch")).toHaveCount(2);
   },
   "/tools/images-to-pdf": async (page) => {
     await page.locator('input[type="file"]').setInputFiles([

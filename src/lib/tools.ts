@@ -1,16 +1,26 @@
 /**
  * Tools staff use for everyday work, in the app so documents never go to outside websites. Each
- * runs in the person's own browser: files are not uploaded.
+ * runs in the person's own browser: files are not uploaded. Each is switched on, off or put
+ * behind approval on its own, even those shown together in the PDF toolkit.
  */
-export const TOOLS = [
-  { key: "pdf_merge", path: "/tools/pdf-merge" },
-  { key: "pdf_split", path: "/tools/pdf-split" },
-  { key: "pdf_organize", path: "/tools/pdf-organize" },
-  { key: "images_to_pdf", path: "/tools/images-to-pdf" },
-  { key: "pdf_stamp", path: "/tools/pdf-stamp" },
+export const TOOL_KEYS = ["pdf_merge", "pdf_split", "pdf_organize", "pdf_to_word", "images_to_pdf", "pdf_stamp"] as const;
+export type ToolKey = (typeof TOOL_KEYS)[number];
+
+/** The PDF toolkit's modes, each one of the tools. */
+export const PDF_MODES = [
+  { mode: "merge", tool: "pdf_merge" },
+  { mode: "split", tool: "pdf_split" },
+  { mode: "organize", tool: "pdf_organize" },
+  { mode: "word", tool: "pdf_to_word" },
 ] as const;
-export const TOOL_KEYS = TOOLS.map((t) => t.key) as [ToolKey, ...ToolKey[]];
-export type ToolKey = (typeof TOOLS)[number]["key"];
+export type PdfMode = (typeof PDF_MODES)[number]["mode"];
+
+/** What the Tools page lists: the PDF toolkit, and the tools that have a page of their own. */
+export const TOOL_CARDS = [
+  { id: "pdf_kit", path: "/tools/pdf", tools: PDF_MODES.map((m) => m.tool) },
+  { id: "images_to_pdf", path: "/tools/images-to-pdf", tools: ["images_to_pdf"] },
+  { id: "pdf_stamp", path: "/tools/pdf-stamp", tools: ["pdf_stamp"] },
+] as const satisfies readonly { id: string; path: string; tools: readonly ToolKey[] }[];
 
 /** on: everyone may use it; approval: people ask and an admin grants it; off: nobody. */
 export const TOOL_MODES = ["on", "approval", "off"] as const;
@@ -39,4 +49,3 @@ export function toolStatus(setting: ToolSetting, department: string | null, exce
   return "allowed";
 }
 
-export const toolByPath = (path: string) => TOOLS.find((t) => t.path === path);

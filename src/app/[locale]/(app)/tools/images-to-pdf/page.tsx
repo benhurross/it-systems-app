@@ -1,12 +1,12 @@
 "use client";
 
-import { FileDown } from "lucide-react";
+import { FileDown, ImagePlus, Images } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { Choices } from "@/components/tools/controls";
+import { Choices, Opening, ToolPanel } from "@/components/tools/controls";
 import { FileProblems, OrderedFiles } from "@/components/tools/file-list";
-import { baseName, downloadBytes, FileDrop, readFile, recordUse, useFileProblem } from "@/components/tools/files";
+import { baseName, downloadBytes, FileDrop, readFile, recordUse, useFileProblem, useSizeLimit } from "@/components/tools/files";
 import { ToolPage } from "@/components/tools/tool-page";
 import { Button } from "@/components/ui/button";
 import { formatBytes } from "@/lib/files";
@@ -67,7 +67,9 @@ function ImagesToPdf() {
   const urls = useRef<string[]>([]);
   const [files, setFiles] = useState<ImageFile[]>([]);
   const [problems, setProblems] = useState<string[]>([]);
+  const [opening, setOpening] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const limit = useSizeLimit();
   const [size, setSize] = useState<ImagePageOptions["size"]>("a4");
   const [orientation, setOrientation] = useState<ImagePageOptions["orientation"]>("auto");
   const [margin, setMargin] = useState<Margin>("small");
@@ -82,6 +84,7 @@ function ImagesToPdf() {
     const found: string[] = [];
     const added: ImageFile[] = [];
     for (const file of chosen) {
+      setOpening(file.name);
       try {
         const image = await prepare(file);
         const url = URL.createObjectURL(file);
@@ -91,6 +94,7 @@ function ImagesToPdf() {
         found.push(problem(file.name, error));
       }
     }
+    setOpening(null);
     setProblems(found);
     setFiles((current) => [...current, ...added]);
   };
@@ -112,22 +116,42 @@ function ImagesToPdf() {
     }
   };
 
+  const accept = "image/jpeg,image/png,image/webp,image/gif,image/bmp,.jpg,.jpeg,.png";
   return (
-    <div className="space-y-6">
-      <p className="text-sm text-muted-foreground">{t("images.hint")}</p>
-      <FileDrop accept="image/jpeg,image/png,image/webp,image/gif,image/bmp,.jpg,.jpeg,.png" multiple label={t("files.chooseImages")} hint={t("files.drop")} onFiles={add} />
-      <FileProblems problems={problems} />
-      {files.length > 0 && (
-        <OrderedFiles
-          files={files}
-          onChange={setFiles}
-          label={t("names.images_to_pdf")}
-          // eslint-disable-next-line @next/next/no-img-element -- a local preview, never served
-          preview={(file) => <img src={file.url} alt="" className="max-h-full max-w-full rounded-sm object-contain ring-1 ring-border" />}
-          detail={(file) => `${file.image.width} × ${file.image.height} · ${formatBytes(file.size, locale)}`}
-        />
+    <ToolPanel
+      icon={Images}
+      title={t("names.images_to_pdf")}
+      description={t("images.hint")}
+      footer={
+        <>
+          <span className="text-sm text-muted-foreground" aria-live="polite">
+            {files.length === 0 ? t("images.empty") : t("files.pages", { count: files.length })}
+          </span>
+          <Button size="lg" disabled={files.length === 0 || busy} onClick={make}>
+            <FileDown />
+            {busy ? t("files.working") : t("images.action")}
+          </Button>
+        </>
+      }
+    >
+      {files.length === 0 ? (
+        <FileDrop accept={accept} multiple icon={ImagePlus} title={t("files.dropImages")} button={t("files.chooseImages")} hint={t("files.imageLimit", { size: limit })} onFiles={add} />
+      ) : (
+        <>
+          <OrderedFiles
+            files={files}
+            onChange={setFiles}
+            label={t("names.images_to_pdf")}
+            // eslint-disable-next-line @next/next/no-img-element -- a local preview, never served
+            preview={(file) => <img src={file.url} alt="" className="max-h-full max-w-full rounded-sm object-contain ring-1 ring-border" />}
+            detail={(file) => `${file.image.width} × ${file.image.height} · ${formatBytes(file.size, locale)}`}
+          />
+          <FileDrop accept={accept} multiple compact title={t("files.dropImages")} button={t("files.addImages")} hint={t("files.imageLimit", { size: limit })} onFiles={add} />
+        </>
       )}
-      <div className="grid gap-5 sm:grid-cols-2">
+      <Opening name={opening} />
+      <FileProblems problems={problems} />
+      <div className="grid gap-5 rounded-xl bg-muted/40 p-4 sm:grid-cols-2">
         <Choices
           legend={t("images.pageSize")}
           value={size}
@@ -152,15 +176,6 @@ function ImagesToPdf() {
           options={(["none", "small", "large"] as const).map((value) => ({ value, label: t(`images.${MARGIN_LABELS[value]}`) }))}
         />
       </div>
-      <div className="flex flex-wrap items-center gap-3">
-        <Button disabled={files.length === 0 || busy} onClick={make}>
-          <FileDown />
-          {busy ? t("files.working") : t("images.action")}
-        </Button>
-        <span className="text-sm text-muted-foreground" aria-live="polite">
-          {files.length === 0 ? t("images.empty") : t("files.pages", { count: files.length })}
-        </span>
-      </div>
-    </div>
+    </ToolPanel>
   );
 }

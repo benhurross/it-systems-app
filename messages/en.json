@@ -1603,14 +1603,16 @@
       "pdf_split": "Split PDF",
       "pdf_organize": "Organize pages",
       "images_to_pdf": "Images to PDF",
-      "pdf_stamp": "Page numbers and watermark"
+      "pdf_stamp": "Page numbers and watermark",
+      "pdf_to_word": "PDF to Word"
     },
     "descriptions": {
       "pdf_merge": "Combine several PDFs into one, in the order you choose.",
       "pdf_split": "Take out some pages, or split a PDF into several.",
       "pdf_organize": "Turn, move or remove pages.",
       "images_to_pdf": "Turn photos and scans into one PDF, a page each.",
-      "pdf_stamp": "Number the pages, or mark them CONFIDENTIAL or COPY."
+      "pdf_stamp": "Number the pages, or mark them CONFIDENTIAL or COPY.",
+      "pdf_to_word": "Turn a PDF into a Word document you can edit."
     },
     "open": "Open",
     "request": "Request access",
@@ -1646,13 +1648,26 @@
         "notImage": "{name} is not an image this tool can read. Use JPG or PNG.",
         "tooBig": "{name} is larger than {size}.",
         "failed": "Something went wrong. Please try again."
-      }
+      },
+      "dropFiles": "Drop PDF files here",
+      "dropFile": "Drop a PDF here",
+      "dropImages": "Drop images here",
+      "or": "or",
+      "pdfLimit": "PDF files up to {size} each",
+      "pdfOneLimit": "One PDF up to {size}",
+      "imageLimit": "JPG, PNG and other images up to {size} each",
+      "addMore": "Add PDFs",
+      "addImages": "Add images",
+      "change": "Change file",
+      "dragHint": "Drag to change the order, or use the arrows.",
+      "opening": "Opening {name}…"
     },
     "merge": {
       "hint": "Put the PDFs in the order you want, then merge them into one.",
       "empty": "Choose two or more PDFs to merge.",
       "total": "{files, plural, one {# file} other {# files}}, {pages, plural, one {# page} other {# pages}}",
-      "action": "Merge and download"
+      "action": "Merge PDF",
+      "title": "Files to merge"
     },
     "split": {
       "pages": "Pages",
@@ -1665,8 +1680,18 @@
       "one": "One PDF with these pages",
       "ranges": "A PDF for each range",
       "every": "Every page as its own PDF",
-      "action": "Download",
-      "page": "Page {n}"
+      "action": "Split PDF",
+      "page": "Page {n}",
+      "title": "Choose pages",
+      "all": "All",
+      "odd": "Odd",
+      "even": "Even",
+      "outputHints": {
+        "one": "The chosen pages, in one file",
+        "ranges": "Each range written above, in its own file",
+        "every": "Each chosen page, in its own file"
+      },
+      "zipped": "Several files come in one zip."
     },
     "organize": {
       "hint": "Turn, move or remove pages, then save the PDF.",
@@ -1680,7 +1705,12 @@
       "removed": "Removed",
       "allRemoved": "Keep at least one page.",
       "reset": "Start over",
-      "action": "Save PDF"
+      "action": "Save PDF",
+      "title": "Pages",
+      "rotateAllLeft": "Turn all left",
+      "rotateAllRight": "Turn all right",
+      "dragHint": "Drag pages to change their order.",
+      "kept": "{kept} of {total} pages"
     },
     "images": {
       "hint": "Each image becomes a page, in the order shown.",
@@ -1732,6 +1762,56 @@
       "startInvalid": "Use a whole number from 0 to 9999.",
       "sizeInvalid": "Use a size from 6 to 36.",
       "textEmpty": "Enter the watermark text."
+    },
+    "cards": {
+      "pdf_kit": {
+        "name": "PDF toolkit",
+        "description": "Merge, split and organize PDFs, or turn one into a Word document."
+      }
+    },
+    "kit": {
+      "choose": "Choose a tool",
+      "modes": {
+        "merge": "Merge",
+        "split": "Split",
+        "organize": "Organize",
+        "word": "PDF to Word"
+      },
+      "hints": {
+        "merge": "Combine PDFs into one",
+        "split": "Take out pages, or split into several",
+        "organize": "Turn, move or remove pages",
+        "word": "Edit the text in Word"
+      },
+      "needsApproval": "Needs approval",
+      "requested": "Requested",
+      "unavailable": "Not available",
+      "none": "None of the PDF tools are available for your account. Ask IT if you need one."
+    },
+    "privacyShort": "Files stay on this computer",
+    "word": {
+      "title": "Word options",
+      "pageBreaks": "Keep page breaks",
+      "pageBreaksHint": "Each PDF page starts a new page in Word.",
+      "pictures": "Include pictures",
+      "picturesHint": "Photos, logos and other pictures on the pages. Scanned pages are always kept.",
+      "keeps": "What carries over",
+      "keep": {
+        "text": "Paragraphs and headings",
+        "styles": "Fonts, sizes, bold and italic",
+        "tables": "Tables, as columns lined up with tabs",
+        "pictures": "Pictures",
+        "arabic": "Arabic and English text"
+      },
+      "limits": "A scanned page is a picture of text, so it comes across as a picture. Complex layouts may need tidying in Word.",
+      "action": "Convert to Word",
+      "reading": "Reading page {page} of {total}…",
+      "writing": "Writing the Word file…",
+      "done": "{name} is ready",
+      "doneHint": "It is downloading. Open it in Word to edit it.",
+      "downloadAgain": "Download again",
+      "another": "Convert another PDF",
+      "scanned": "{count, plural, one {Page {pages} is a scan, with no text to edit. It comes across as a picture.} other {Pages {pages} are scans, with no text to edit. They come across as pictures.}}"
     }
   }
 }

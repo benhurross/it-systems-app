@@ -10,6 +10,7 @@ import type { z } from "zod";
 import { ComboboxField, FormDialog, SelectField } from "@/components/form";
 import { StatusBadge } from "@/components/status-badge";
 import { TOOL_ICONS } from "@/components/tools/tool-page";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -28,7 +29,7 @@ import { api } from "@/lib/api";
 import type { ToolsOverview, UserRow } from "@/lib/api-types";
 import { ref } from "@/lib/domain";
 import { toolException, toolSettings } from "@/lib/schemas";
-import { TOOL_MODES, TOOLS } from "@/lib/tools";
+import { PDF_MODES, TOOL_KEYS, TOOL_MODES } from "@/lib/tools";
 import { SettingsCard } from "../settings-card";
 
 type Settings = z.output<typeof toolSettings>;
@@ -108,9 +109,14 @@ function ToolModes({ data }: { data: ToolsOverview | undefined }) {
           <Fragment key={tool.key}>
             {i > 0 && <FieldSeparator />}
             <FieldSet>
-              <FieldLegend className="flex items-center gap-2">
+              <FieldLegend className="flex flex-wrap items-center gap-2">
                 <Icon className="size-4 text-brand" aria-hidden />
                 {t(`tools.names.${tool.key}`)}
+                {PDF_MODES.some((m) => m.tool === tool.key) && (
+                  <Badge variant="secondary" className="font-normal">
+                    {t("tools.cards.pdf_kit.name")}
+                  </Badge>
+                )}
               </FieldLegend>
               <FieldDescription>
                 {t("settings.toolsAccess.uses", { recent: tool.recentUses, days: data.days, total: format.number(tool.totalUses) })}
@@ -243,7 +249,7 @@ function AddException({ onClose }: { onClose: () => void }) {
   const { data: users = [] } = useApi<UserRow[]>("/settings/users");
   const form = useForm<z.input<typeof toolException>, unknown, z.output<typeof toolException>>({
     resolver: zodResolver(toolException),
-    defaultValues: { userId: "", tool: TOOLS[0].key, state: "allowed" },
+    defaultValues: { userId: "", tool: TOOL_KEYS[0], state: "allowed" },
   });
   const save = useApiMutation((values: z.output<typeof toolException>) => api("/tools/exceptions", { body: values }), {
     form,
@@ -265,7 +271,7 @@ function AddException({ onClose }: { onClose: () => void }) {
         label={t("settings.toolsAccess.person")}
         options={users.filter((u) => !u.banned).map((u) => ({ value: u.id, label: `${u.name} (${u.email})` }))}
       />
-      <SelectField name="tool" label={t("settings.toolsAccess.tool")} options={TOOLS.map(({ key }) => ({ value: key, label: t(`tools.names.${key}`) }))} />
+      <SelectField name="tool" label={t("settings.toolsAccess.tool")} options={TOOL_KEYS.map((key) => ({ value: key, label: t(`tools.names.${key}`) }))} />
       <SelectField
         name="state"
         label={t("settings.toolsAccess.access")}
