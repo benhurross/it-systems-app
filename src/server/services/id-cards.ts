@@ -286,17 +286,64 @@ async function myEmployee(user: SessionUser) {
 /** What the request page needs: the details the card will carry, and any request still with IT. */
 export async function myCardRequest(user: SessionUser) {
   const employee = await myEmployee(user);
+  return {
+    details: { name: employee.name, designation: employee.jobTitle, number: employee.employeeNumber },
+    waiting: await waitingFor(employee.id),
+    design: await designInfo(),
+  };
+}
+
+/** A person's card request still with IT, if any. */
+async function waitingFor(employeeId: number) {
   const [waiting] = await db
     .select({ id: idCards.id, ticketId: idCards.ticketId, createdAt: idCards.createdAt })
     .from(idCards)
-    .where(and(eq(idCards.employeeId, employee.id), eq(idCards.status, "requested")))
+    .where(and(eq(idCards.employeeId, employeeId), eq(idCards.status, "requested")))
     .orderBy(desc(idCards.id))
     .limit(1);
-  return {
-    details: { name: employee.name, designation: employee.jobTitle, number: employee.employeeNumber },
-    waiting: waiting ?? null,
-    design: await designInfo(),
+  return waiting ?? null;
+}
+
+/** The person's latest printed card, the one they hold now. */
+async function latestPrinted(employeeId: number) {
+  const [card] = await db
+    .select()
+    .from(idCards)
+    .where(and(eq(idCards.employeeId, employeeId), eq(idCards.status, "printed")))
+    .orderBy(desc(idCards.printedAt), desc(idCards.id))
+    .limit(1);
+  return card ?? null;
+}
+
+/**
+ * For the employee's dashboard: the card they were handed, exactly as it was printed, and any
+ * request still with IT.
+ */
+export async function myCard(user: SessionUser) {
+  const employee = await myEmployee(user);
+  const [card, waiting, design] = await Promise.all([latestPrinted(employee.id), waitingFor(employee.id), designInfo()]);
+  const printed = card && {
+    id: card.id,
+    name: card.name,
+    designation: card.designation,
+    number: card.number,
+    nameFont: card.nameFont,
+    nameSize: card.nameSize,
+    designationFont: card.designationFont,
+    designationSize: card.designationSize,
+    hasPhoto: card.photoKey !== null,
+    printedAt: card.printedAt,
+    updatedAt: card.updatedAt,
   };
+  return { printed, waiting, design };
+}
+
+/** The photo on the employee's own printed card; they see no other. */
+export async function myCardPhoto(user: SessionUser) {
+  const employee = await myEmployee(user);
+  const card = await latestPrinted(employee.id);
+  if (!card?.photoKey) throw notFound();
+  return cardPhoto(card.id);
 }
 
 /**

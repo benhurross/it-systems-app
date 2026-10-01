@@ -159,3 +159,17 @@ export function png(width: number, height: number) {
   const signature = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
   return Buffer.concat([signature, chunk("IHDR", header), chunk("IDAT", deflateSync(Buffer.concat(rows))), chunk("IEND", Buffer.alloc(0))]);
 }
+
+/**
+ * Prints an ID card for the demo admin, so their dashboard shows one. Needs an admin session.
+ * Browsers side by side may print the same card, so one already printed is fine.
+ */
+export async function printedCardForAdmin(page: Page) {
+  const users = (await (await page.request.get("/api/settings/users")).json()) as { email: string; employeeId: number }[];
+  const employeeId = users.find((u) => u.email === "admin@applus.test")!.employeeId;
+  const created = await page.request.post("/api/id-cards", { data: { employeeId, joinerId: null, reason: "other" } });
+  expect(created.ok()).toBe(true);
+  const { id } = (await created.json()) as { id: number };
+  const printed = await page.request.post(`/api/id-cards/${id}/printed`);
+  expect([200, 400]).toContain(printed.status());
+}

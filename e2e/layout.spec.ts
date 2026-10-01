@@ -1,7 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 import { TEXT_SIZE_KEY, TEXT_SIZES } from "../src/lib/text-size";
 import { session } from "./env";
-import { png, resolvedTicket } from "./helpers";
+import { png, printedCardForAdmin, resolvedTicket } from "./helpers";
 import { ALLOWED, resolve } from "./routes";
 
 // At the largest text size, every page fits a phone, a tablet and a desktop screen: the page never
@@ -96,6 +96,15 @@ test("the ID card photo, once chosen, fits every screen at the largest text size
   const problems = await sweep(page, "/requests/id-card", async (p) => {
     await p.locator('input[type="file"]').setInputFiles({ name: "me.png", mimeType: "image/png", buffer: png(600, 800) });
     await expect(p.locator('[role="group"][tabindex="0"]')).toBeVisible();
+  });
+  expect(problems, problems.join("\n")).toEqual([]);
+});
+
+test("the dashboard's printed ID card and its preview fit every screen at the largest text size", async ({ page }) => {
+  await printedCardForAdmin(page);
+  const problems = await sweep(page, "/home", async (p) => {
+    await p.getByRole("button", { name: /^(Preview|معاينة)$/ }).click();
+    await expect(p.getByRole("dialog")).toBeVisible();
   });
   expect(problems, problems.join("\n")).toEqual([]);
 });

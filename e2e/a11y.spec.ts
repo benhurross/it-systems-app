@@ -1,7 +1,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 import { session } from "./env";
-import { png, resolvedTicket, signedOut } from "./helpers";
+import { png, printedCardForAdmin, resolvedTicket, signedOut } from "./helpers";
 import { ALLOWED, resolve } from "./routes";
 
 // axe finds no serious or critical problem on any page. English in the light theme and Arabic in
@@ -83,6 +83,23 @@ test.describe("asking for an ID card", () => {
       await open(page, "/requests/id-card", mode);
       await page.locator('input[type="file"]').setInputFiles({ name: "me.png", mimeType: "image/png", buffer: png(600, 800) });
       await page.locator('[role="group"][tabindex="0"]').focus();
+      found.push(...(await problems(page, mode)));
+    }
+    expect(found, found.join("\n")).toEqual([]);
+  });
+});
+
+test.describe("a printed ID card", () => {
+  test.use({ storageState: session("admin") });
+
+  test("the dashboard's card and its preview have no serious accessibility problems", async ({ page }) => {
+    await printedCardForAdmin(page);
+    const found: string[] = [];
+    for (const mode of MODES) {
+      await open(page, "/home", mode);
+      found.push(...(await problems(page, mode)));
+      await page.getByRole("button", { name: mode.locale === "ar" ? "معاينة" : "Preview" }).click();
+      await expect(page.getByRole("dialog")).toBeVisible();
       found.push(...(await problems(page, mode)));
     }
     expect(found, found.join("\n")).toEqual([]);

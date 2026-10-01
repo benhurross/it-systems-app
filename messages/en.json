@@ -1277,7 +1277,20 @@
     "report": "Report a problem",
     "reportFor": "Report a problem with {device}",
     "notLinked": "Your account is not linked to an employee record yet. Ask IT to link it.",
-    "idCard": "New ID card"
+    "idCard": "New ID card",
+    "myCard": {
+      "title": "Your ID card",
+      "frontLabel": "Front of your ID card",
+      "backLabel": "Back of your ID card",
+      "handedOver": "Printed and handed over",
+      "printedOn": "Printed on {date}",
+      "preview": "Preview",
+      "withIt": "New card requested",
+      "requestedOn": "Asked for on {date}, with IT now.",
+      "viewRequest": "View request {ref}",
+      "front": "Front",
+      "back": "Back"
+    }
   },
   "email": {
     "footer": "Sent automatically by AP Plus IT Systems.",

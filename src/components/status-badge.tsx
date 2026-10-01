@@ -1,3 +1,4 @@
+import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
@@ -12,8 +13,11 @@ const TONES: Record<Tone, string> = {
   neutral: "bg-neutral-soft text-neutral",
 };
 
-/** A label on a tinted pill. The text always carries the meaning; colour only reinforces it. */
-export function StatusBadge({ tone, children, className }: { tone: Tone; children: ReactNode; className?: string }) {
+/**
+ * A label on a tinted pill. The text always carries the meaning; colour only reinforces it. An
+ * icon, when given, takes the place of the dot.
+ */
+export function StatusBadge({ tone, icon: Icon, children, className }: { tone: Tone; icon?: LucideIcon; children: ReactNode; className?: string }) {
   return (
     <span
       className={cn(
@@ -22,7 +26,7 @@ export function StatusBadge({ tone, children, className }: { tone: Tone; childre
         className,
       )}
     >
-      <span aria-hidden className="size-1.5 rounded-full bg-current" />
+      {Icon ? <Icon aria-hidden className="size-3.5" /> : <span aria-hidden className="size-1.5 rounded-full bg-current" />}
       {children}
     </span>
   );

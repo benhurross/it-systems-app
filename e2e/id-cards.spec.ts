@@ -80,6 +80,8 @@ test("an employee asks for a new ID card with their photo, and IT prints it", as
   // One request at a time: asking again shows the one with IT.
   await employee.goto("/en/requests/id-card");
   await expect(employee.getByText("Your ID card request is with IT")).toBeVisible();
+  await employee.goto("/en/home");
+  await expect(employee.getByText("New card requested")).toBeVisible();
 
   // IT opens the card from the ticket, shortens the name, makes it bigger and narrower, and prints.
   await page.goto(`/en/tickets/${ticket}`);
@@ -111,6 +113,17 @@ test("an employee asks for a new ID card with their photo, and IT prints it", as
   // The employee's request is resolved, saying the card is ready.
   await employee.goto(`/en/requests/${ticket}`);
   await expect(employee.getByText("Your new ID card is printed and ready to collect from IT.")).toBeVisible();
+
+  // Their dashboard shows the card as printed and handed over, with a preview of both sides.
+  await employee.goto("/en/home");
+  const myCard = employee.locator('[data-slot="card"]').filter({ has: employee.locator('[data-slot="card-title"]', { hasText: /^Your ID card$/ }) });
+  await expect(myCard.getByText("Printed and handed over")).toBeVisible();
+  await myCard.getByRole("button", { name: "Preview" }).click();
+  const preview = employee.getByRole("dialog", { name: "Your ID card" });
+  const front = preview.getByRole("img", { name: "Front of your ID card" });
+  await expect(front.locator("text").first()).toHaveText(person.name);
+  await expect(front.locator('image[href^="/api/id-cards/mine/photo"]')).toHaveCount(1);
+  await expect(preview.getByRole("img", { name: "Back of your ID card" })).toBeVisible();
   await employee.context().close();
   employeeConsole.assertClean();
   console.assertClean();

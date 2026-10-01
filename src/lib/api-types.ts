@@ -76,6 +76,7 @@ export type MySummary = Result<typeof me.mySummary>;
 export type IdCard = Item<typeof idCards.listCards>;
 export type IdCardDetail = Result<typeof idCards.getCard>;
 export type MyCardRequest = Result<typeof idCards.myCardRequest>;
+export type MyCard = Result<typeof idCards.myCard>;
 export type CardDesign = Result<typeof idCards.designInfo>;
 export type EmailSettings = Result<typeof mailConfig.getEmailSettings>;
 export type OutboxEmail = Item<typeof outbox.listOutbox>;

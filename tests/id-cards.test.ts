@@ -258,3 +258,21 @@ describe("IT printing a card", () => {
     expect((await cards.listCards()).find((c) => c.id === card.id)).toMatchObject({ personName: "Yara Al-Mutairi", hasPhoto: false });
   });
 });
+
+describe("the employee's own card", () => {
+  it("shows the card they were handed, as printed, with its photo", async () => {
+    const mine = await cards.myCard(employee);
+    expect(mine.printed).toMatchObject({ name: "Short Name", nameFont: "narrow", nameSize: 9, hasPhoto: true });
+    expect(mine.printed?.printedAt).toBeInstanceOf(Date);
+    expect(mine.waiting).toBeNull();
+    expect((await cards.myCardPhoto(employee)).type).toBe("image/png");
+  });
+
+  it("shows a request still with IT, and nothing to preview before a card is printed", async () => {
+    expect(await cards.myCard(admin)).toMatchObject({ printed: null, waiting: null });
+    await expect(cards.myCardPhoto(admin)).rejects.toMatchObject({ status: 404 });
+    const { id, ticketId } = await cards.requestCard(admin, { reason: "lost", note: null, photo: PHOTO });
+    expect((await cards.myCard(admin)).waiting).toMatchObject({ id, ticketId });
+    await cards.deleteCard(id, it_);
+  });
+});
