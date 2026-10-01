@@ -1,4 +1,5 @@
 import { expect, test, type TestInfo } from "@playwright/test";
+import { quarterOf } from "../src/lib/kpis";
 import { session } from "./env";
 import { choose, watchConsole } from "./helpers";
 
@@ -20,9 +21,11 @@ test("the KPIs page shows the five KPIs with their targets and status", async ({
   ]) {
     await expect(page.getByRole("rowheader", { name: new RegExp(kpi.replace(/[()]/g, "\\$&")) })).toBeVisible();
   }
-  // The demo data has 125 training hours so far against a target of 150.
+  // The demo data records 42, 38, 45 and 12 training hours in this year's quarters, up to the
+  // current one, against a target of 150.
+  const hours = [42, 38, 45, 12].slice(0, quarterOf(new Date()).quarter).reduce((sum, h) => sum + h, 0);
   const training = page.getByRole("row").filter({ hasText: "IT training hours" });
-  await expect(training).toContainText("125");
+  await expect(training).toContainText(String(hours));
   await expect(training).toContainText("Improving");
   console.assertClean();
 });

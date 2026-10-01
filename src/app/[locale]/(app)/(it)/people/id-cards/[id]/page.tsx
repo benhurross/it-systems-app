@@ -142,7 +142,7 @@ function Editor({ card }: { card: IdCardDetail }) {
         </Alert>
       )}
 
-      <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+      <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <Card>
           <CardHeader>
             <CardTitle>{t("idCards.preview")}</CardTitle>
@@ -197,12 +197,20 @@ function Editor({ card }: { card: IdCardDetail }) {
                       type="button"
                       variant="outline"
                       size="sm"
+                      className="h-auto min-h-8 py-1 text-start whitespace-normal"
                       disabled={firstAndLast(draft.name) === draft.name.trim()}
                       onClick={() => set({ name: firstAndLast(draft.name) })}
                     >
                       {t("idCards.firstAndLast")}
                     </Button>
-                    <Button type="button" variant="ghost" size="sm" disabled={draft.name === card.record.name} onClick={() => set({ name: card.record.name })}>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-auto min-h-8 py-1 text-start whitespace-normal"
+                      disabled={draft.name === card.record.name}
+                      onClick={() => set({ name: card.record.name })}
+                    >
                       {t("idCards.fromRecord", { what: t("idCards.whatName") })}
                     </Button>
                   </div>
@@ -222,6 +230,7 @@ function Editor({ card }: { card: IdCardDetail }) {
                     type="button"
                     variant="ghost"
                     size="sm"
+                    className="h-auto min-h-8 py-1 text-start whitespace-normal"
                     disabled={draft.designation === card.record.designation}
                     onClick={() => set({ designation: card.record.designation })}
                   >
@@ -418,7 +427,7 @@ function Fit({
             </Button>
           )}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <span className="text-sm text-muted-foreground" aria-hidden>
             {t("font")}
           </span>
@@ -429,6 +438,7 @@ function Fit({
             value={font}
             onValueChange={(value) => value && onChange(value as FontChoice, size)}
             aria-label={t("fontOf", { what })}
+            className="flex-wrap"
           >
             {FONT_CHOICES.map((f) => (
               <ToggleGroupItem key={f} value={f}>

@@ -109,7 +109,7 @@ function RequestForm({ data }: { data: MyCardRequest }) {
   return (
     <>
       <PageHeader title={t("idCards.requestTitle")} description={t("idCards.requestIntro")} />
-      <div className="grid max-w-4xl items-start gap-6 md:grid-cols-[minmax(0,18rem)_minmax(0,1fr)]">
+      <div className="grid max-w-4xl items-start gap-6 lg:grid-cols-[minmax(0,18rem)_minmax(0,1fr)]">
         <div className="mx-auto w-full max-w-72">
           <ArrangeOnCard arranger={arranger} design={designUrl(data.design, "front")} lines={lines} label={t("idCards.previewLabel", { name: data.details.name })} />
         </div>
@@ -150,7 +150,7 @@ function RequestForm({ data }: { data: MyCardRequest }) {
                 <TextareaField name="note" label={t("idCards.note")} rows={3} optional />
               </FieldGroup>
             </CardContent>
-            <CardFooter className="justify-end gap-2">
+            <CardFooter className="flex-wrap justify-end gap-2">
               <Button type="button" variant="outline" onClick={() => router.back()}>
                 {t("common.cancel")}
               </Button>
