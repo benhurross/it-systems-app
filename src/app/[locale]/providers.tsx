@@ -51,7 +51,7 @@ export function Providers({ dir, children }: { dir: "ltr" | "rtl"; children: Rea
   );
 
   return (
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <DirectionProvider dir={dir}>
         <QueryClientProvider client={queryClient}>
           <TooltipProvider>

@@ -338,3 +338,10 @@
     animation: none;
   }
 }
+
+/* Switching between light and dark cross-fades the whole page, slowly and smoothly. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.7s;
+  animation-timing-function: ease-in-out;
+}
