@@ -1,4 +1,4 @@
-import { and, count, desc, eq, gte, inArray, isNotNull, ne } from "drizzle-orm";
+import { and, count, desc, eq, gte, inArray, isNotNull, lt, ne } from "drizzle-orm";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import { ONBOARDING_TASKS, OFFBOARDING_TASKS } from "@/lib/domain";
 import { vulnerabilityInput } from "@/lib/schemas";
@@ -342,7 +342,8 @@ describe("dashboard", () => {
     const [{ n: lastYear }] = await db
       .select({ n: count() })
       .from(s.tickets)
-      .where(gte(s.tickets.createdAt, new Date("2025-10-01T00:00:00+03:00")));
+      // The twelve months to NOW's: other tests here open tickets on the real clock, which may be later.
+      .where(and(gte(s.tickets.createdAt, new Date("2025-10-01T00:00:00+03:00")), lt(s.tickets.createdAt, new Date("2026-10-01T00:00:00+03:00"))));
     expect(data.charts.ticketsByMonth.reduce((n, m) => n + m.opened, 0)).toBe(lastYear);
     expect(data.charts.budget.map((l) => l.category)).toContain("hardware");
   });

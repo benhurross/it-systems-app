@@ -41,3 +41,22 @@ export function formatBytes(bytes: number, locale: string): string {
   }
   return `${new Intl.NumberFormat(locale === "ar" ? "ar-SA" : "en-GB", { maximumFractionDigits: unit === 0 ? 0 : 1 }).format(value)} ${units[unit]}`;
 }
+
+/** An image's width and height in pixels, read from its header; null if it cannot be read. */
+export function imageSize(bytes: Uint8Array): { width: number; height: number } | null {
+  const type = sniffType(bytes);
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  if (type === "image/png" && bytes.length >= 24) return { width: view.getUint32(16), height: view.getUint32(20) };
+  if (type === "image/jpeg") {
+    // Walk the segments to the frame header (SOF0-SOF15, not DHT, JPG or DAC), which holds the size.
+    for (let i = 2; i + 9 < bytes.length; ) {
+      if (bytes[i] !== 0xff) return null;
+      const marker = bytes[i + 1];
+      if (marker >= 0xc0 && marker <= 0xcf && ![0xc4, 0xc8, 0xcc].includes(marker)) {
+        return { width: view.getUint16(i + 7), height: view.getUint16(i + 5) };
+      }
+      i += 2 + view.getUint16(i + 2);
+    }
+  }
+  return null;
+}

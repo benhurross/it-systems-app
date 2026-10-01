@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { session } from "./env";
 import { BASE_URL } from "./env";
-import { addTcpDevice, choose, listen, mailSink, resolvedTicket, signedOut } from "./helpers";
+import { addTcpDevice, choose, listen, mailSink, png, resolvedTicket, signedOut } from "./helpers";
 
 // Journeys that change system-wide settings. They run once, in their own project, so parallel
 // browsers never race over the same value.
@@ -148,4 +148,42 @@ test("a resolved ticket's email reaches the requester, and its links answer with
     await visitor.context().close();
     await sink.close();
   }
+});
+
+test("the ID card design is uploaded in Settings and shows on every card", async ({ page }) => {
+  await page.goto("/en/settings/id-card");
+  const side = (title: string) => page.locator('[data-slot="card"]').filter({ has: page.locator('[data-slot="card-title"]', { hasText: new RegExp(`^${title}$`) }) });
+  const front = side("Front");
+  const back = side("Back");
+  await expect(front).toContainText("Not uploaded yet");
+
+  // Refused: landscape, and too small to print sharp.
+  const upload = async (card: typeof front, side: string, width: number, height: number) => {
+    await card.getByLabel(/the design$/).setInputFiles({ name: `${side}.png`, mimeType: "image/png", buffer: png(width, height) });
+    await card.getByRole("button", { name: `Upload ${side}` }).click();
+  };
+  await upload(front, "Front", 1016, 640);
+  await expect(front.getByRole("alert")).toHaveText("This image is not in the card's proportions. It should be portrait, 54 × 85.6 mm.");
+  await upload(front, "Front", 320, 508);
+  await expect(front.getByRole("alert")).toHaveText("This image is too small to print sharp. Use one at least 640 pixels wide.");
+
+  await upload(front, "Front", 640, 1016);
+  await expect(front).toContainText("640 × 1016 pixels");
+  await upload(back, "Back", 640, 1016);
+  await expect(back).toContainText("640 × 1016 pixels");
+  await expect(front.locator("svg image")).toHaveAttribute("href", /^\/api\/id-cards\/design\/front\?v=/);
+
+  // Cards show it, front and back.
+  await page.goto("/en/people/id-cards");
+  await page.locator('table a[href*="/people/id-cards/"]').first().click();
+  await expect(page.getByText("The card design is not uploaded yet")).toBeHidden();
+  await expect(page.getByRole("img", { name: /^Front of the ID card/ }).locator("image").first()).toHaveAttribute("href", /design\/front/);
+  await expect(page.getByRole("img", { name: /^Back of the ID card/ }).locator("image")).toHaveAttribute("href", /design\/back/);
+
+  // Removing a side leaves the card without it.
+  await page.goto("/en/settings/id-card");
+  await back.getByRole("button", { name: "Remove Back" }).click();
+  await expect(back).toContainText("Not uploaded yet");
+  await front.getByRole("button", { name: "Remove Front" }).click();
+  await expect(front).toContainText("Not uploaded yet");
 });

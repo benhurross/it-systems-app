@@ -31,7 +31,7 @@ test("completing a joiner's checklist adds them to the directory", async ({ page
     await box.click();
     await expect(box).toBeChecked();
   }
-  await expect(sheet.getByText("11/11")).toBeVisible();
+  await expect(sheet.getByText("12/12")).toBeVisible();
   await complete.click();
   await expect(page.getByText(`Onboarding complete. ${name} is now in the directory.`)).toBeVisible();
   await sheet.getByRole("link", { name: "View in the directory" }).click();

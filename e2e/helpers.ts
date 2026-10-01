@@ -1,4 +1,5 @@
 import { createServer, type AddressInfo } from "node:net";
+import { crc32, deflateSync } from "node:zlib";
 import { expect, type Browser, type Page, type TestInfo } from "@playwright/test";
 
 /** Fails the test if the page logs an error to the console. */
@@ -127,4 +128,34 @@ export async function resolvedTicket(page: Page, subject: string) {
   const email = outbox.find((e) => e.ticketId === id && e.kind === "resolution")!;
   const { html } = (await (await page.request.get(`/api/settings/email/outbox/${email.id}`)).json()) as { html: string };
   return { id, token: /\/en\/respond\/([\w-]+)\?/.exec(html)![1], recipient: email.recipient };
+}
+
+/**
+ * A real PNG of the given size: a light background with a darker disc in the middle, enough to
+ * stand in for a photo or a card design.
+ */
+export function png(width: number, height: number) {
+  const chunk = (type: string, data: Buffer) => {
+    const body = Buffer.concat([Buffer.from(type, "latin1"), data]);
+    const out = Buffer.alloc(body.length + 8);
+    out.writeUInt32BE(data.length, 0);
+    body.copy(out, 4);
+    out.writeUInt32BE(crc32(body), body.length + 4);
+    return out;
+  };
+  const header = Buffer.alloc(13);
+  header.writeUInt32BE(width, 0);
+  header.writeUInt32BE(height, 4);
+  header.set([8, 2, 0, 0, 0], 8); // 8-bit RGB
+  const radius = Math.min(width, height) / 3;
+  const rows = Array.from({ length: height }, (_, y) => {
+    const row = Buffer.alloc(1 + width * 3);
+    for (let x = 0; x < width; x++) {
+      const inside = (x - width / 2) ** 2 + (y - height / 2) ** 2 < radius ** 2;
+      row.set(inside ? [60, 90, 140] : [225, 232, 240], 1 + x * 3);
+    }
+    return row;
+  });
+  const signature = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+  return Buffer.concat([signature, chunk("IHDR", header), chunk("IDAT", deflateSync(Buffer.concat(rows))), chunk("IEND", Buffer.alloc(0))]);
 }

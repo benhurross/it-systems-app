@@ -9,6 +9,7 @@ import type * as changes from "@/server/services/changes";
 import type * as dailyChecks from "@/server/services/daily-checks";
 import type * as dashboard from "@/server/services/dashboard";
 import type * as finance from "@/server/services/finance";
+import type * as idCards from "@/server/services/id-cards";
 import type * as kb from "@/server/services/kb";
 import type * as kpis from "@/server/services/kpis";
 import type * as licenses from "@/server/services/licenses";
@@ -72,6 +73,10 @@ export type DailyChecklist = {
   history: Item<typeof dailyChecks.dailyHistory>[];
 };
 export type MySummary = Result<typeof me.mySummary>;
+export type IdCard = Item<typeof idCards.listCards>;
+export type IdCardDetail = Result<typeof idCards.getCard>;
+export type MyCardRequest = Result<typeof idCards.myCardRequest>;
+export type CardDesign = Result<typeof idCards.designInfo>;
 export type EmailSettings = Result<typeof mailConfig.getEmailSettings>;
 export type OutboxEmail = Item<typeof outbox.listOutbox>;
 export type OutboxEmailDetail = Result<typeof outbox.getEmail>;

@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus } from "lucide-react";
+import { IdCard, Plus } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 import { columnHelper, DataTable } from "@/components/data-table";
@@ -15,7 +15,7 @@ import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetT
 import { useApi, useApiMutation } from "@/hooks/use-api";
 import { useFormat } from "@/hooks/use-format";
 import { useLookups } from "@/hooks/use-lookups";
-import { Link } from "@/i18n/navigation";
+import { Link, useRouter } from "@/i18n/navigation";
 import { api } from "@/lib/api";
 import type { Joiner } from "@/lib/api-types";
 import { ONBOARDING_PHASES, ONBOARDING_TASKS } from "@/lib/domain";
@@ -118,6 +118,12 @@ function JoinerSheet({ joiner, onClose }: { joiner: Joiner; onClose: () => void 
     success: t("people.onboarding.done", { name: joiner.name }),
     scope,
   });
+  const router = useRouter();
+  // The card is started (or the one already started is found) and opened to add the photo and print.
+  const card = useApiMutation(
+    () => api<{ id: number }>("/id-cards", { body: { employeeId: null, joinerId: joiner.id, reason: "new_joiner" } }),
+    { onSuccess: (row) => router.push(`/people/id-cards/${row.id}`) },
+  );
   const progress = onboardingProgress(tasks);
   const finished = joiner.completedAt !== null;
 
@@ -158,6 +164,12 @@ function JoinerSheet({ joiner, onClose }: { joiner: Joiner; onClose: () => void 
                   <Label htmlFor={`joiner-${task.key}`} className="font-normal">
                     {t(`enums.onboardingTask.${task.key}`)}
                   </Label>
+                  {task.key === "print_id_card" && !finished && (
+                    <Button variant="outline" size="xs" className="ms-auto" disabled={card.isPending} onClick={() => card.mutate(undefined)}>
+                      <IdCard />
+                      {t("idCards.openForJoiner")}
+                    </Button>
+                  )}
                 </div>
               ))}
             </fieldset>

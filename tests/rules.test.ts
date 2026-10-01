@@ -390,9 +390,9 @@ describe("risk", () => {
 describe("joiners and leavers", () => {
   it("tracks onboarding by phase", () => {
     const progress = onboardingProgress({ create_email: true, create_accounts: true, deliver_device: true });
-    expect(progress).toMatchObject({ done: 3, total: 11 });
+    expect(progress).toMatchObject({ done: 3, total: 12 });
     expect(progress.phases).toEqual([
-      { phase: "preparation", done: 2, total: 5 },
+      { phase: "preparation", done: 2, total: 6 },
       { phase: "during", done: 1, total: 4 },
       { phase: "after", done: 0, total: 2 },
     ]);

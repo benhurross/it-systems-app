@@ -8,7 +8,7 @@ import { isReopen, nextStatuses } from "@/lib/workflows";
 import { audit } from "../audit";
 import type { SessionUser } from "../auth";
 import { db } from "../db";
-import { assets, auditLog, employees, ticketComments, tickets, users } from "../db/schema";
+import { assets, auditLog, employees, idCards, ticketComments, tickets, users } from "../db/schema";
 import { badRequest, forbidden, notFound, one } from "../http";
 import { getSetting } from "../settings";
 import { heldAsset } from "./me";
@@ -43,7 +43,7 @@ export async function listTickets(user: SessionUser) {
 /** One ticket with its conversation and history. Out-of-scope tickets are reported as missing. */
 export async function getTicket(user: SessionUser, id: number) {
   const ticket = one(await withNames().where(and(eq(tickets.id, id), scope(user))));
-  const [comments, history, asset] = await Promise.all([
+  const [comments, history, asset, card] = await Promise.all([
     db.select().from(ticketComments).where(eq(ticketComments.ticketId, id)).orderBy(asc(ticketComments.createdAt), asc(ticketComments.id)),
     db
       .select({ id: auditLog.id, at: auditLog.at, userName: auditLog.userName, action: auditLog.action, summary: auditLog.summary })
@@ -53,10 +53,12 @@ export async function getTicket(user: SessionUser, id: number) {
     ticket.assetId
       ? db.select({ id: assets.id, name: assets.name }).from(assets).where(eq(assets.id, ticket.assetId))
       : [],
+    // An ID card request carries the card to print.
+    db.select({ id: idCards.id, status: idCards.status }).from(idCards).where(eq(idCards.ticketId, id)),
   ]);
   // A resolved ticket closes by itself if the requester does not answer; say when.
   const closesAt = ticket.status === "resolved" && ticket.resolvedAt ? await autoCloseAt(ticket.resolvedAt) : null;
-  return { ...ticket, comments, history, asset: asset[0] ?? null, closesAt };
+  return { ...ticket, comments, history, asset: asset[0] ?? null, idCard: card[0] ?? null, closesAt };
 }
 
 export async function createTicket(user: SessionUser, input: z.infer<typeof ticketCreate>) {

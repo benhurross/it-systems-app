@@ -55,6 +55,7 @@ export const ONBOARDING_TASKS = [
   { key: "folder_permissions", phase: "preparation" },
   { key: "prepare_device", phase: "preparation" },
   { key: "access_card", phase: "preparation" },
+  { key: "print_id_card", phase: "preparation" },
   { key: "check_accounts", phase: "during" },
   { key: "deliver_device", phase: "during" },
   { key: "deliver_cards", phase: "during" },
@@ -118,6 +119,10 @@ export const ATTACHMENT_KINDS_FOR = {
   contract: ["contract", "renewal_quote", "invoice", "other"],
 } as const satisfies Record<(typeof ATTACHMENT_ENTITIES)[number], readonly (typeof ATTACHMENT_KINDS)[number][]>;
 
+export const ID_CARD_REASONS = ["lost", "damaged", "details_changed", "new_joiner", "other"] as const;
+/** requested: waiting for IT; printed: done. */
+export const ID_CARD_STATUSES = ["requested", "printed"] as const;
+
 export const KPI_KEYS = ["tat", "complaints", "training_hours", "iso_ncs", "satisfaction"] as const;
 /** KPIs entered by hand each quarter; the rest are computed from tickets. */
 export const MANUAL_KPIS = ["training_hours", "iso_ncs"] as const;
@@ -150,6 +155,8 @@ export type EmailStatus = (typeof EMAIL_STATUSES)[number];
 export type SmtpSecurity = (typeof SMTP_SECURITY)[number];
 export type AttachmentEntity = (typeof ATTACHMENT_ENTITIES)[number];
 export type AttachmentKind = (typeof ATTACHMENT_KINDS)[number];
+export type IdCardReason = (typeof ID_CARD_REASONS)[number];
+export type IdCardStatus = (typeof ID_CARD_STATUSES)[number];
 
 /** Display references in the workbook's style: IT000351, AST-0142, LIC-001. */
 export const REF_PREFIX = {

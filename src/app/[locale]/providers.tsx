@@ -23,8 +23,12 @@ function makeQueryClient() {
         }
       },
     }),
-    // Any successful change refetches what is on screen, so counts and dashboards are never stale.
-    mutationCache: new MutationCache({ onSuccess: () => client.invalidateQueries() }),
+    // Any successful change refetches what is on screen, so counts and dashboards are never stale,
+    // except a record the change deleted, which would only come back as missing.
+    mutationCache: new MutationCache({
+      onSuccess: (_data, _variables, _context, mutation) =>
+        client.invalidateQueries({ predicate: (query) => mutation.meta?.gone === undefined || query.queryKey[0] !== mutation.meta.gone }),
+    }),
   });
   return client;
 }

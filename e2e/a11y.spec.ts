@@ -1,7 +1,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 import { session } from "./env";
-import { resolvedTicket, signedOut } from "./helpers";
+import { png, resolvedTicket, signedOut } from "./helpers";
 import { ALLOWED, resolve } from "./routes";
 
 // axe finds no serious or critical problem on any page. English in the light theme and Arabic in
@@ -70,6 +70,21 @@ test.describe("from a resolution email", () => {
       found.push(...(await problems(visitor, mode)));
     }
     await visitor.context().close();
+    expect(found, found.join("\n")).toEqual([]);
+  });
+});
+
+test.describe("asking for an ID card", () => {
+  test.use({ storageState: session("admin") });
+
+  test("the photo, placed on the card, has no serious accessibility problems", async ({ page }) => {
+    const found: string[] = [];
+    for (const mode of MODES) {
+      await open(page, "/requests/id-card", mode);
+      await page.locator('input[type="file"]').setInputFiles({ name: "me.png", mimeType: "image/png", buffer: png(600, 800) });
+      await page.locator('[role="group"][tabindex="0"]').focus();
+      found.push(...(await problems(page, mode)));
+    }
     expect(found, found.join("\n")).toEqual([]);
   });
 });

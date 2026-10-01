@@ -7,6 +7,7 @@ import {
   jsonb,
   numeric,
   pgTable,
+  real,
   smallint,
   text,
   timestamp,
@@ -20,6 +21,8 @@ import type {
   Criticality,
   DeviceStatus,
   EmailKind,
+  IdCardReason,
+  IdCardStatus,
   EmailStatus,
   KbStatus,
   LicenseType,
@@ -37,6 +40,7 @@ import type {
   TicketType,
   VulnStatus,
 } from "@/lib/domain";
+import type { FontChoice } from "@/lib/id-card";
 
 const id = () => integer().primaryKey().generatedAlwaysAsIdentity();
 const createdAt = () => timestamp({ withTimezone: true }).notNull().defaultNow();
@@ -644,4 +648,38 @@ export const attachments = pgTable(
     createdAt: createdAt(),
   },
   (t) => [index().on(t.entity, t.entityId)],
+);
+
+// ---------------------------------------------------------------- ID cards
+
+/**
+ * An ID card to print, for an employee or a joiner not yet in the directory. The text is a copy
+ * of their details that IT may adjust for the card (a shorter name, say) without changing the
+ * record. The cropped photo is a file under UPLOADS_DIR.
+ */
+export const idCards = pgTable(
+  "id_cards",
+  {
+    id: id(),
+    employeeId: integer().references(() => employees.id, { onDelete: "cascade" }),
+    joinerId: integer().references(() => joiners.id, { onDelete: "cascade" }),
+    ticketId: integer().references(() => tickets.id, { onDelete: "set null" }),
+    reason: text().$type<IdCardReason>().notNull(),
+    note: text(),
+    photoKey: text(),
+    name: text().notNull(),
+    designation: text().notNull(),
+    number: text(),
+    nameFont: text().$type<FontChoice>().notNull().default("auto"),
+    nameSize: real(),
+    designationFont: text().$type<FontChoice>().notNull().default("auto"),
+    designationSize: real(),
+    status: text().$type<IdCardStatus>().notNull().default("requested"),
+    printedAt: timestamp({ withTimezone: true }),
+    printedBy: text(),
+    createdBy: text().references(() => users.id, { onDelete: "set null" }),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [index().on(t.employeeId), index().on(t.joinerId), index().on(t.ticketId)],
 );

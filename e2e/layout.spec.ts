@@ -1,7 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 import { TEXT_SIZE_KEY, TEXT_SIZES } from "../src/lib/text-size";
 import { session } from "./env";
-import { resolvedTicket } from "./helpers";
+import { png, resolvedTicket } from "./helpers";
 import { ALLOWED, resolve } from "./routes";
 
 // At the largest text size, every page fits a phone, a tablet and a desktop screen: the page never
@@ -68,8 +68,8 @@ function layoutProblems(page: Page) {
   });
 }
 
-/** Opens the page at each width in both languages and gathers what does not fit. */
-async function sweep(page: Page, path: string) {
+/** Opens the page at each width in both languages, does `then`, and gathers what does not fit. */
+async function sweep(page: Page, path: string, then?: (page: Page) => Promise<void>) {
   const problems: string[] = [];
   for (const width of WIDTHS) {
     await page.setViewportSize({ width, height: 900 });
@@ -79,6 +79,7 @@ async function sweep(page: Page, path: string) {
       await expect(page.locator('[data-slot="skeleton"]')).toHaveCount(0);
       await page.waitForLoadState("networkidle");
       expect(await page.evaluate(() => document.documentElement.style.fontSize)).toBe(`${LARGEST}%`);
+      await then?.(page);
       problems.push(...(await layoutProblems(page)).map((p) => `${locale} at ${width}px: ${p}`));
     }
   }
@@ -88,6 +89,14 @@ async function sweep(page: Page, path: string) {
 test("the answer page from a resolution email fits every screen at the largest text size", async ({ page }, info) => {
   const { token } = await resolvedTicket(page, `Answer page layout ${info.project.name}`);
   const problems = await sweep(page, `/respond/${token}`);
+  expect(problems, problems.join("\n")).toEqual([]);
+});
+
+test("the ID card photo, once chosen, fits every screen at the largest text size", async ({ page }) => {
+  const problems = await sweep(page, "/requests/id-card", async (p) => {
+    await p.locator('input[type="file"]').setInputFiles({ name: "me.png", mimeType: "image/png", buffer: png(600, 800) });
+    await expect(p.locator('[role="group"][tabindex="0"]')).toBeVisible();
+  });
   expect(problems, problems.join("\n")).toEqual([]);
 });
 

@@ -1,9 +1,10 @@
 "use client";
 
-import { ArrowLeft, Mail, Pencil, Phone } from "lucide-react";
+import { ArrowLeft, IdCard, Mail, Pencil, Phone } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { use, useState } from "react";
 import { EnumBadge } from "@/components/badges";
+import { NewCardDialog } from "@/components/id-cards/new-card-dialog";
 import { EmployeeDialog } from "@/components/people/dialogs";
 import { StatusBadge } from "@/components/status-badge";
 import { StatusPage } from "@/components/status-page";
@@ -22,7 +23,7 @@ export default function EmployeePage({ params }: PageProps<"/[locale]/people/dir
   const t = useTranslations();
   const format = useFormat();
   const lookups = useLookups();
-  const [editing, setEditing] = useState(false);
+  const [dialog, setDialog] = useState<"edit" | "card" | null>(null);
   const { data: person, isLoading } = useApi<EmployeeProfile>(`/employees/${id}`);
 
   if (isLoading) return <Skeleton className="h-96 w-full" />;
@@ -63,10 +64,16 @@ export default function EmployeePage({ params }: PageProps<"/[locale]/people/dir
             )}
           </div>
         </div>
-        <Button variant="outline" onClick={() => setEditing(true)}>
-          <Pencil />
-          {t("common.edit")}
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" onClick={() => setDialog("card")}>
+            <IdCard />
+            {t("idCards.new")}
+          </Button>
+          <Button variant="outline" onClick={() => setDialog("edit")}>
+            <Pencil />
+            {t("common.edit")}
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
@@ -119,7 +126,8 @@ export default function EmployeePage({ params }: PageProps<"/[locale]/people/dir
           </CardContent>
         </Card>
       </div>
-      {editing && <EmployeeDialog employee={person} onClose={() => setEditing(false)} />}
+      {dialog === "edit" && <EmployeeDialog employee={person} onClose={() => setDialog(null)} />}
+      {dialog === "card" && <NewCardDialog employeeId={person.id} onClose={() => setDialog(null)} />}
     </div>
   );
 }

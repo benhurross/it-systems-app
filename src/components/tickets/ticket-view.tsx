@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft, ArrowRight, BookOpen, Star } from "lucide-react";
+import { ArrowLeft, ArrowRight, BookOpen, IdCard, Star } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState, type ReactNode } from "react";
 import { useForm } from "react-hook-form";
@@ -11,7 +11,7 @@ import { EnumBadge, SlaIndicator } from "@/components/badges";
 import { FormDialog, TextareaField } from "@/components/form";
 import { StatusPage } from "@/components/status-page";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
@@ -66,11 +66,36 @@ export function TicketView({ id, mode }: { id: number; mode: Mode }) {
           {mode === "it" && <History ticket={ticket} />}
         </div>
         <div className="space-y-6">
+          {mode === "it" && ticket.idCard && <IdCardPanel card={ticket.idCard} />}
           <Details ticket={ticket} mode={mode} />
           <Suggestions issueType={ticket.issueType} />
         </div>
       </div>
     </div>
+  );
+}
+
+/** An ID card request: the card itself is where IT checks it, prints it and marks it printed. */
+function IdCardPanel({ card }: { card: NonNullable<TicketDetail["idCard"]> }) {
+  const t = useTranslations("idCards");
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <IdCard className="size-4 text-muted-foreground" aria-hidden />
+          {t("ticketPanel")}
+        </CardTitle>
+        <CardDescription className="flex flex-wrap items-center gap-2">
+          <EnumBadge kind="idCardStatus" value={card.status} />
+          {card.status === "requested" ? t("ticketPanelWaiting") : t("ticketPanelPrinted")}
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Button asChild>
+          <Link href={`/people/id-cards/${card.id}`}>{t("openCard")}</Link>
+        </Button>
+      </CardContent>
+    </Card>
   );
 }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle2, Clock, Inbox, Laptop, Plus, UserX } from "lucide-react";
+import { CheckCircle2, Clock, IdCard, Inbox, Laptop, Plus, UserX } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCurrentUser } from "@/components/app-shell/current-user";
 import { EnumBadge } from "@/components/badges";
@@ -30,12 +30,20 @@ export default function HomePage() {
   const today = isoDate(new Date());
 
   const newRequest = (
-    <Button asChild>
-      <Link href="/requests/new">
-        <Plus />
-        {tr("new")}
-      </Link>
-    </Button>
+    <>
+      <Button asChild variant="outline">
+        <Link href="/requests/id-card">
+          <IdCard />
+          {t("idCard")}
+        </Link>
+      </Button>
+      <Button asChild>
+        <Link href="/requests/new">
+          <Plus />
+          {tr("new")}
+        </Link>
+      </Button>
+    </>
   );
 
   if (!data || !lookups.ready) {

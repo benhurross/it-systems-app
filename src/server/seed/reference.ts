@@ -31,6 +31,7 @@ export const REFERENCE: Record<LookupList, Entry[]> = {
     ["security", "Security", "الأمن"],
     ["maintenance", "Maintenance request", "طلب صيانة"],
     ["periodic_maintenance", "Periodic maintenance", "صيانة دورية"],
+    ["id_card", "ID card", "بطاقة الهوية"],
     ["other", "Other request", "طلب آخر"],
   ],
   asset_category: [

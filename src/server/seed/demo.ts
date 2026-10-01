@@ -916,6 +916,31 @@ export async function seedDemo(now = new Date(), options: { people?: Person[] } 
     onboarded = 1;
   }
 
+  // ---------------------------------------------------------------- ID cards
+
+  // A joiner's card waiting to print and a recent hire's already printed. No photos: those come
+  // from the people themselves.
+  const joinerRows = await db.select().from(s.joiners).orderBy(s.joiners.startDate);
+  const upcoming = joinerRows.find((j) => !j.completedAt);
+  const hired = joinerRows.filter((j) => j.completedAt).at(-1);
+  const [printer] = await db.select({ name: s.users.name }).from(s.users).where(eq(s.users.id, helpdesk));
+  const cardOf = (j: (typeof joinerRows)[number]) => ({
+    joinerId: j.id,
+    employeeId: j.employeeId,
+    reason: "new_joiner" as const,
+    name: j.name,
+    designation: j.jobTitle,
+    number: j.employeeNumber,
+    createdBy: helpdesk,
+  });
+  const cards: (typeof s.idCards.$inferInsert)[] = [];
+  if (upcoming) cards.push({ ...cardOf(upcoming), createdAt: at(day(-2), 10) });
+  if (hired?.completedAt) {
+    const printedAt = new Date(hired.completedAt.getTime() - 2 * 86_400_000);
+    cards.push({ ...cardOf(hired), status: "printed", printedAt, printedBy: printer?.name ?? null, createdAt: at(day(-45), 9) });
+  }
+  if (cards.length) await db.insert(s.idCards).values(cards);
+
   // ---------------------------------------------------------------- monitoring history
 
   const monitored = infraRows.filter((a) => a.monitorMethod !== "none");

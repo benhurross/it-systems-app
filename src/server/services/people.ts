@@ -5,7 +5,7 @@ import { onboardingComplete } from "@/lib/people";
 import type { checklistUpdate, employeeInput, joinerInput, leaverInput } from "@/lib/schemas";
 import { audit, type Actor } from "../audit";
 import { db } from "../db";
-import { assets, employees, joiners, leavers, tickets, users } from "../db/schema";
+import { assets, employees, idCards, joiners, leavers, tickets, users } from "../db/schema";
 import { badRequest, one } from "../http";
 
 // ---------------------------------------------------------------- employees
@@ -100,6 +100,8 @@ export async function completeJoiner(id: number, actor: Actor) {
         })
         .returning(),
     );
+    // Their ID card now belongs to the directory entry too.
+    await tx.update(idCards).set({ employeeId: employee.id }).where(eq(idCards.joinerId, id));
     return one(
       await tx
         .update(joiners)

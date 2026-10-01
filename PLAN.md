@@ -385,6 +385,9 @@ Requested by the owner. The company runs its own Exchange Server, so mail goes o
 - [x] Settings → Email shows the outbox beside the settings on wide screens, as a compact list with a filter (all, failed, held, sent). Sent and held emails and old email links are deleted after 90 days (adjustable); failed emails are kept
 - [x] Documents on assets, purchases and contracts: PDF, JPG or PNG up to 10 MB, told apart by their content (a renamed file is refused), stored under random names in UPLOADS_DIR (an "uploads" folder by default) with their details in the database. IT staff and admins only; each upload and deletion is in the record's audit trail. An asset bought through a purchase also shows that purchase's documents
 - [x] Employee ID numbers: shown and edited in the directory (and set on new joiners), flagged when two current employees share one. Read from the staff list's EmpID column, dropped for people who have left; `npm run people:ids "<file.xlsx>"` fills them in for people already loaded, changing nothing else
+- [x] ID cards for the HID Fargo DTC1250e. An admin uploads the company's card design (front and back, portrait, in CR80 proportions) in Settings → ID card; the design files are not in the repository. An employee asks for a new card from their dashboard: they upload a photo, drag and zoom it in the card's photo frame (also by keyboard), and the card fills in their name, designation and "ID: 1234" from the directory. This opens an "ID card" ticket, one request at a time. IT can also start a card from a directory profile, the ID cards list, or a joiner's checklist ("Print the ID card" is now an onboarding step)
+- [x] IT's card page shows the card exactly as it prints. The name, designation and number can be changed for the card only ("First and last name only" drops middle names), each with a size (−/+, or fit automatically) and a font (Auto, Regular, Narrow). Auto shrinks long text a little, then switches to the narrow font, then wraps onto two lines; text is centred on the photo and never wider than the blue line, so it cannot reach the banner. The preview and the PDF use the same fonts (Liberation Sans and Roboto Condensed, both free licences, in public/fonts/id-card) and the same layout code
+- [x] The printer prints one side at a time, so each side is its own one-page PDF at card size, with the steps (Actual size, then put the card back turned over along its long edge). Printing waits for unsaved changes. "Mark as printed" resolves the employee's ticket (they get the usual email asking them to confirm) or ticks the joiner's step. Photos are stored like documents, in UPLOADS_DIR, and removed when replaced or when the card is deleted
 
 ### Phase 11 - Handover
 - [ ] Minimal README: prerequisites (Node, Docker), setup, scripts, and where the demo accounts are defined
@@ -396,7 +399,7 @@ Requested by the owner. The company runs its own Exchange Server, so mail goes o
 
 ## Out of scope for the MVP
 
-Email notifications, file attachments, Microsoft 365 / Active Directory sign-in, importing the workbook's records, and multi-server deployment of the monitoring scheduler.
+Microsoft 365 / Active Directory sign-in, importing the workbook's records, and multi-server deployment of the monitoring scheduler.
 
 ## MVP success criteria
 

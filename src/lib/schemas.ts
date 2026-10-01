@@ -9,6 +9,7 @@ import {
   CRITICALITIES,
   CSAT_SCORES,
   DAILY_CHECKS,
+  ID_CARD_REASONS,
   KB_STATUSES,
   LICENSE_TYPES,
   LOOKUP_LISTS,
@@ -406,3 +407,25 @@ export const attachmentUpload = z.object({
   entityId: z.coerce.number().int().positive(),
   kind: z.enum(ATTACHMENT_KINDS),
 });
+
+/** An employee asking for a new ID card; the photo comes as a file alongside. */
+export const idCardRequest = z.object({ reason: z.enum(ID_CARD_REASONS), note: optionalText });
+
+/** IT starting a card for an employee or a joiner (exactly one of them). */
+export const idCardCreate = z
+  .object({ employeeId: optionalId, joinerId: optionalId, reason: z.enum(ID_CARD_REASONS) })
+  .refine((v) => (v.employeeId === null) !== (v.joinerId === null), { message: "validation.required", path: ["employeeId"] });
+
+const cardFont = z.enum(["auto", "regular", "narrow"]);
+/** IT adjusting what the card says and how: a size of null lets the card choose. */
+export const idCardUpdate = z
+  .object({
+    name,
+    designation: z.string().trim().max(200),
+    number: employeeNumber,
+    nameFont: cardFont,
+    nameSize: z.number().min(5).max(10).nullable(),
+    designationFont: cardFont,
+    designationSize: z.number().min(5).max(10).nullable(),
+  })
+  .partial();

@@ -2,7 +2,7 @@ import { expect, type Page } from "@playwright/test";
 import type { Role } from "./env";
 
 // Every page of the app. `:name` stands for the id of a record, filled in by `resolve`.
-export const REQUEST = ["/home", "/requests", "/requests/new", "/requests/:ticket", "/knowledge", "/knowledge/:article"];
+export const REQUEST = ["/home", "/requests", "/requests/new", "/requests/id-card", "/requests/:ticket", "/knowledge", "/knowledge/:article"];
 export const IT = [
   "/",
   "/kpis",
@@ -39,6 +39,8 @@ export const IT = [
   "/people/directory/:employee",
   "/people/onboarding",
   "/people/offboarding",
+  "/people/id-cards",
+  "/people/id-cards/:card",
 ];
 export const SETTINGS = [
   "/settings",
@@ -47,6 +49,7 @@ export const SETTINGS = [
   "/settings/service-desk",
   "/settings/monitoring",
   "/settings/email",
+  "/settings/id-card",
   "/settings/kpis",
   "/settings/organisation",
   "/settings/audit",
@@ -67,6 +70,7 @@ const SOURCES: Record<string, string> = {
   license: "/api/licenses",
   project: "/api/projects",
   employee: "/api/employees",
+  card: "/api/id-cards",
 };
 
 /** The route with each placeholder replaced by the id of a record the signed-in role can see. */

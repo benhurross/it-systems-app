@@ -32,12 +32,15 @@ export function useApiMutation<TInput, TResult = unknown>(
     onSuccess?: (result: TResult) => void;
     /** Mutations sharing a scope run one at a time, in order, so later saves always land last. */
     scope?: string;
+    /** The path of a record this change deletes: it is not refetched afterwards. */
+    gone?: string;
   } = {},
 ) {
   const t = useTranslations();
   return useMutation({
     mutationFn,
     scope: options.scope ? { id: options.scope } : undefined,
+    meta: options.gone ? { gone: options.gone } : undefined,
     onSuccess: (result) => {
       if (options.success) toast.success(options.success);
       options.onSuccess?.(result);

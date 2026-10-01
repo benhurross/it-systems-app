@@ -17,7 +17,7 @@ const heading = (page: Page) => page.getByRole("heading", { level: 1 });
 
 /** What the pages read from the API, by the area of the app allowed to read it. */
 const APIS = {
-  request: ["/api/me", "/api/tickets", "/api/kb", "/api/lookups"],
+  request: ["/api/me", "/api/tickets", "/api/kb", "/api/lookups", "/api/id-cards/request", "/api/id-cards/design"],
   it: [
     "/api/dashboard",
     "/api/kpis",
@@ -42,6 +42,7 @@ const APIS = {
     "/api/staff",
     "/api/attachments?entity=asset&id=1",
     "/api/attachments/counts?entity=purchase",
+    "/api/id-cards",
   ],
   settings: [
     "/api/audit",

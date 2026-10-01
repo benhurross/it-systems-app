@@ -381,7 +381,8 @@
       "deliver_cards": "Hand over the access card",
       "it_policies": "Walk through the IT policies",
       "check_shares": "Confirm access to shared folders",
-      "signed_forms": "File the signed IT forms"
+      "signed_forms": "File the signed IT forms",
+      "print_id_card": "Print the ID card"
     },
     "offboardingTask": {
       "disable_account": "Disable the user account",
@@ -428,6 +429,17 @@
       "renewal_quote": "Renewal quote",
       "photo": "Photo",
       "other": "Other"
+    },
+    "idCardReason": {
+      "lost": "Lost",
+      "damaged": "Damaged",
+      "details_changed": "Details changed",
+      "new_joiner": "New joiner",
+      "other": "Other"
+    },
+    "idCardStatus": {
+      "requested": "To print",
+      "printed": "Printed"
     }
   },
   "validation": {
@@ -453,7 +465,8 @@
       "kpis": "KPI targets",
       "organisation": "Organization",
       "audit": "Audit log",
-      "email": "Email"
+      "email": "Email",
+      "idCard": "ID card"
     },
     "users": {
       "add": "Add user",
@@ -597,6 +610,29 @@
       "title": "Resolved tickets",
       "description": "When IT resolves a ticket, the requester is asked to confirm the fix. Tickets nobody answers close by themselves.",
       "autoCloseDays": "Close after (days)"
+    },
+    "idCard": {
+      "intro": "The company's card design, printed edge to edge on every ID card. The photo, name, designation and ID number are placed over the front for each person. Here the front shows example details.",
+      "front": "Front",
+      "back": "Back",
+      "size": "{width} × {height} pixels",
+      "none": "Not uploaded yet",
+      "previewOf": "{side} of the card design",
+      "upload": "Upload the design",
+      "replace": "Replace the design",
+      "hint": "A portrait PNG or JPG in the card's proportions (54 × 85.6 mm), at least 640 pixels wide. 1275 × 2019 pixels (600 dpi) is ideal. Leave the photo frame and text area empty.",
+      "uploadSide": "Upload {side}",
+      "remove": "Remove {side}",
+      "uploaded": "Card design uploaded.",
+      "removed": "Card design removed.",
+      "errors": {
+        "fileEmpty": "Choose an image first.",
+        "fileSize": "This file is larger than 10 MB.",
+        "designType": "Choose a PNG or JPG image.",
+        "designShape": "This image is not in the card's proportions. It should be portrait, 54 × 85.6 mm.",
+        "designSmall": "This image is too small to print sharp. Use one at least 640 pixels wide.",
+        "generic": "Something went wrong. Please try again."
+      }
     }
   },
   "kpi": {
@@ -1138,7 +1174,8 @@
     "tabs": {
       "directory": "Directory",
       "onboarding": "Onboarding",
-      "offboarding": "Offboarding"
+      "offboarding": "Offboarding",
+      "idCards": "ID cards"
     },
     "name": "Name",
     "email": "Email",
@@ -1239,7 +1276,8 @@
     "noWarranty": "No warranty date",
     "report": "Report a problem",
     "reportFor": "Report a problem with {device}",
-    "notLinked": "Your account is not linked to an employee record yet. Ask IT to link it."
+    "notLinked": "Your account is not linked to an employee record yet. Ask IT to link it.",
+    "idCard": "New ID card"
   },
   "email": {
     "footer": "Sent automatically by AP Plus IT Systems.",
@@ -1345,5 +1383,122 @@
       "fileKind": "Choose what kind of document this is.",
       "generic": "The file could not be uploaded. Try again."
     }
+  },
+  "idCards": {
+    "requestTitle": "New ID card",
+    "requestIntro": "Upload a recent photo, place it in the frame on your card, and IT will print it for you.",
+    "waitingTitle": "Your ID card request is with IT",
+    "waitingText": "You asked for a new card on {date}. IT will let you know when it is ready to collect.",
+    "viewRequest": "View request {ref}",
+    "sent": "Request {ref} sent to IT.",
+    "yourCard": "Your card",
+    "name": "Name",
+    "designation": "Designation",
+    "number": "ID number",
+    "detailsHint": "These come from the staff directory. If anything is wrong, say so in the note and IT will correct it.",
+    "reason": "Reason",
+    "note": "Note for IT",
+    "send": "Send to IT",
+    "previewLabel": "Front of the ID card for {name}",
+    "choosePhoto": "Your photo",
+    "changePhoto": "Change photo",
+    "addPhoto": "Add photo",
+    "tips": {
+      "recent": "A recent photo of your face and shoulders, looking at the camera.",
+      "background": "A plain, light background and even light work best.",
+      "files": "JPG or PNG, up to 10 MB."
+    },
+    "photoPosition": "Photo position",
+    "arrangeHint": "Drag the photo to place it in the frame. With the keyboard, use the arrow keys to move it and + or − to zoom.",
+    "zoom": "Zoom",
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out",
+    "resetPhoto": "Reset the photo's position",
+    "photoSmallWarning": "This photo is small for the frame, so the card may look blurry. A larger photo, or less zoom, will print sharper.",
+    "errors": {
+      "fileEmpty": "Choose a photo first.",
+      "fileSize": "This file is larger than 10 MB.",
+      "photoType": "Choose a JPG or PNG photo.",
+      "photoShape": "The photo could not be placed on the card. Please try again.",
+      "photoSmall": "This photo is too small to print sharp. Please choose a larger one.",
+      "cardWaiting": "You already have an ID card request with IT.",
+      "generic": "Something went wrong. Please try again."
+    },
+    "new": "New ID card",
+    "newHint": "The card starts with the person's details from the directory. You can add the photo and adjust the text next.",
+    "create": "Start card",
+    "employee": "Employee",
+    "person": "For",
+    "request": "Request",
+    "status": "Status",
+    "requestedOn": "Requested",
+    "printedOn": "Printed",
+    "backToList": "ID cards",
+    "cardFor": "ID card for {name}",
+    "startedOn": "Started {date}",
+    "inDirectory": "Directory entry",
+    "inOnboarding": "Onboarding",
+    "noteFrom": "Note from {name}:",
+    "noDesign": "The card design is not uploaded yet",
+    "noDesignAdmin": "Upload the front and back in Settings → ID card.",
+    "noDesignStaff": "Ask an admin to upload the front and back in Settings → ID card.",
+    "preview": "Preview",
+    "previewHint": "Exactly as the card will print.",
+    "frontOf": "Front of the ID card for {name}",
+    "backOf": "Back of the ID card for {name}",
+    "frontSide": "Front",
+    "backSide": "Back",
+    "noPhoto": "No photo yet. Add one before printing.",
+    "text": "Text on the card",
+    "textHint": "Changes here are for the card only; the directory keeps its details.",
+    "nameOnCard": "Name on the card",
+    "firstAndLast": "First and last name only",
+    "fromRecord": "Use the {what} in the directory",
+    "noNumber": "Without a number, the card has no ID line.",
+    "unsaved": "Unsaved changes",
+    "undo": "Undo changes",
+    "sizeOf": "Size of the {what}",
+    "smaller": "Smaller {what}",
+    "larger": "Larger {what}",
+    "points": "{size} pt",
+    "autoSize": "Fit automatically",
+    "fontOf": "Font for the {what}",
+    "fonts": {
+      "auto": "Auto",
+      "regular": "Regular",
+      "narrow": "Narrow"
+    },
+    "fitNow": "On the card: {font}, {size} pt{lines, plural, =1 {} other {, on # lines}}",
+    "print": "Print",
+    "printerHint": "Each side opens as a PDF. In the print dialog choose the Fargo DTC1250e, Portrait, and Actual size (100%), not Fit to page.",
+    "printFront": "Print front",
+    "printBack": "Print back",
+    "flip": "Put the printed card back in the printer turned over along its long edge, so the top of the card stays at the same end.",
+    "markPrinted": "Mark as printed",
+    "markPrintedTicket": "Resolves the request and tells the employee the card is ready to collect.",
+    "markPrintedJoiner": "Ticks “Print the ID card” on the onboarding checklist.",
+    "markPrintedPlain": "Records who printed the card and when.",
+    "printedBy": "Printed {date} by {name}",
+    "saveFirst": "Save your changes before printing.",
+    "confirmPrinted": "Mark this card as printed?",
+    "confirmPrintedTicket": "This resolves {ref} and tells {name} the card is ready to collect from IT.",
+    "confirmPrintedText": "This records the card as printed.",
+    "confirmDelete": "Delete this card?",
+    "confirmDeleteText": "The card and its photo are removed. Any request ticket stays as it is.",
+    "saved": "Card saved.",
+    "markedPrinted": "Card marked as printed.",
+    "deleted": "Card deleted.",
+    "photoSaved": "Photo saved.",
+    "photoDialogHint": "Choose the photo, then drag and zoom it until the face fills the frame.",
+    "savePhoto": "Save photo",
+    "ticketPanel": "ID card",
+    "ticketPanelWaiting": "Check the card, then print it.",
+    "ticketPanelPrinted": "The card is printed.",
+    "openCard": "Open the card",
+    "openForJoiner": "Open card",
+    "whatName": "name",
+    "whatDesignation": "designation",
+    "size": "Size",
+    "font": "Font"
   }
 }
