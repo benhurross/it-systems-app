@@ -1,10 +1,10 @@
-import { TIME_ZONE } from "./format";
+import { dateFormatter, TIME_ZONE } from "./format";
 
 const DAY_MS = 86_400_000;
 
 /** The calendar date in Riyadh, as YYYY-MM-DD. */
 export function isoDate(at: Date | string = new Date()): string {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: TIME_ZONE }).format(new Date(at));
+  return dateFormatter("en-CA", { timeZone: TIME_ZONE }).format(new Date(at));
 }
 
 const utc = (iso: string) => Date.parse(`${iso}T00:00:00Z`);

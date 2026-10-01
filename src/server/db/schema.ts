@@ -515,7 +515,8 @@ export const monitorChecks = pgTable(
     up: boolean().notNull(),
     latencyMs: integer(),
   },
-  (t) => [index().on(t.assetId, t.checkedAt)],
+  // By time too: the network page and the dashboard read the last day of every device's checks.
+  (t) => [index().on(t.assetId, t.checkedAt), index().on(t.checkedAt)],
 );
 
 export const alerts = pgTable("alerts", {

@@ -1,3 +1,5 @@
+import { numberFormatter } from "./format";
+
 /** Uploads are refused above this size. */
 export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
 
@@ -39,7 +41,7 @@ export function formatBytes(bytes: number, locale: string): string {
     value /= 1024;
     unit++;
   }
-  return `${new Intl.NumberFormat(locale === "ar" ? "ar-SA" : "en-GB", { maximumFractionDigits: unit === 0 ? 0 : 1 }).format(value)} ${units[unit]}`;
+  return `${numberFormatter(locale === "ar" ? "ar-SA" : "en-GB", { maximumFractionDigits: unit === 0 ? 0 : 1 }).format(value)} ${units[unit]}`;
 }
 
 /** An image's width and height in pixels, read from its header; null if it cannot be read. */

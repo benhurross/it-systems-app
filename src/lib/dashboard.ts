@@ -89,6 +89,17 @@ export function dashboardSummary(data: DashboardInput, now = new Date()) {
   const months = lastMonths(today);
   const monthOf = (at: When) => isoDate(at).slice(0, 7);
   const yearAgo = `${months[0]}-01`;
+  // Each ticket's months worked out once, not once for every month of the chart.
+  const opened = new Map<string, number>();
+  const closed = new Map<string, number>();
+  for (const t of data.tickets) {
+    const o = monthOf(t.createdAt);
+    opened.set(o, (opened.get(o) ?? 0) + 1);
+    if (t.closedAt) {
+      const c = monthOf(t.closedAt);
+      closed.set(c, (closed.get(c) ?? 0) + 1);
+    }
+  }
 
   return {
     tiles: {
@@ -146,11 +157,7 @@ export function dashboardSummary(data: DashboardInput, now = new Date()) {
       ),
     ].filter((g) => g.count > 0),
     charts: {
-      ticketsByMonth: months.map((month) => ({
-        month,
-        opened: data.tickets.filter((t) => monthOf(t.createdAt) === month).length,
-        closed: data.tickets.filter((t) => t.closedAt && monthOf(t.closedAt) === month).length,
-      })),
+      ticketsByMonth: months.map((month) => ({ month, opened: opened.get(month) ?? 0, closed: closed.get(month) ?? 0 })),
       ticketsByIssueType: tally(
         data.tickets.filter((t) => isoDate(t.createdAt) >= yearAgo),
         (t) => t.issueType,

@@ -5,6 +5,7 @@ import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
 import { useFormat } from "@/hooks/use-format";
 import type { DashboardData } from "@/lib/api-types";
+import { dateFormatter } from "@/lib/format";
 import { ChartCard, ChartTable, LegendKey } from "./chart-card";
 
 /** Tickets opened and closed each month. Time runs left to right in both languages, as axes do. */
@@ -13,9 +14,7 @@ export function TicketsChart({ months }: { months: DashboardData["charts"]["tick
   const format = useFormat();
   const locale = useLocale();
   const monthName = (month: string, style: "short" | "long") =>
-    new Intl.DateTimeFormat(locale, { month: style, year: style === "long" ? "numeric" : undefined, timeZone: "UTC" }).format(
-      new Date(`${month}-01T00:00:00Z`),
-    );
+    dateFormatter(locale, { month: style, year: style === "long" ? "numeric" : undefined, timeZone: "UTC" }).format(new Date(`${month}-01T00:00:00Z`));
   const config = {
     opened: { label: t("opened"), color: "var(--chart-1)" },
     closed: { label: t("closed"), color: "var(--chart-2)" },
