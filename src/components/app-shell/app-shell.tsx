@@ -9,6 +9,7 @@ import { authClient } from "@/lib/auth-client";
 import { signInFor } from "@/lib/next-path";
 import { AppSidebar } from "./app-sidebar";
 import { CurrentUserProvider } from "./current-user";
+import { MeshBackground } from "./mesh-background";
 import { Topbar } from "./topbar";
 
 export function AppShell({ children }: { children: ReactNode }) {
@@ -36,9 +37,10 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <CurrentUserProvider value={session.user}>
+      <MeshBackground />
       <SidebarProvider>
         <AppSidebar side={locale === "ar" ? "right" : "left"} />
-        <SidebarInset className="min-w-0">
+        <SidebarInset className="min-w-0 bg-transparent">
           <Topbar />
           <main className="flex-1 p-4 md:p-6">{children}</main>
         </SidebarInset>

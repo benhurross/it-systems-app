@@ -29,7 +29,7 @@ export default function ToolsPage() {
       ) : modes.length === 0 ? (
         <p className="max-w-3xl rounded-xl border p-6 text-sm text-muted-foreground">{t("kit.none")}</p>
       ) : (
-        <section className="max-w-5xl overflow-hidden rounded-xl bg-card ring-1 ring-foreground/10" aria-labelledby="pdf-kit">
+        <section className="max-w-5xl overflow-hidden rounded-xl bg-card shadow-glass ring-1 ring-foreground/10" aria-labelledby="pdf-kit">
           <div className="flex flex-wrap items-center gap-4 border-b p-4 sm:p-5">
             <span className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-brand-soft text-brand">
               <Files className="size-6" aria-hidden />

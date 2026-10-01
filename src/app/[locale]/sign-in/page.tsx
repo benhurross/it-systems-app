@@ -7,6 +7,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { DisplayMenu } from "@/components/app-shell/display-menu";
 import { LocaleSwitcher } from "@/components/app-shell/locale-switcher";
+import { MeshBackground } from "@/components/app-shell/mesh-background";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
@@ -50,6 +51,7 @@ export default function SignInPage() {
 
   return (
     <div className="grid min-h-dvh lg:grid-cols-2">
+      <MeshBackground />
       <div className="relative hidden flex-col justify-between bg-sidebar p-10 text-sidebar-foreground lg:flex">
         <Image
           src={locale === "ar" ? "/brand/applus-white-ar.svg" : "/brand/applus-white.svg"}

@@ -15,7 +15,7 @@
 
   --background: #f7faff;
   --foreground: #1e2022;
-  --card: #ffffff;
+  --card: var(--glass);
   --card-foreground: #1e2022;
   --popover: #ffffff;
   --popover-foreground: #1e2022;
@@ -24,7 +24,8 @@
   --secondary: #eef3fb;
   --secondary-foreground: #21325b;
   --muted: #f1f4f9;
-  --muted-foreground: #5c6b7c;
+  /* A touch darker than the brand grey, so it keeps 4.5:1 over the brightest part of the mesh. */
+  --muted-foreground: #526070;
   --accent: #e6efff;
   --accent-foreground: #08305a;
   --destructive: #b3244b;
@@ -53,6 +54,13 @@
 
   --radius: 0.625rem;
 
+  /* The mesh behind the pages (brand blue, accent teal, violet) and the glass over it. */
+  --mesh-1: rgb(0 71 186 / 0.13);
+  --mesh-2: rgb(0 201 167 / 0.13);
+  --mesh-3: rgb(142 78 198 / 0.1);
+  --glass: rgb(255 255 255 / 0.66);
+  --glass-shadow: inset 0 1px 0 rgb(255 255 255 / 0.8), 0 1px 2px rgb(16 24 40 / 0.04), 0 10px 30px -14px rgb(16 24 40 / 0.16);
+
   --sidebar: #21325b;
   --sidebar-foreground: #dfe6f3;
   --sidebar-primary: #0047ba;
@@ -67,7 +75,7 @@
 .dark {
   --background: #0d1526;
   --foreground: #e6ebf4;
-  --card: #131c30;
+  --card: var(--glass);
   --card-foreground: #e6ebf4;
   --popover: #16213a;
   --popover-foreground: #e6ebf4;
@@ -97,6 +105,12 @@
   --neutral: #b4bfd0;
   --neutral-soft: rgb(148 163 184 / 0.14);
 
+  --mesh-1: rgb(63 134 242 / 0.26);
+  --mesh-2: rgb(20 168 140 / 0.16);
+  --mesh-3: rgb(139 116 224 / 0.2);
+  --glass: rgb(19 28 48 / 0.6);
+  --glass-shadow: inset 0 1px 0 rgb(255 255 255 / 0.05), 0 10px 30px -14px rgb(0 0 0 / 0.55);
+
   --chart-1: #3f86f2;
   --chart-2: #14a88c;
   --chart-3: #e0703f;
@@ -124,6 +138,7 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
+  --shadow-glass: var(--glass-shadow);
   --color-card-foreground: var(--card-foreground);
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
@@ -208,5 +223,69 @@
     --xy-controls-button-color: var(--foreground);
     --xy-controls-button-color-hover: var(--foreground);
     --xy-controls-button-border-color: var(--border);
+  }
+}
+
+/*
+ * The mesh: three soft glows that drift slowly behind the pages. They are gradients rather than
+ * blurred shapes, and only move, so the browser draws them once and slides them along.
+ */
+@layer components {
+  .mesh {
+    background-color: var(--background);
+  }
+  .mesh-glow {
+    position: absolute;
+    border-radius: 9999px;
+    will-change: transform;
+    animation: 40s ease-in-out infinite alternate;
+  }
+  .mesh-glow-1 {
+    width: 70vmax;
+    height: 70vmax;
+    top: -32vmax;
+    left: -14vmax;
+    background: radial-gradient(closest-side, var(--mesh-1), transparent);
+    animation-name: mesh-drift-1;
+  }
+  .mesh-glow-2 {
+    width: 62vmax;
+    height: 62vmax;
+    bottom: -30vmax;
+    right: -18vmax;
+    background: radial-gradient(closest-side, var(--mesh-2), transparent);
+    animation-name: mesh-drift-2;
+    animation-duration: 48s;
+  }
+  .mesh-glow-3 {
+    width: 48vmax;
+    height: 48vmax;
+    top: 22%;
+    left: 38%;
+    background: radial-gradient(closest-side, var(--mesh-3), transparent);
+    animation-name: mesh-drift-3;
+    animation-duration: 56s;
+  }
+}
+
+@keyframes mesh-drift-1 {
+  to {
+    transform: translate3d(14vw, 10vh, 0) scale(1.12);
+  }
+}
+@keyframes mesh-drift-2 {
+  to {
+    transform: translate3d(-16vw, -12vh, 0) scale(0.9);
+  }
+}
+@keyframes mesh-drift-3 {
+  to {
+    transform: translate3d(-18vw, 14vh, 0) scale(1.18);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mesh-glow {
+    animation: none;
   }
 }

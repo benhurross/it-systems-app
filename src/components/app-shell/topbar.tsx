@@ -18,7 +18,7 @@ export function Topbar() {
   const it = can(user.role, "it");
 
   return (
-    <header className="sticky top-0 z-20 flex h-16 items-center gap-2 border-b bg-background/85 px-3 backdrop-blur md:px-4">
+    <header className="sticky top-0 z-20 flex h-16 items-center gap-2 border-b bg-background/60 px-3 backdrop-blur-xl md:px-4">
       <SidebarTrigger aria-label={t("common.toggleSidebar")} />
       <CommandMenu />
       <div className="ms-auto flex shrink-0 items-center gap-1">
