@@ -398,6 +398,7 @@ Requested by the owner. The company runs its own Exchange Server, so mail goes o
 - [x] An optional "People" sheet in the log's workbook says who names in the log are: someone in the directory under another spelling, someone to add (with email, department, job title, ID number, and current, left or shared mailbox), or an IT account to make for a "Closed by" name (printed with a one-time password). It is read before any guessing, and a second load finds what the first made
 - [x] The log's Reopened and ReopenedDate columns count a reopening and add it to the ticket's history
 - [x] Tickets record how they reached IT ("Received by": App, Phone call, Mobile, Email, Email alert, WhatsApp, In person; an editable list). Requests raised in the app are App; IT picks the rest when logging one, and can change it. The tickets list filters and exports by it
+- [x] The tickets list filters by the day tickets opened: quick ranges (today, last 7 or 30 days, this or last month, this or last year) or chosen days, either end open, counted by Riyadh's calendar. It clears with the other filters and the CSV export follows it
 
 ### Phase 11 - Handover
 - [ ] Minimal README: prerequisites (Node, Docker), setup, scripts, and where the demo accounts are defined

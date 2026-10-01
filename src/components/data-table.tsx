@@ -3,6 +3,7 @@
 import {
   columnFacetingFeature,
   columnFilteringFeature,
+  constructFilterFn,
   createColumnHelper,
   createFacetedRowModel,
   createFacetedUniqueValues,
@@ -43,6 +44,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useFormat } from "@/hooks/use-format";
 import { useRouter } from "@/i18n/navigation";
 import { downloadCsv, toCsv, type CsvColumn } from "@/lib/csv";
+import { type DateRange, inDateRange, isEmptyRange } from "@/lib/date-range";
+import { DateRangeFilter } from "./date-range-filter";
 
 export const dataTableFeatures = tableFeatures({
   rowSortingFeature,
@@ -51,7 +54,15 @@ export const dataTableFeatures = tableFeatures({
   columnFilteringFeature,
   globalFilteringFeature,
   filteredRowModel: createFilteredRowModel(),
-  filterFns: { arrHas: filterFn_arrHas, includesString: filterFn_includesString },
+  filterFns: {
+    arrHas: filterFn_arrHas,
+    includesString: filterFn_includesString,
+    // Whole days by the office's calendar, so "today" means today in Riyadh.
+    inRange: constructFilterFn({
+      filter: (value, range: DateRange) => value !== null && value !== undefined && inDateRange(value as Date | string, range),
+      autoRemove: isEmptyRange,
+    }),
+  },
   columnFacetingFeature,
   facetedRowModel: createFacetedRowModel(),
   facetedUniqueValues: createFacetedUniqueValues(),
@@ -61,7 +72,7 @@ export const dataTableFeatures = tableFeatures({
 
 type Features = typeof dataTableFeatures;
 
-/** Column helper typed for DataTable. Facet columns should set `filterFn: "arrHas"`. */
+/** Column helper typed for DataTable. Facet columns set `filterFn: "arrHas"`; a date filter's column `filterFn: "inRange"`. */
 export const columnHelper = <T extends RowData>() => createColumnHelper<Features, T>();
 
 export type Facet = { column: string; label: string; options: { value: string; label: string }[] };
@@ -70,6 +81,7 @@ export function DataTable<T extends RowData>({
   data,
   columns,
   facets = [],
+  dateFilter,
   csv,
   rowHref,
   toolbar,
@@ -82,6 +94,8 @@ export function DataTable<T extends RowData>({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   columns: ColumnDef<Features, T, any>[];
   facets?: Facet[];
+  /** A range of days for one date column, beside the facets. */
+  dateFilter?: { column: string; label: string };
   csv?: { filename: string; columns: CsvColumn<T>[]; label?: string };
   rowHref?: (row: T) => string;
   toolbar?: ReactNode;
@@ -119,6 +133,13 @@ export function DataTable<T extends RowData>({
           onChange={(e) => table.setGlobalFilter(e.target.value)}
           className="h-9 w-full sm:w-64"
         />
+        {dateFilter && (
+          <DateRangeFilter
+            label={dateFilter.label}
+            value={(table.getColumn(dateFilter.column)?.getFilterValue() as DateRange | undefined) ?? null}
+            onChange={(range) => table.getColumn(dateFilter.column)?.setFilterValue(isEmptyRange(range) ? undefined : range)}
+          />
+        )}
         {facets.map((facet) => (
           <FacetFilter key={facet.column} facet={facet} column={table.getColumn(facet.column)} />
         ))}

@@ -88,6 +88,7 @@ export default function TicketsPage() {
     }),
     col.accessor("createdAt", {
       header: t("tickets.created"),
+      filterFn: "inRange",
       cell: (info) => <span className="whitespace-nowrap">{format.date(info.getValue())}</span>,
     }),
   ];
@@ -135,6 +136,7 @@ export default function TicketsPage() {
             columns={columns}
             loading={isLoading}
             rowHref={(x) => `/tickets/${x.id}`}
+            dateFilter={{ column: "createdAt", label: t("tickets.created") }}
             facets={[
               { column: "status", label: t("tickets.status"), options: TICKET_STATUSES.map((s) => ({ value: s, label: t(`enums.ticketStatus.${s}`) })) },
               { column: "priority", label: t("tickets.priority"), options: PRIORITIES.map((p) => ({ value: p, label: t(`enums.priority.${p}`) })) },

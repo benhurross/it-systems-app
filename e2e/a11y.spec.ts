@@ -105,3 +105,18 @@ test.describe("a printed ID card", () => {
     expect(found, found.join("\n")).toEqual([]);
   });
 });
+
+test.describe("filtering by date", () => {
+  test.use({ storageState: session("admin") });
+
+  test("the open date filter has no serious accessibility problems", async ({ page }) => {
+    const found: string[] = [];
+    for (const mode of MODES) {
+      await open(page, "/tickets", mode);
+      await page.locator("button:has(svg.lucide-calendar-days)").first().click();
+      await expect(page.getByRole("dialog")).toBeVisible();
+      found.push(...(await problems(page, mode)));
+    }
+    expect(found, found.join("\n")).toEqual([]);
+  });
+});

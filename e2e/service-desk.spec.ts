@@ -1,5 +1,7 @@
 import { expect, test, type Browser } from "@playwright/test";
 import { session } from "./env";
+import { inDateRange } from "../src/lib/date-range";
+import { addDays, isoDate } from "../src/lib/dates";
 import { DEMO_PASSWORD } from "../src/server/seed/demo-data";
 import { choose, signedOut, unique, watchConsole } from "./helpers";
 
@@ -53,6 +55,32 @@ test.describe("IT staff", () => {
     await page.getByRole("button", { name: "Close", exact: true }).click();
     await expect(page.getByRole("button", { name: "Reopen" })).toBeVisible();
     await expect(page.getByText(/status closed/)).toBeVisible();
+    console.assertClean();
+  });
+
+  test("the tickets list filters by the day tickets opened", async ({ page }) => {
+    const console = watchConsole(page);
+    // A month well in the past, so tickets other tests open today never change the count.
+    const from = addDays(isoDate(), -60);
+    const to = addDays(isoDate(), -31);
+    const all = (await (await page.request.get("/api/tickets")).json()) as { createdAt: string }[];
+    const expected = all.filter((t) => inDateRange(t.createdAt, { from, to })).length;
+
+    await page.goto("/en/tickets");
+    const opened = page.getByRole("button", { name: /^Opened/ }).first();
+    await opened.click();
+    const panel = page.getByRole("dialog");
+    await panel.getByLabel("From").fill(from);
+    await panel.getByLabel("To").fill(to);
+    await page.keyboard.press("Escape");
+    await expect(page.getByText(new RegExp(` of ${expected}$`))).toBeVisible();
+
+    await opened.click();
+    await panel.getByRole("button", { name: "Last 7 days" }).click();
+    await expect(opened).toContainText("Last 7 days");
+    await page.keyboard.press("Escape");
+    await page.getByRole("button", { name: "Clear filters" }).click();
+    await expect(opened).not.toContainText("Last 7 days");
     console.assertClean();
   });
 

@@ -123,7 +123,25 @@
     "next": "الصفحة التالية",
     "empty": "لا توجد بيانات بعد",
     "noMatches": "لا توجد صفوف مطابقة لعوامل التصفية",
-    "clearFilters": "مسح عوامل التصفية"
+    "clearFilters": "مسح عوامل التصفية",
+    "dates": {
+      "quick": "نطاقات سريعة",
+      "presets": {
+        "today": "اليوم",
+        "last7": "آخر 7 أيام",
+        "last30": "آخر 30 يوماً",
+        "thisMonth": "هذا الشهر",
+        "lastMonth": "الشهر الماضي",
+        "thisYear": "هذه السنة",
+        "lastYear": "السنة الماضية"
+      },
+      "from": "من",
+      "to": "إلى",
+      "clear": "أي تاريخ",
+      "between": "{from} – {to}",
+      "since": "من {date}",
+      "until": "حتى {date}"
+    }
   },
   "errors": {
     "forbiddenTitle": "غير متاح",

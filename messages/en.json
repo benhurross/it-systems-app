@@ -123,7 +123,25 @@
     "next": "Next page",
     "empty": "Nothing to show yet",
     "noMatches": "No rows match the filters",
-    "clearFilters": "Clear filters"
+    "clearFilters": "Clear filters",
+    "dates": {
+      "quick": "Quick ranges",
+      "presets": {
+        "today": "Today",
+        "last7": "Last 7 days",
+        "last30": "Last 30 days",
+        "thisMonth": "This month",
+        "lastMonth": "Last month",
+        "thisYear": "This year",
+        "lastYear": "Last year"
+      },
+      "from": "From",
+      "to": "To",
+      "clear": "Any date",
+      "between": "{from} – {to}",
+      "since": "From {date}",
+      "until": "Until {date}"
+    }
   },
   "errors": {
     "forbiddenTitle": "Not available",
