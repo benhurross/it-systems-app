@@ -48,6 +48,8 @@ export const ticketCreate = z.object({
   description: body,
   issueType: code,
   location: code,
+  /** How the request reached IT; set to "app" for anyone outside IT. */
+  channel: code.nullish().transform((v) => v ?? null),
   priority: z.enum(PRIORITIES).default("medium"),
   requesterId: optionalId,
   assigneeId: optionalUser,
@@ -59,6 +61,7 @@ export const ticketUpdate = z
     status: z.enum(TICKET_STATUSES),
     priority: z.enum(PRIORITIES),
     issueType: code,
+    channel: code.nullable(),
     assigneeId: optionalUser,
     assetId: optionalId,
     resolution: optionalText,
@@ -303,7 +306,17 @@ export const lookupInput = z.object({
 });
 
 const hours = z.number().positive().max(24 * 90);
-export const slaSettings = z.object({ critical: hours, high: hours, medium: hours, low: hours });
+export const slaSettings = z.object({
+  critical: hours,
+  high: hours,
+  medium: hours,
+  low: hours,
+  // An empty target leaves the issue type to its tickets' priority.
+  byIssueType: z
+    .record(code, hours.nullish())
+    .default({})
+    .transform((targets) => Object.fromEntries(Object.entries(targets).filter((e): e is [string, number] => typeof e[1] === "number"))),
+});
 
 /** Resolved tickets the requester has not answered close by themselves after this many days. */
 export const ticketSettings = z.object({ autoCloseDays: z.number().int().min(1).max(30) });

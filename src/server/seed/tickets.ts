@@ -1,11 +1,13 @@
-import { inArray, sql } from "drizzle-orm";
+import { randomBytes } from "node:crypto";
+import { eq, inArray, sql } from "drizzle-orm";
 import { ref, type TicketStatus, type TicketType } from "@/lib/domain";
 import { PLACEHOLDER_DOMAIN } from "@/lib/people";
 import { dueAt } from "@/lib/sla";
 import { db } from "../db";
 import * as s from "../db/schema";
+import { auth } from "../auth";
 import { getSetting } from "../settings";
-import { DEFAULT_DEPARTMENT } from "./people";
+import { DEFAULT_DEPARTMENT, DEFAULT_JOB_TITLE, DEFAULT_LOCATION } from "./people";
 
 // Loads the IT ticket log (an export from the old system, as a spreadsheet) in place of the tickets
 // in the database. Ticket numbers are kept, so IT001234 stays IT001234.
@@ -24,9 +26,12 @@ export type LoggedTicket = {
   location: string;
   requester: string;
   subject: string;
-  /** How the request came in (phone, email...), when the log says. */
+  /** How the request reached IT, as a code from the "channel" list, when the log says. */
   channel: string | null;
   closedBy: string | null;
+  /** Reopened after it was first closed, and when, as the log's Reopened columns say. */
+  reopened: boolean;
+  reopenedAt: Date | null;
 };
 
 const key = (v: string) => v.toLowerCase().replace(/[^a-z0-9]/g, "");
@@ -42,7 +47,9 @@ const COLUMNS = {
   status: ["status"],
   closed: ["closeddate", "closed"],
   closedBy: ["closedby", "resolvedby", "technician"],
-  channel: ["channel", "source", "via", "receivedvia"],
+  channel: ["channel", "source", "via", "receivedvia", "receivedby"],
+  reopened: ["reopened"],
+  reopenedAt: ["reopeneddate", "reopenedon"],
 } as const;
 
 const RIYADH = 3 * 3_600_000;
@@ -104,7 +111,7 @@ function lookupOf(value: string, list: Lookup[]): string | null {
  * without a ticket number or an opening date are skipped; everything else that needed a guess is
  * listed in the notes.
  */
-export function cleanTickets(sheet: Cell[][], lists: { location: Lookup[]; issue_type: Lookup[] }) {
+export function cleanTickets(sheet: Cell[][], lists: { location: Lookup[]; issue_type: Lookup[]; channel: Lookup[] }) {
   const notes: string[] = [];
   const headerAt = sheet.findIndex((row) => row.some((c) => COLUMNS.number.includes(key(text(c)) as never)));
   if (headerAt < 0) throw new Error("No header row with a TicketNo column.");
@@ -188,6 +195,11 @@ export function cleanTickets(sheet: Cell[][], lists: { location: Lookup[]; issue
       notes.push(`${ref("ticket", number)}: location "${rawLocation}" is not in the list, so it is ${location}.`);
     }
     const description = text(r[at.description]);
+    const rawChannel = at.channel >= 0 ? channelOf(text(r[at.channel])) : null;
+    const channel = rawChannel ? lookupOf(rawChannel, lists.channel) : null;
+    if (rawChannel && !channel) notes.push(`${ref("ticket", number)}: received by "${rawChannel}" is not in the list, so it is not recorded.`);
+    const reopenedAt = at.reopenedAt >= 0 ? toDate(r[at.reopenedAt], swapped) : null;
+    const reopenedText = at.reopened >= 0 ? key(text(r[at.reopened])) : "";
     tickets.push({
       number,
       openedAt,
@@ -199,8 +211,10 @@ export function cleanTickets(sheet: Cell[][], lists: { location: Lookup[]; issue
       location,
       requester: text(r[at.requester]) || "Unknown",
       subject: (description || rawIssue || "Ticket").slice(0, 200),
-      channel: at.channel >= 0 ? channelOf(text(r[at.channel])) : null,
+      channel,
       closedBy: finished && at.closedBy >= 0 ? text(r[at.closedBy]) || null : null,
+      reopened: reopenedAt !== null || !["", "no", "n", "false", "0"].includes(reopenedText),
+      reopenedAt,
     });
   }
   tickets.sort((a, b) => a.number - b.number);
@@ -283,103 +297,240 @@ export function matchStaff(value: string, staff: { id: string; name: string; ema
   );
 }
 
+// ---------------------------------------------------------------- the People sheet
+
+/**
+ * A row of the optional People sheet, saying who a name in the log is: someone already in the
+ * directory (by name or email), or someone to add with these details. A row whose Account is
+ * "IT staff" or "Admin" also gets a sign-in, for a name in the Closed by column.
+ */
+export type PersonFix = {
+  inLog: string;
+  name: string;
+  email: string | null;
+  department: string | null;
+  jobTitle: string | null;
+  location: string | null;
+  employeeNumber: string | null;
+  status: "current" | "left" | "mailbox";
+  account: "it_staff" | "admin" | null;
+};
+
+const PEOPLE_COLUMNS = {
+  inLog: ["nameinlog", "inlog", "logname"],
+  name: ["name", "fullname"],
+  email: ["email"],
+  department: ["department"],
+  jobTitle: ["jobtitle", "designation", "title"],
+  location: ["location"],
+  employeeNumber: ["idnumber", "empid", "employeenumber"],
+  status: ["status"],
+  account: ["account", "role"],
+} as const;
+
+const isEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+
+export function cleanPeopleSheet(sheet: Cell[][], lists: { department: Lookup[]; location: Lookup[] }) {
+  const notes: string[] = [];
+  const header = (sheet[0] ?? []).map((c) => key(text(c)));
+  const at = Object.fromEntries(
+    Object.entries(PEOPLE_COLUMNS).map(([field, names]) => [field, header.findIndex((h) => (names as readonly string[]).includes(h))]),
+  ) as Record<keyof typeof PEOPLE_COLUMNS, number>;
+  const get = (r: Cell[], field: keyof typeof PEOPLE_COLUMNS) => (at[field] >= 0 ? text(r[at[field]]) : "");
+  const fixes: PersonFix[] = [];
+  for (const r of sheet.slice(1)) {
+    const inLog = get(r, "inLog") || get(r, "name");
+    if (!inLog) continue;
+    const name = get(r, "name") || inLog;
+    let email: string | null = get(r, "email").toLowerCase() || null;
+    if (email && !isEmail(email)) {
+      notes.push(`People: "${email}" for ${name} is not an email address, so none is used.`);
+      email = null;
+    }
+    const lookup = (field: "department" | "location") => {
+      const value = get(r, field);
+      if (!value) return null;
+      const code = lookupOf(value, lists[field]);
+      if (!code) notes.push(`People: ${field} "${value}" for ${name} is not in the list, so the default is used.`);
+      return code;
+    };
+    const status = key(get(r, "status"));
+    const account = key(get(r, "account"));
+    fixes.push({
+      inLog,
+      name,
+      email,
+      department: lookup("department"),
+      jobTitle: get(r, "jobTitle") || null,
+      location: lookup("location"),
+      employeeNumber: get(r, "employeeNumber") || null,
+      status: status.startsWith("left") || status === "inactive" || status === "resigned" ? "left" : status.includes("mailbox") || status === "team" ? "mailbox" : "current",
+      account: account === "admin" ? "admin" : account.includes("it") || account === "staff" ? "it_staff" : null,
+    });
+  }
+  return { fixes, notes };
+}
+
 // ---------------------------------------------------------------- loading
 
 const CHUNK = 500;
 
+type Person = { id: number; name: string; email: string };
+type Staff = { id: string; name: string; email: string };
+
+/** Someone the People sheet names, found in the directory by email or name. */
+const findPerson = (fix: PersonFix, people: Person[]) =>
+  people.find((p) => (fix.email && p.email.toLowerCase() === fix.email) || normalName(p.name) === normalName(fix.name));
+
 /**
  * Matches the log's people and IT staff against the database and, when `replace` is set, removes
  * every ticket there (with its comments, links and history) and loads the log's in their place.
- * Without it, only reports what would happen.
+ * Without it, only reports what would happen. The People sheet, when given, decides who names in
+ * the log are before any guessing.
  */
-export async function importTickets(tickets: LoggedTicket[], { replace }: { replace: boolean }) {
+export async function importTickets(tickets: LoggedTicket[], { replace, people: fixes = [] }: { replace: boolean; people?: PersonFix[] }) {
   const [people, staffUsers, [{ n: existing }], sla] = await Promise.all([
     db.select({ id: s.employees.id, name: s.employees.name, email: s.employees.email }).from(s.employees),
     db.select({ id: s.users.id, name: s.users.name, email: s.users.email }).from(s.users).where(inArray(s.users.role, ["admin", "it_staff"])),
     db.select({ n: sql<number>`count(*)::int` }).from(s.tickets),
     getSetting("sla"),
   ]);
+  const fixFor = new Map(fixes.map((f) => [normalName(f.inLog), f]));
 
-  const requesters = new Map<string, Requester>();
-  for (const t of tickets) if (!requesters.has(t.requester)) requesters.set(t.requester, matchRequester(t.requester, people));
-  const closers = new Map<string, { id: string; name: string } | null>();
-  for (const t of tickets) if (t.closedBy && !closers.has(t.closedBy)) closers.set(t.closedBy, matchStaff(t.closedBy, staffUsers) ?? null);
+  // Who each requester is: the People sheet first, then the directory, then a guess.
+  type Resolved = Requester | { kind: "listed"; id: number; name: string } | { kind: "new"; fix: PersonFix };
+  const requesters = new Map<string, Resolved>();
+  for (const t of tickets) {
+    if (requesters.has(t.requester)) continue;
+    const fix = fixFor.get(normalName(t.requester));
+    const found = fix && findPerson(fix, people);
+    requesters.set(t.requester, fix ? (found ? { kind: "listed", id: found.id, name: found.name } : { kind: "new", fix }) : matchRequester(t.requester, people));
+  }
+
+  // Who closed each ticket: an account the People sheet names (made if it says so), or a match.
+  const accountsToMake = new Map<string, PersonFix>();
+  const closers = new Map<string, Staff | null>();
+  for (const t of tickets) {
+    if (!t.closedBy || closers.has(t.closedBy)) continue;
+    const fix = fixFor.get(normalName(t.closedBy));
+    const user = fix
+      ? staffUsers.find((u) => (fix.email && u.email.toLowerCase() === fix.email) || normalName(u.name) === normalName(fix.name))
+      : matchStaff(t.closedBy, staffUsers);
+    if (!user && fix?.account && fix.email) accountsToMake.set(t.closedBy, fix);
+    closers.set(t.closedBy, user ?? null);
+  }
 
   const count = (pick: (t: LoggedTicket) => boolean) => tickets.filter(pick).length;
+  const ticketsOf = (from: string) => count((t) => t.requester === from);
   const report = {
     tickets: tickets.length,
     existing,
     first: tickets[0]?.openedAt ?? null,
     last: tickets.at(-1)?.openedAt ?? null,
     exact: count((t) => requesters.get(t.requester)!.kind === "exact"),
-    close: [...requesters].filter(([, r]) => r.kind === "close").map(([from, r]) => ({ from, to: r.name, tickets: count((t) => t.requester === from) })),
-    // Names that are not people in the directory, grouped by who they become.
-    added: [] as { name: string; team: boolean; from: string[]; tickets: number }[],
-    closers: [...closers].map(([from, user]) => ({ from, to: user?.name ?? null, tickets: count((t) => t.closedBy === from) })),
+    close: [...requesters].filter(([, r]) => r.kind === "close" || r.kind === "listed").map(([from, r]) => ({ from, to: (r as { name: string }).name, tickets: ticketsOf(from) })),
+    // People added to the directory: from the People sheet, as teams, or as unknown people who left.
+    added: [] as { name: string; kind: "listed" | "team" | "unknown"; status: PersonFix["status"]; from: string[]; tickets: number }[],
+    closers: [...closers].map(([from, user]) => ({
+      from,
+      to: user?.name ?? (accountsToMake.has(from) ? `${accountsToMake.get(from)!.name} (new account)` : null),
+      tickets: count((t) => t.closedBy === from),
+    })),
+    accounts: [] as { name: string; email: string; role: string; password: string }[],
+    reopened: count((t) => t.reopened),
     channels: Object.entries(Object.groupBy(tickets, (t) => t.channel ?? "")).map(([channel, list]) => ({ channel: channel || null, tickets: list!.length })),
   };
-  const addedByName = new Map<string, (typeof report.added)[number]>();
+  const added = new Map<string, (typeof report.added)[number] & { fix?: PersonFix }>();
   for (const [from, r] of requesters) {
-    if (r.kind !== "team" && r.kind !== "unknown") continue;
-    const entry = addedByName.get(r.name) ?? { name: r.name, team: r.kind === "team", from: [], tickets: 0 };
+    if (r.kind !== "new" && r.kind !== "team" && r.kind !== "unknown") continue;
+    const name = r.kind === "new" ? r.fix.name : r.name;
+    const entry = added.get(name) ?? {
+      name,
+      kind: r.kind === "new" ? ("listed" as const) : r.kind,
+      status: r.kind === "new" ? r.fix.status : r.kind === "team" ? ("mailbox" as const) : ("left" as const),
+      fix: r.kind === "new" ? r.fix : undefined,
+      from: [],
+      tickets: 0,
+    };
     entry.from.push(from);
-    entry.tickets += count((t) => t.requester === from);
-    addedByName.set(r.name, entry);
+    entry.tickets += ticketsOf(from);
+    added.set(name, entry);
   }
-  report.added = [...addedByName.values()].sort((a, b) => b.tickets - a.tickets);
+  // A new account's person is added too, if the directory does not have them yet.
+  for (const fix of accountsToMake.values()) {
+    if (!added.has(fix.name) && !findPerson(fix, people)) added.set(fix.name, { name: fix.name, kind: "listed", status: fix.status, fix, from: [], tickets: 0 });
+  }
+  report.added = [...added.values()].sort((a, b) => b.tickets - a.tickets).map(({ name, kind, status, from, tickets: n }) => ({ name, kind, status, from, tickets: n }));
   if (!replace) return report;
+
+  // People first, then accounts (made through sign-in, outside the database transaction).
+  const emails = new Set(people.map((p) => p.email.toLowerCase()));
+  const ids = new Map<string, number>();
+  for (const entry of added.values()) {
+    const fix = entry.fix;
+    let email = fix?.email && !emails.has(fix.email) ? fix.email : null;
+    if (!email) {
+      const base = entry.name.toLowerCase().replace(/[^a-z0-9]+/g, ".").replace(/^\.|\.$/g, "") || "requester";
+      email = `${base}@${PLACEHOLDER_DOMAIN}`;
+      for (let n = 2; emails.has(email); n++) email = `${base}.${n}@${PLACEHOLDER_DOMAIN}`;
+    }
+    emails.add(email);
+    const theirs = tickets.filter((t) => entry.from.includes(t.requester));
+    const common = Object.entries(Object.groupBy(theirs, (t) => t.location)).sort((a, b) => b[1]!.length - a[1]!.length)[0]?.[0];
+    const [row] = await db
+      .insert(s.employees)
+      .values({
+        name: entry.name,
+        email,
+        department: fix?.department ?? DEFAULT_DEPARTMENT,
+        location: fix?.location ?? common ?? DEFAULT_LOCATION,
+        jobTitle: fix?.jobTitle ?? (entry.status === "mailbox" ? "Shared mailbox" : entry.kind === "unknown" ? "Not on the staff list" : DEFAULT_JOB_TITLE),
+        employeeNumber: fix?.employeeNumber ?? null,
+        // A mailbox and someone still here are current; a name not on the staff list has most likely left.
+        active: entry.status !== "left",
+      })
+      .returning({ id: s.employees.id });
+    ids.set(entry.name, row.id);
+  }
+  for (const [from, fix] of accountsToMake) {
+    const password = randomBytes(12).toString("base64url");
+    const { user } = await auth.api.createUser({ body: { name: fix.name, email: fix.email!, password, role: fix.account! } });
+    const employeeId = ids.get(fix.name) ?? findPerson(fix, people)?.id ?? null;
+    if (employeeId) await db.update(s.users).set({ employeeId }).where(eq(s.users.id, user.id));
+    closers.set(from, { id: user.id, name: fix.name, email: fix.email! });
+    report.accounts.push({ name: fix.name, email: fix.email!, role: fix.account!, password });
+  }
+  const requesterId = (t: LoggedTicket) => {
+    const r = requesters.get(t.requester)!;
+    if (r.kind === "exact" || r.kind === "close" || r.kind === "listed") return r.id;
+    return ids.get(r.kind === "new" ? r.fix.name : r.name)!;
+  };
 
   await db.transaction(async (tx) => {
     // Old tickets' history would otherwise show on the log's tickets that take their numbers.
     await tx.delete(s.auditLog).where(sql`${s.auditLog.entity} = 'ticket'`);
     await tx.delete(s.tickets);
 
-    // Teams and people not in the directory get an entry, so their tickets keep a requester.
-    const emails = new Set(people.map((p) => p.email));
-    const ids = new Map<string, number>();
-    for (const entry of report.added) {
-      const base = entry.name.toLowerCase().replace(/[^a-z0-9]+/g, ".").replace(/^\.|\.$/g, "") || "requester";
-      let email = `${base}@${PLACEHOLDER_DOMAIN}`;
-      for (let n = 2; emails.has(email); n++) email = `${base}.${n}@${PLACEHOLDER_DOMAIN}`;
-      emails.add(email);
-      const theirs = tickets.filter((t) => entry.from.includes(t.requester));
-      const locations = Object.entries(Object.groupBy(theirs, (t) => t.location)).sort((a, b) => b[1]!.length - a[1]!.length);
-      const [row] = await tx
-        .insert(s.employees)
-        .values({
-          name: entry.name,
-          email,
-          department: DEFAULT_DEPARTMENT,
-          location: locations[0][0],
-          jobTitle: entry.team ? "Shared mailbox" : "Not on the staff list",
-          // Someone in the log but not on the staff list has most likely left.
-          active: entry.team,
-        })
-        .returning({ id: s.employees.id });
-      ids.set(entry.name, row.id);
-    }
-    const requesterId = (t: LoggedTicket) => {
-      const r = requesters.get(t.requester)!;
-      return r.kind === "exact" || r.kind === "close" ? r.id : ids.get(r.name)!;
-    };
-
     for (let i = 0; i < tickets.length; i += CHUNK) {
       const chunk = tickets.slice(i, i + CHUNK);
       const rows = chunk.map((t) => {
-        const description = t.channel ? `${t.subject}\n\nReceived by: ${t.channel}` : t.subject;
         const assignee = t.closedBy ? (closers.get(t.closedBy)?.id ?? null) : null;
-        return sql`(${t.number}, ${t.type}, ${t.status}, 'medium', ${t.issueType}, ${t.location}, ${t.subject}, ${description}, ${requesterId(t)}, ${assignee}, ${dueAt(t.openedAt, "medium", sla).toISOString()}, ${t.closedAt?.toISOString() ?? null}, ${t.status === "closed" ? (t.closedAt?.toISOString() ?? null) : null}, ${t.openedAt.toISOString()}, ${(t.closedAt ?? t.openedAt).toISOString()})`;
+        const resolved = t.status === "closed" || t.status === "resolved" ? (t.closedAt?.toISOString() ?? null) : null;
+        return sql`(${t.number}, ${t.type}, ${t.status}, 'medium', ${t.issueType}, ${t.location}, ${t.channel}, ${t.subject}, ${t.subject}, ${requesterId(t)}, ${assignee}, ${dueAt(t.openedAt, "medium", sla, t.issueType).toISOString()}, ${resolved}, ${t.status === "closed" ? resolved : null}, ${t.reopened ? 1 : 0}, ${t.openedAt.toISOString()}, ${(t.closedAt ?? t.openedAt).toISOString()})`;
       });
       await tx.execute(sql`
-        INSERT INTO tickets (id, type, status, priority, issue_type, location, subject, description, requester_id, assignee_id, due_at, resolved_at, closed_at, created_at, updated_at)
+        INSERT INTO tickets (id, type, status, priority, issue_type, location, channel, subject, description, requester_id, assignee_id, due_at, resolved_at, closed_at, reopen_count, created_at, updated_at)
         OVERRIDING SYSTEM VALUE VALUES ${sql.join(rows, sql`, `)}`);
 
-      // Each ticket's history: opened, then closed by whoever closed it.
+      // Each ticket's history: opened, reopened if it was, then closed by whoever closed it.
       const history = chunk.flatMap((t) => {
         const closer = t.closedBy ? closers.get(t.closedBy) : null;
         const entries: (typeof s.auditLog.$inferInsert)[] = [
           { at: t.openedAt, userName: "Ticket log", action: "create", entity: "ticket", entityId: String(t.number), summary: `Opened ${ref("ticket", t.number)}: ${t.subject} (from the ticket log)` },
         ];
+        if (t.reopened && t.reopenedAt) {
+          entries.push({ at: t.reopenedAt, userName: "Ticket log", action: "update", entity: "ticket", entityId: String(t.number), summary: `Updated ${ref("ticket", t.number)}: status open (reopened)` });
+        }
         if (t.closedAt && t.status === "closed") {
           entries.push({ at: t.closedAt, userId: closer?.id ?? null, userName: closer?.name ?? t.closedBy ?? "Ticket log", action: "update", entity: "ticket", entityId: String(t.number), summary: `Updated ${ref("ticket", t.number)}: status closed` });
         }

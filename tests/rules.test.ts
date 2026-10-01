@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { impactOf, neighbours, type Relation } from "@/lib/cmdb";
 import { addDays, daysBetween, hoursBetween, isoDate } from "@/lib/dates";
 import { expandCidr, parseArp, reconcile } from "@/lib/discovery";
-import { ref } from "@/lib/domain";
+import { type Priority, ref } from "@/lib/domain";
 import { budgetLines, contractState, fiscalYearOf, fiscalYearRange } from "@/lib/finance";
 import { quarterOf, rag, DEFAULT_KPI_TARGETS } from "@/lib/kpis";
 import { compliance, licenseState } from "@/lib/licenses";
@@ -48,7 +48,7 @@ describe("references", () => {
 
 describe("SLA", () => {
   const opened = new Date("2026-09-01T08:00:00Z");
-  const ticket = (priority: keyof typeof DEFAULT_SLA, resolvedAfterHours: number | null) => ({
+  const ticket = (priority: Priority, resolvedAfterHours: number | null) => ({
     status: resolvedAfterHours === null ? ("open" as const) : ("resolved" as const),
     createdAt: opened,
     dueAt: dueAt(opened, priority, DEFAULT_SLA),
@@ -59,6 +59,13 @@ describe("SLA", () => {
   it("sets the due time from the priority's target", () => {
     expect(dueAt(opened, "critical", DEFAULT_SLA).toISOString()).toBe("2026-09-01T12:00:00.000Z");
     expect(dueAt(opened, "low", { ...DEFAULT_SLA, low: 1 }).toISOString()).toBe("2026-09-01T09:00:00.000Z");
+  });
+
+  it("uses an issue type's own target, whatever the priority", () => {
+    const sla = { ...DEFAULT_SLA, byIssueType: { login: 1, purchase: 120 } };
+    expect(dueAt(opened, "critical", sla, "purchase").toISOString()).toBe("2026-09-06T08:00:00.000Z");
+    expect(dueAt(opened, "medium", sla, "login").toISOString()).toBe("2026-09-01T09:00:00.000Z");
+    expect(dueAt(opened, "medium", sla, "email").toISOString()).toBe("2026-09-02T08:00:00.000Z");
   });
 
   it("counts a ticket breached when resolved late or still open past its due time", () => {

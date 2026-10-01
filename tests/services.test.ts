@@ -114,6 +114,28 @@ describe("tickets", () => {
     await settings.putSetting("sla", { critical: 4, high: 8, medium: 24, low: 72 }, admin);
   });
 
+  it("records how a request reached IT: the app for employees, what IT says for the rest", async () => {
+    const own = await tickets.createTicket(employee, { ...ticketInput, channel: "phone" });
+    expect(own.channel).toBe("app");
+    const logged = await tickets.createTicket(it_, { ...ticketInput, requesterId: employee.employeeId!, channel: "whatsapp" });
+    expect(logged.channel).toBe("whatsapp");
+    const unrecorded = await tickets.createTicket(it_, { ...ticketInput, requesterId: employee.employeeId! });
+    expect(unrecorded.channel).toBeNull();
+    expect((await tickets.updateTicket(it_, unrecorded.id, { channel: "email" })).channel).toBe("email");
+    await expect(tickets.updateTicket(employee, own.id, { channel: "email" })).rejects.toMatchObject({ status: 403 });
+  });
+
+  it("uses an issue type's own target, and moves the due time when the issue type changes", async () => {
+    await settings.putSetting("sla", { critical: 4, high: 8, medium: 24, low: 72, byIssueType: { login: 1, other: 120 } }, admin);
+    const t = await tickets.createTicket(it_, { ...ticketInput, requesterId: employee.employeeId!, issueType: "login", priority: "critical" });
+    expect(t.dueAt.getTime() - t.createdAt.getTime()).toBe(1 * 3_600_000);
+    const moved = await tickets.updateTicket(it_, t.id, { issueType: "other" });
+    expect(moved.dueAt.getTime() - t.createdAt.getTime()).toBe(120 * 3_600_000);
+    const back = await tickets.updateTicket(it_, t.id, { issueType: "email" });
+    expect(back.dueAt.getTime() - t.createdAt.getTime()).toBe(4 * 3_600_000);
+    await settings.putSetting("sla", { critical: 4, high: 8, medium: 24, low: 72 }, admin);
+  });
+
   it("keeps comments and history with the ticket", async () => {
     const [own] = await tickets.listTickets(employee);
     await tickets.addComment(employee, own.id, { body: "Still happening after a restart." });

@@ -5,6 +5,7 @@ import {
   contractInput,
   lookupInput,
   relationshipInput,
+  slaSettings,
   ticketCreate,
   ticketUpdate,
   vendorInput,
@@ -71,5 +72,16 @@ describe("input schemas", () => {
     const base = { list: "location", labelEn: "Dammam", labelAr: "الدمام", sortOrder: 1, active: true };
     expect(lookupInput.safeParse({ ...base, code: "Dammam Office" }).success).toBe(false);
     expect(lookupInput.safeParse({ ...base, code: "dammam_office" }).success).toBe(true);
+  });
+});
+
+describe("SLA settings", () => {
+  it("keeps issue types with a target and drops the empty ones", () => {
+    const parsed = slaSettings.parse({ critical: 4, high: 8, medium: 24, low: 72, byIssueType: { login: 0.5, other: 120, email: null } });
+    expect(parsed.byIssueType).toEqual({ login: 0.5, other: 120 });
+  });
+
+  it("reads settings saved before issue types had targets", () => {
+    expect(slaSettings.parse({ critical: 4, high: 8, medium: 24, low: 72 }).byIssueType).toEqual({});
   });
 });

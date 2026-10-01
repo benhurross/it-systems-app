@@ -127,6 +127,16 @@ export const REFERENCE: Record<LookupList, Entry[]> = {
     ["continuity", "Business continuity", "استمرارية الأعمال"],
     ["vendor", "Third party", "الأطراف الخارجية"],
   ],
+  // How a request reached IT. Requests raised in the app are "app"; IT picks the rest.
+  channel: [
+    ["app", "App", "التطبيق"],
+    ["phone", "Phone call", "اتصال هاتفي"],
+    ["mobile", "Mobile", "الجوال"],
+    ["email", "Email", "البريد الإلكتروني"],
+    ["email_alert", "Email alert", "تنبيه بريد إلكتروني"],
+    ["whatsapp", "WhatsApp", "واتساب"],
+    ["in_person", "In person", "حضورياً"],
+  ],
 };
 
 /** Adds any missing reference values. Existing rows are left alone, so an admin's edits survive a re-run. */

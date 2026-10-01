@@ -46,6 +46,7 @@ export const LOOKUP_LISTS = [
   "vendor_category",
   "budget_category",
   "risk_category",
+  "channel",
 ] as const;
 
 /** The workbook's new-joiner checklist (IT_New_Joinee), in its three phases. */

@@ -274,6 +274,8 @@ export const tickets = pgTable(
     priority: text().$type<Priority>().notNull().default("medium"),
     issueType: text().notNull(),
     location: text().notNull(),
+    /** How the request reached IT (the "channel" list); null when nobody recorded it. */
+    channel: text(),
     subject: text().notNull(),
     description: text().notNull(),
     requesterId: integer()

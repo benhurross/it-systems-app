@@ -25,12 +25,14 @@ test.describe("IT staff", () => {
     // The requester's location is filled in for us.
     await expect(page.getByRole("combobox", { name: "Location" })).toContainText("Jeddah Head Office");
     await choose(page, "Issue type", "Hardware");
+    await choose(page, "Received by", "Phone call");
     await page.getByLabel("Subject").fill(subject);
     await page.getByLabel("What is happening?").fill("The meeting room projector shows no signal.");
     await page.getByRole("button", { name: "Open ticket" }).click();
 
     await expect(page).toHaveURL(/\/en\/tickets\/\d+$/);
     await expect(page.getByRole("heading", { name: subject })).toBeVisible();
+    await expect(page.getByRole("combobox", { name: "Received by" })).toContainText("Phone call");
     await expect(page.getByText("Due in")).toBeVisible();
 
     await page.getByRole("button", { name: "Start work" }).click();

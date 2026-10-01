@@ -88,6 +88,7 @@ function NewTicketForm() {
                 />
                 <SelectField name="issueType" label={t("tickets.issueType")} options={lookups.options("issue_type")} />
                 <SelectField name="location" label={t("tickets.location")} options={lookups.options("location")} />
+                <SelectField name="channel" label={t("tickets.channel")} options={lookups.options("channel")} optional />
                 <SelectField
                   name="priority"
                   label={t("tickets.priority")}

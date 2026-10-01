@@ -516,13 +516,16 @@
         "kb_category": "Knowledge base categories",
         "vendor_category": "Vendor categories",
         "budget_category": "Budget categories",
-        "risk_category": "Risk categories"
+        "risk_category": "Risk categories",
+        "channel": "Received by"
       }
     },
     "sla": {
       "title": "Resolution Targets",
-      "description": "Hours allowed to resolve a ticket at each priority. A change applies to tickets opened or re-prioritised from now on.",
-      "hours": "Hours"
+      "description": "Hours allowed to resolve a ticket. A change applies to tickets opened, re-prioritised or given another issue type from now on.",
+      "hours": "Hours",
+      "byIssueType": "By issue type",
+      "byIssueTypeHint": "An issue type with its own target uses it whatever the priority: minutes for a password reset, days for buying equipment. Leave it empty to use the priority's target."
     },
     "monitoring": {
       "title": "Network Checks",
@@ -711,7 +714,9 @@
     "suggested": "Suggested articles",
     "noSuggestions": "No published articles for this issue type yet.",
     "backToList": "All tickets",
-    "notFound": "This ticket does not exist or you cannot see it."
+    "notFound": "This ticket does not exist or you cannot see it.",
+    "channel": "Received by",
+    "channelNone": "Not recorded"
   },
   "requests": {
     "title": "My Requests",

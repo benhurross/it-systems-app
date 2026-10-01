@@ -96,7 +96,7 @@ Employees get a reduced shell with three items: My requests, New request and Kno
   - KB, vendor and budget categories
 
   Lists can be added to, renamed, reordered and deactivated. A deactivated value stays on existing records but is no longer offered in forms.
-- **Service desk**: SLA target hours per priority. The due time is stored on each ticket when it opens or changes priority, so changing a target never rewrites past SLA results.
+- **Service desk**: SLA target hours per priority, and optionally per issue type (an issue type with its own target uses it whatever the priority). The due time is stored on each ticket when it opens or changes priority, so changing a target never rewrites past SLA results.
 - **Monitoring**: checks on or off, interval, timeout, degraded-latency threshold and history retention. The scheduler picks up changes without a restart.
 - **KPIs**: baseline and target per KPI per year, for the workbook's five KPIs.
 - **Organisation**: the name shown in the app and on exports, and the fiscal year start month.
@@ -394,7 +394,10 @@ Requested by the owner. The company runs its own Exchange Server, so mail goes o
 - [x] `npm run tickets:import "<file.xlsx>"` reads the IT ticket log exported from the old system and reports what it would load, changing nothing; adding `replace` removes every ticket in the database (with its comments, email links and history) and loads the log's in their place. The log itself is never in the repository
 - [x] Ticket numbers are kept (IT000001 stays IT000001) and new tickets carry on after the last one. Times are Riyadh's. Dates Excel had read month first (any day of 12 or less) are put back, choosing the reading that keeps tickets in number order
 - [x] Requesters are found in the directory by name, without middle names, or one letter apart; shared mailboxes ("Finance Finance", "Sales Team") become one entry each ("Finance team"), and names not on the staff list are added as people who have left. "Closed by" finds the IT account by name, a first name only one person has, or its mailbox ("Helpdesk" for helpdesk@...); without an account the ticket stays unassigned and its history still names who closed it
-- [x] The log has no priority (all Medium, so the SLA is 24 hours), no resolution notes and no ratings. How a request came in (phone, email, WhatsApp...) goes in the description until the app has a field for it
+- [x] The log has no priority (all Medium), no resolution notes and no ratings. Each ticket's SLA comes from its issue type's target in Settings → Service desk when it has one, otherwise from Medium (24 hours)
+- [x] An optional "People" sheet in the log's workbook says who names in the log are: someone in the directory under another spelling, someone to add (with email, department, job title, ID number, and current, left or shared mailbox), or an IT account to make for a "Closed by" name (printed with a one-time password). It is read before any guessing, and a second load finds what the first made
+- [x] The log's Reopened and ReopenedDate columns count a reopening and add it to the ticket's history
+- [x] Tickets record how they reached IT ("Received by": App, Phone call, Mobile, Email, Email alert, WhatsApp, In person; an editable list). Requests raised in the app are App; IT picks the rest when logging one, and can change it. The tickets list filters and exports by it
 
 ### Phase 11 - Handover
 - [ ] Minimal README: prerequisites (Node, Docker), setup, scripts, and where the demo accounts are defined

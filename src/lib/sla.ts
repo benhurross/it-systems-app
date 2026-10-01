@@ -1,12 +1,20 @@
 import { hoursBetween } from "./dates";
 import type { Priority, TicketStatus } from "./domain";
 
-/** Resolution targets in hours, per priority. Editable in Settings. */
-export type SlaTargets = Record<Priority, number>;
-export const DEFAULT_SLA: SlaTargets = { critical: 4, high: 8, medium: 24, low: 72 };
+/**
+ * Resolution targets in hours, per priority, and for issue types that have their own (a password
+ * reset takes minutes, buying a laptop takes days). Editable in Settings.
+ */
+export type SlaTargets = Record<Priority, number> & { byIssueType?: Record<string, number> };
+export const DEFAULT_SLA: SlaTargets = { critical: 4, high: 8, medium: 24, low: 72, byIssueType: {} };
 
-export function dueAt(from: Date, priority: Priority, sla: SlaTargets): Date {
-  return new Date(from.getTime() + sla[priority] * 3_600_000);
+/** A ticket's target: its issue type's own when it has one, whatever the priority; else its priority's. */
+export function slaHours(sla: SlaTargets, priority: Priority, issueType?: string): number {
+  return (issueType ? sla.byIssueType?.[issueType] : undefined) ?? sla[priority];
+}
+
+export function dueAt(from: Date, priority: Priority, sla: SlaTargets, issueType?: string): Date {
+  return new Date(from.getTime() + slaHours(sla, priority, issueType) * 3_600_000);
 }
 
 type SlaTicket = {

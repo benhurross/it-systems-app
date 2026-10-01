@@ -39,10 +39,26 @@ test("an SLA change applies to tickets opened afterwards", async ({ page }) => {
   await saveSla.click();
   await expect(page.getByText("Settings saved.").last()).toBeVisible();
 
-  // Both saves are in the audit log.
+  // An issue type with its own target uses it whatever the priority.
+  const login = page.getByLabel("Login and access (Hours)");
+  await login.fill("1.5");
+  await saveSla.click();
+  await expect(page.getByText("Settings saved.").last()).toBeVisible();
+  await page.reload();
+  await expect(login).toHaveValue("1.5");
+  const quick = await page.request.post("/api/tickets", {
+    data: { type: "incident", subject: "Locked out", description: "Cannot sign in.", issueType: "login", location: "jeddah", priority: "low", requesterId: employee.id },
+  });
+  const locked = (await quick.json()) as { createdAt: string; dueAt: string };
+  expect(Date.parse(locked.dueAt) - Date.parse(locked.createdAt)).toBe(1.5 * 3_600_000);
+  await login.fill("");
+  await saveSla.click();
+  await expect(page.getByText("Settings saved.").last()).toBeVisible();
+
+  // Every save is in the audit log.
   await page.goto("/en/settings/audit");
   await page.getByRole("textbox", { name: "Filter rows" }).fill("Changed sla settings");
-  await expect(page.getByRole("cell", { name: "Changed sla settings" })).toHaveCount(2);
+  await expect(page.getByRole("cell", { name: "Changed sla settings" })).toHaveCount(4);
 });
 
 test("turning network checks on in Settings starts them without a restart", async ({ page }) => {

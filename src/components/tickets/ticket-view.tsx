@@ -352,6 +352,18 @@ function Details({ ticket, mode }: { ticket: TicketDetail; mode: Mode }) {
               ? edit(t("tickets.issueType"), ticket.issueType, lookups.options("issue_type"), (issueType) => update.mutate({ issueType }))
               : lookups.label("issue_type", ticket.issueType)}
           </Row>
+          <Row label={t("tickets.channel")}>
+            {it
+              ? edit(
+                  t("tickets.channel"),
+                  ticket.channel ?? NONE,
+                  [{ value: NONE, label: t("tickets.channelNone") }, ...lookups.options("channel")],
+                  (v) => v && update.mutate({ channel: v === NONE ? null : v }),
+                )
+              : ticket.channel
+                ? lookups.label("channel", ticket.channel)
+                : t("tickets.channelNone")}
+          </Row>
           <Row label={t("tickets.priority")}>
             {it ? (
               edit(

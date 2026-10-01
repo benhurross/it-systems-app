@@ -17,6 +17,7 @@ import { PRIORITIES, ref, TICKET_STATUSES, type TicketType } from "@/lib/domain"
 
 const col = columnHelper<Ticket>();
 const UNASSIGNED = "unassigned";
+const NOT_RECORDED = "not_recorded";
 
 export default function TicketsPage() {
   const t = useTranslations();
@@ -68,6 +69,12 @@ export default function TicketsPage() {
       header: t("tickets.location"),
       filterFn: "arrHas",
       cell: (info) => lookups.label("location", info.getValue()),
+    }),
+    col.accessor((x) => x.channel ?? NOT_RECORDED, {
+      id: "channel",
+      header: t("tickets.channel"),
+      filterFn: "arrHas",
+      cell: (info) => (info.row.original.channel ? lookups.label("channel", info.row.original.channel) : "—"),
     }),
     col.accessor((x) => x.assigneeId ?? UNASSIGNED, {
       id: "assignee",
@@ -134,6 +141,11 @@ export default function TicketsPage() {
               { column: "issueType", label: t("tickets.issueType"), options: lookups.options("issue_type") },
               { column: "location", label: t("tickets.location"), options: lookups.options("location") },
               {
+                column: "channel",
+                label: t("tickets.channel"),
+                options: [...lookups.options("channel"), { value: NOT_RECORDED, label: t("tickets.channelNone") }],
+              },
+              {
                 column: "assignee",
                 label: t("tickets.assignee"),
                 options: [{ value: UNASSIGNED, label: t("tickets.unassigned") }, ...staff.map((s) => ({ value: s.id, label: s.name }))],
@@ -149,6 +161,7 @@ export default function TicketsPage() {
                 { header: "Priority", value: (x) => x.priority },
                 { header: "Issue type", value: (x) => lookups.label("issue_type", x.issueType) },
                 { header: "Location", value: (x) => lookups.label("location", x.location) },
+                { header: "Received by", value: (x) => (x.channel ? lookups.label("channel", x.channel) : "") },
                 { header: "Requester", value: (x) => x.requesterName },
                 { header: "Assigned to", value: (x) => x.assigneeName },
                 { header: "Subject", value: (x) => x.subject },

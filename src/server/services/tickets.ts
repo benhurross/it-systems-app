@@ -61,7 +61,10 @@ export async function getTicket(user: SessionUser, id: number) {
   return { ...ticket, comments, history, asset: asset[0] ?? null, idCard: card[0] ?? null, closesAt };
 }
 
-export async function createTicket(user: SessionUser, input: z.infer<typeof ticketCreate>) {
+/** How the request reached IT may be left out, as it is for tickets the system opens itself. */
+type NewTicket = Omit<z.infer<typeof ticketCreate>, "channel"> & { channel?: string | null };
+
+export async function createTicket(user: SessionUser, input: NewTicket) {
   const it = can(user.role, "it");
   const requesterId = it ? input.requesterId : user.employeeId;
   if (!requesterId) {
@@ -80,11 +83,13 @@ export async function createTicket(user: SessionUser, input: z.infer<typeof tick
         description: input.description,
         issueType: input.issueType,
         location: input.location,
+        // Raised by the person themselves, it came through the app; IT says how it reached them.
+        channel: it ? (input.channel ?? null) : "app",
         priority,
         requesterId,
         assigneeId: it ? input.assigneeId : null,
         assetId: it ? input.assetId : await heldAsset(input.assetId, requesterId),
-        dueAt: dueAt(now, priority, await getSetting("sla")),
+        dueAt: dueAt(now, priority, await getSetting("sla"), input.issueType),
         createdBy: user.id,
         createdAt: now,
       })
@@ -128,8 +133,6 @@ export async function updateTicket(user: SessionUser, id: number, input: z.infer
   if (it) {
     if (input.priority && input.priority !== current.priority) {
       changes.priority = input.priority;
-      // The SLA clock always runs from when the ticket was opened.
-      changes.dueAt = dueAt(current.createdAt, input.priority, await getSetting("sla"));
       notes.push(`priority ${input.priority}`);
     }
     if (input.assigneeId !== undefined && input.assigneeId !== current.assigneeId) {
@@ -139,6 +142,14 @@ export async function updateTicket(user: SessionUser, id: number, input: z.infer
     if (input.issueType && input.issueType !== current.issueType) {
       changes.issueType = input.issueType;
       notes.push(`issue type ${input.issueType}`);
+    }
+    if (input.channel !== undefined && input.channel !== current.channel) {
+      changes.channel = input.channel;
+      notes.push(input.channel ? `received by ${input.channel}` : "received by cleared");
+    }
+    // The target follows the priority or the issue type; the clock always runs from when it opened.
+    if (changes.priority || changes.issueType) {
+      changes.dueAt = dueAt(current.createdAt, changes.priority ?? current.priority, await getSetting("sla"), changes.issueType ?? current.issueType);
     }
     if (input.assetId !== undefined && input.assetId !== current.assetId) {
       changes.assetId = input.assetId;

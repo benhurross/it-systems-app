@@ -485,6 +485,9 @@ export async function seedDemo(now = new Date(), options: { people?: Person[] } 
       priority,
       issueType,
       location: requester.location,
+      // People with an account raise their own in the app; the rest call or write. Chosen without
+      // the random generator, so the rest of the demo stays as it was.
+      channel: userOfEmployee(requester.id) ? "app" : (["phone", "email", "phone", "whatsapp"] as const)[createdAt.getMinutes() % 4],
       subject: pick(template.subjects),
       description: `Reported from the ${requester.location === "riyadh" ? "Riyadh branch" : "Jeddah office"}. The user needs this for their daily work.`,
       requesterId: requester.id,

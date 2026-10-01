@@ -43,6 +43,13 @@
       "when": 1790834604824,
       "tag": "0005_id_card_handover",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1790838282686,
+      "tag": "0006_ticket_channel",
+      "breakpoints": true
     }
   ]
 }
