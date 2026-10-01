@@ -61,21 +61,21 @@ export function DisplayMenu() {
       <PopoverContent
         align="end"
         aria-label={t("title")}
-        className="w-36 gap-2 rounded-2xl bg-popover/75 p-2 shadow-glass ring-foreground/10 glass-sheen backdrop-blur-2xl backdrop-saturate-150"
+        className="w-36 gap-2 rounded-2xl bg-popover/45 p-2 shadow-glass ring-foreground/10 glass-sheen backdrop-blur-md backdrop-saturate-150 dark:bg-popover/30 dark:ring-white/15"
       >
         <ToggleGroup
           type="single"
           aria-label={t("theme")}
           value={theme}
           onValueChange={(value) => value && changeTheme(value)}
-          className="relative grid w-full grid-cols-3 gap-0 rounded-xl border bg-muted/70 p-0.5 dark:border-foreground/30 dark:bg-background/60"
+          className="relative grid w-full grid-cols-3 gap-0 rounded-xl border border-foreground/10 bg-foreground/5 p-0.5 dark:border-foreground/30 dark:bg-black/20"
         >
           {/* The highlight glides slowly to the chosen theme. */}
           {chosen >= 0 && (
             <span
               aria-hidden
               style={{ "--chosen": chosen } as CSSProperties}
-              className="absolute start-0.5 top-0.5 bottom-0.5 w-[calc((100%-4px)/3)] translate-x-[calc(var(--chosen)*100%)] rounded-lg bg-background shadow-sm transition-transform duration-700 ease-in-out rtl:translate-x-[calc(var(--chosen)*-100%)] dark:bg-muted"
+              className="absolute start-0.5 top-0.5 bottom-0.5 w-[calc((100%-4px)/3)] translate-x-[calc(var(--chosen)*100%)] rounded-lg bg-background/80 shadow-sm transition-transform duration-700 ease-in-out rtl:translate-x-[calc(var(--chosen)*-100%)] dark:bg-white/15"
             />
           )}
           {THEMES.map(({ value, icon: Icon, chosen: colour }) => (
@@ -101,7 +101,7 @@ export function DisplayMenu() {
             aria-label={t("smaller")}
             disabled={text.size === TEXT_SIZES[0]}
             onClick={text.decrease}
-            className="size-7 rounded-lg bg-background/60 dark:border-foreground/30 [&_svg:not([class*='size-'])]:size-3.5"
+            className="size-7 rounded-lg border-foreground/15 bg-background/40 dark:border-foreground/30 dark:bg-white/5 [&_svg:not([class*='size-'])]:size-3.5"
           >
             <Minus />
           </Button>
@@ -113,7 +113,7 @@ export function DisplayMenu() {
             aria-label={t("larger")}
             disabled={text.size === TEXT_SIZES.at(-1)}
             onClick={text.increase}
-            className="size-7 rounded-lg bg-background/60 dark:border-foreground/30 [&_svg:not([class*='size-'])]:size-3.5"
+            className="size-7 rounded-lg border-foreground/15 bg-background/40 dark:border-foreground/30 dark:bg-white/5 [&_svg:not([class*='size-'])]:size-3.5"
           >
             <Plus />
           </Button>
