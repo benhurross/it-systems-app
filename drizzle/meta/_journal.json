@@ -50,6 +50,13 @@
       "when": 1790838282686,
       "tag": "0006_ticket_channel",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1790842924006,
+      "tag": "0007_tools",
+      "breakpoints": true
     }
   ]
 }

@@ -2,7 +2,7 @@ import { eq } from "drizzle-orm";
 import type { z } from "zod";
 import { DEFAULT_KPI_TARGETS, type KpiTargets } from "@/lib/kpis";
 import { DEFAULT_MONITOR_SETTINGS } from "@/lib/monitor";
-import { monitorSettings, organisationSettings, slaSettings, ticketSettings } from "@/lib/schemas";
+import { monitorSettings, organisationSettings, slaSettings, ticketSettings, toolSettings } from "@/lib/schemas";
 import { DEFAULT_SLA } from "@/lib/sla";
 import { audit, type Actor } from "./audit";
 import { db } from "./db";
@@ -13,6 +13,7 @@ const SETTINGS = {
   monitoring: { schema: monitorSettings, defaults: DEFAULT_MONITOR_SETTINGS },
   organisation: { schema: organisationSettings, defaults: { name: "AP Plus", fiscalYearStartMonth: 1 } },
   tickets: { schema: ticketSettings, defaults: { autoCloseDays: 3 } },
+  tools: { schema: toolSettings, defaults: {} },
 };
 
 export type SettingKey = keyof typeof SETTINGS;

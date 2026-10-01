@@ -15,6 +15,7 @@ import {
   Ticket,
   Users,
   Wallet,
+  Wrench,
   type LucideIcon,
 } from "lucide-react";
 import { can, type Area } from "./permissions";
@@ -37,13 +38,14 @@ export type NavItem = {
     | "people"
     | "settings"
     | "myRequests"
-    | "newRequest";
+    | "newRequest"
+    | "tools";
   href: string;
   icon: LucideIcon;
 };
 
 export type NavGroup = {
-  key: "overview" | "serviceDesk" | "infrastructure" | "management" | "self" | "system";
+  key: "overview" | "serviceDesk" | "infrastructure" | "management" | "self" | "workspace" | "system";
   area: Area;
   /** Hidden from roles that also reach this area; self service is for people outside IT. */
   hiddenWith?: Area;
@@ -98,6 +100,12 @@ export const NAV: NavGroup[] = [
       { key: "newRequest", href: "/requests/new", icon: SquarePen },
       { key: "knowledge", href: "/knowledge", icon: BookOpen },
     ],
+  },
+  {
+    // Everyone's: tools for everyday work.
+    key: "workspace",
+    area: "request",
+    items: [{ key: "tools", href: "/tools", icon: Wrench }],
   },
   {
     key: "system",

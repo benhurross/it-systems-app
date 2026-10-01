@@ -1,7 +1,7 @@
 import { handler, notFound, requireUser } from "@/server/http";
 import { getSetting, putSetting, type SettingKey } from "@/server/settings";
 
-const KEYS: SettingKey[] = ["sla", "monitoring", "organisation", "tickets"];
+const KEYS: SettingKey[] = ["sla", "monitoring", "organisation", "tickets", "tools"];
 
 async function settingKey(ctx: RouteContext<"/api/settings/[key]">): Promise<SettingKey> {
   const { key } = await ctx.params;

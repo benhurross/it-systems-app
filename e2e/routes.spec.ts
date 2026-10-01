@@ -17,7 +17,7 @@ const heading = (page: Page) => page.getByRole("heading", { level: 1 });
 
 /** What the pages read from the API, by the area of the app allowed to read it. */
 const APIS = {
-  request: ["/api/me", "/api/tickets", "/api/kb", "/api/lookups", "/api/id-cards/request", "/api/id-cards/design", "/api/id-cards/mine"],
+  request: ["/api/me", "/api/tickets", "/api/kb", "/api/lookups", "/api/id-cards/request", "/api/id-cards/design", "/api/id-cards/mine", "/api/tools"],
   it: [
     "/api/dashboard",
     "/api/kpis",
@@ -51,6 +51,8 @@ const APIS = {
     "/api/settings/sla",
     "/api/settings/email",
     "/api/settings/email/outbox",
+    "/api/settings/tools",
+    "/api/tools/admin",
     `/api/settings/kpi-targets?year=${new Date().getFullYear()}`,
   ],
 };

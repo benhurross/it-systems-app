@@ -400,6 +400,14 @@ Requested by the owner. The company runs its own Exchange Server, so mail goes o
 - [x] Tickets record how they reached IT ("Received by": App, Phone call, Mobile, Email, Email alert, WhatsApp, In person; an editable list). Requests raised in the app are App; IT picks the rest when logging one, and can change it. The tickets list filters and exports by it
 - [x] The tickets list filters by the day tickets opened: quick ranges (today, last 7 or 30 days, this or last month, this or last year) or chosen days, either end open, counted by Riyadh's calendar. It clears with the other filters and the CSV export follows it
 
+### Tools (added after Phase 10)
+Requested by the owner: everyday document tools for everyone, under a "Workspace" menu.
+- [x] Five PDF tools that run in the browser, so files never leave the person's computer: Merge PDFs (in the order chosen), Split PDF (pages typed as "1-3, 5" or clicked; one PDF, one per range or one per page, several in a zip), Organize pages (turn, move, remove, start over), Images to PDF (JPG, PNG and other images, a page each, A4 or the image's size, margins; photos a phone saved sideways are stood upright) and Page numbers and watermark (six positions, three styles, a first number; a Latin-letter watermark across each page, light to strong, with a preview of the first page). Pages turned in the original are numbered as shown. Files up to 100 MB; password-protected or damaged PDFs are refused with a reason
+- [x] Page thumbnails use pdf.js's compatibility build, which works in older browsers too. pdf-lib makes the files; the same code is unit-tested
+- [x] Every tool is on for everyone. Settings → Tools sets each one to on, "Needs approval" or off, and can keep it from whole departments. One person can be allowed or blocked whatever the setting
+- [x] When a tool needs approval, an employee's "Request access" opens a ticket for IT; IT grants or declines it in Settings → Tools, which resolves the ticket with the answer (the person gets the usual email)
+- [x] Each file a tool makes is counted (never the file itself), shown in Settings → Tools for the last 30 days and in all
+
 ### Phase 11 - Handover
 - [ ] Minimal README: prerequisites (Node, Docker), setup, scripts, and where the demo accounts are defined
 - [ ] Lint, typecheck, unit, build and e2e all green, with no skipped tests

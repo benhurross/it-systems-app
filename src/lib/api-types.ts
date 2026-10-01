@@ -22,6 +22,7 @@ import type * as people from "@/server/services/people";
 import type * as projects from "@/server/services/projects";
 import type * as risk from "@/server/services/risk";
 import type * as tickets from "@/server/services/tickets";
+import type * as tools from "@/server/services/tools";
 import type * as users from "@/server/services/users";
 
 export type Json<T> = T extends Date
@@ -78,6 +79,8 @@ export type IdCardDetail = Result<typeof idCards.getCard>;
 export type MyCardRequest = Result<typeof idCards.myCardRequest>;
 export type MyCard = Result<typeof idCards.myCard>;
 export type CardDesign = Result<typeof idCards.designInfo>;
+export type MyTool = Item<typeof tools.myTools>;
+export type ToolsOverview = Result<typeof tools.toolsOverview>;
 export type EmailSettings = Result<typeof mailConfig.getEmailSettings>;
 export type OutboxEmail = Item<typeof outbox.listOutbox>;
 export type OutboxEmailDetail = Result<typeof outbox.getEmail>;

@@ -41,6 +41,7 @@ import type {
   VulnStatus,
 } from "@/lib/domain";
 import type { FontChoice } from "@/lib/id-card";
+import type { ToolAccessState, ToolKey } from "@/lib/tools";
 
 const id = () => integer().primaryKey().generatedAlwaysAsIdentity();
 const createdAt = () => timestamp({ withTimezone: true }).notNull().defaultNow();
@@ -687,4 +688,39 @@ export const idCards = pgTable(
     updatedAt: updatedAt(),
   },
   (t) => [index().on(t.employeeId), index().on(t.joinerId), index().on(t.ticketId)],
+);
+
+// ---------------------------------------------------------------- tools
+
+/**
+ * A person's own exception for a tool: allowed or blocked whatever the tool's setting, or asked
+ * for (with the ticket the request opened). One row per person and tool.
+ */
+export const toolAccess = pgTable(
+  "tool_access",
+  {
+    id: id(),
+    userId: text()
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    tool: text().$type<ToolKey>().notNull(),
+    state: text().$type<ToolAccessState>().notNull(),
+    ticketId: integer().references(() => tickets.id, { onDelete: "set null" }),
+    decidedBy: text(),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [unique().on(t.userId, t.tool)],
+);
+
+/** Each time a tool produced a file: who and when, never what. For counts in Settings. */
+export const toolUses = pgTable(
+  "tool_uses",
+  {
+    id: bigint({ mode: "number" }).primaryKey().generatedAlwaysAsIdentity(),
+    tool: text().$type<ToolKey>().notNull(),
+    userId: text().references(() => users.id, { onDelete: "set null" }),
+    at: timestamp({ withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index().on(t.tool, t.at)],
 );

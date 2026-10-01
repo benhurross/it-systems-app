@@ -1,7 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 import { TEXT_SIZE_KEY, TEXT_SIZES } from "../src/lib/text-size";
 import { session } from "./env";
-import { png, printedCardForAdmin, resolvedTicket } from "./helpers";
+import { png, printedCardForAdmin, resolvedTicket, TOOLS_IN_USE } from "./helpers";
 import { ALLOWED, resolve } from "./routes";
 
 // At the largest text size, every page fits a phone, a tablet and a desktop screen: the page never
@@ -108,6 +108,13 @@ test("the dashboard's printed ID card and its preview fit every screen at the la
   });
   expect(problems, problems.join("\n")).toEqual([]);
 });
+
+for (const [route, use] of Object.entries(TOOLS_IN_USE)) {
+  test(`${route}, with files chosen, fits every screen at the largest text size`, async ({ page }) => {
+    const problems = await sweep(page, route, use);
+    expect(problems, problems.join("\n")).toEqual([]);
+  });
+}
 
 for (const route of ALLOWED.admin) {
   test(`${route} fits every screen at the largest text size`, async ({ page }) => {

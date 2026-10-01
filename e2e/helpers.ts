@@ -1,6 +1,7 @@
 import { createServer, type AddressInfo } from "node:net";
 import { crc32, deflateSync } from "node:zlib";
 import { expect, type Browser, type Page, type TestInfo } from "@playwright/test";
+import { PDFDocument, StandardFonts } from "pdf-lib";
 
 /** Fails the test if the page logs an error to the console. */
 export function watchConsole(page: Page) {
@@ -173,3 +174,43 @@ export async function printedCardForAdmin(page: Page) {
   const printed = await page.request.post(`/api/id-cards/${id}/printed`);
   expect([200, 400]).toContain(printed.status());
 }
+
+/** A PDF to choose in a tool, page n of it `base + n` points wide so pages can be told apart. */
+export async function pdfFile(name: string, pages: number, base = 500) {
+  const pdf = await PDFDocument.create();
+  const font = await pdf.embedFont(StandardFonts.Helvetica);
+  for (let n = 1; n <= pages; n++) pdf.addPage([base + n, 842]).drawText(`${name} ${n}`, { x: 40, y: 700, size: 28, font });
+  return { name, mimeType: "application/pdf", buffer: Buffer.from(await pdf.save()) };
+}
+
+/** Each PDF tool with files chosen, as far as its every setting showing, in either language. */
+export const TOOLS_IN_USE: Record<string, (page: Page) => Promise<void>> = {
+  "/tools/pdf-merge": async (page) => {
+    await page.locator('input[type="file"]').setInputFiles([await pdfFile("first-quarter-report.pdf", 2), await pdfFile("second.pdf", 3)]);
+    await expect(page.locator("ol > li")).toHaveCount(2);
+  },
+  "/tools/pdf-split": async (page) => {
+    await page.locator('input[type="file"]').setInputFiles(await pdfFile("annual-budget-overview.pdf", 6));
+    await expect(page.locator("button[aria-pressed]")).toHaveCount(6);
+    await page.locator("button[aria-pressed]").nth(1).click();
+  },
+  "/tools/pdf-organize": async (page) => {
+    await page.locator('input[type="file"]').setInputFiles(await pdfFile("scan.pdf", 3));
+    await expect(page.locator("ol > li")).toHaveCount(3);
+    // One page removed, to show its button to put it back.
+    await page.locator("ol > li").nth(1).locator("button").last().click();
+  },
+  "/tools/images-to-pdf": async (page) => {
+    await page.locator('input[type="file"]').setInputFiles([
+      { name: "receipt-photo-from-phone.png", mimeType: "image/png", buffer: png(800, 400) },
+      { name: "tall.png", mimeType: "image/png", buffer: png(300, 600) },
+    ]);
+    await expect(page.locator("ol > li")).toHaveCount(2);
+  },
+  "/tools/pdf-stamp": async (page) => {
+    await page.locator('input[type="file"]').setInputFiles(await pdfFile("policy.pdf", 3));
+    await expect(page.getByRole("switch")).toHaveCount(2);
+    await page.getByRole("switch").last().click();
+    await expect(page.getByRole("switch").last()).toHaveAttribute("aria-checked", "true");
+  },
+};

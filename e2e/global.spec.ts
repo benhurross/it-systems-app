@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { DEMO_PASSWORD } from "../src/server/seed/demo-data";
 import { session } from "./env";
 import { BASE_URL } from "./env";
 import { addTcpDevice, choose, listen, mailSink, png, resolvedTicket, signedOut } from "./helpers";
@@ -202,4 +203,65 @@ test("the ID card design is uploaded in Settings and shows on every card", async
   await expect(back).toContainText("Not uploaded yet");
   await front.getByRole("button", { name: "Remove Front" }).click();
   await expect(front).toContainText("Not uploaded yet");
+});
+
+test("a tool that needs approval is asked for, granted by IT, and then opens", async ({ page, browser }) => {
+  // Back to every tool on for everyone, whatever an earlier attempt left.
+  const start = (await (await page.request.get("/api/tools/admin")).json()) as { requests: { id: number }[]; exceptions: { id: number }[] };
+  for (const e of [...start.requests, ...start.exceptions]) await page.request.delete(`/api/tools/exceptions/${e.id}`);
+  expect((await page.request.put("/api/settings/tools", { data: {} })).ok()).toBe(true);
+
+  // IT has Merge PDFs ask for approval.
+  await page.goto("/en/settings/tools");
+  const merge = page.getByRole("group", { name: "Merge PDFs" });
+  await expect(merge.getByRole("combobox", { name: "Who may use it" })).toContainText("On for everyone");
+  await merge.getByRole("combobox", { name: "Who may use it" }).click();
+  await page.getByRole("option", { name: "Needs approval" }).click();
+  await page.getByRole("button", { name: "Save" }).click();
+  await expect(page.getByText("Tool settings saved.")).toBeVisible();
+
+  // The employee asks for it.
+  const context = await signedOut(browser);
+  expect((await context.request.post("/api/auth/sign-in/email", { data: { email: "employee@applus.test", password: DEMO_PASSWORD }, headers: { origin: BASE_URL } })).ok()).toBe(true);
+  const employee = await context.newPage();
+  await employee.goto("/en/tools");
+  const card = employee.locator('[data-slot="card"]').filter({ hasText: "Merge PDFs" });
+  await expect(card).toContainText("Needs approval from IT");
+  await expect(employee.getByRole("link", { name: "Open" })).toHaveCount(4);
+  await card.getByRole("button", { name: "Request access" }).click();
+  await employee.getByLabel(/Why do you need it/).fill("Monthly reports come in several parts.");
+  await employee.getByRole("button", { name: "Send request" }).click();
+  await expect(employee.getByText(/^Request IT\d+ sent to IT\.$/)).toBeVisible();
+  await expect(card).toContainText("Requested");
+  const requestLink = card.getByRole("link", { name: /^View request IT\d+$/ });
+  const ticketId = Number(/\/requests\/(\d+)/.exec((await requestLink.getAttribute("href"))!)![1]);
+  await employee.goto("/en/tools/pdf-merge");
+  await expect(employee.getByText("Requested")).toBeVisible();
+  await expect(employee.getByLabel("Choose files")).toBeHidden();
+
+  // IT grants it; the request's ticket is resolved with the answer.
+  await page.reload();
+  const requests = page.locator('[data-slot="card"]').filter({ hasText: "Waiting for approval" });
+  await expect(requests).toContainText("Nora Al-Otaibi");
+  await requests.getByRole("button", { name: "Grant" }).click();
+  await expect(page.getByText("Access granted.")).toBeVisible();
+  await expect(requests).toContainText("No requests waiting.");
+  const people = page.locator('[data-slot="card"]').filter({ hasText: "Allow or block one person" });
+  await expect(people).toContainText("Nora Al-Otaibi");
+  await expect(people).toContainText("Allowed");
+  const ticket = (await (await page.request.get(`/api/tickets/${ticketId}`)).json()) as { status: string; resolution: string };
+  expect(ticket.status).toBe("resolved");
+  expect(ticket.resolution).toContain("The Merge PDFs tool is now switched on for you.");
+
+  await employee.reload();
+  await expect(employee.getByLabel("Choose files")).toBeAttached();
+
+  // Put back as it was.
+  await people.getByRole("button", { name: "Remove the exception for Nora Al-Otaibi" }).click();
+  await expect(page.getByText("Exception removed.")).toBeVisible();
+  await merge.getByRole("combobox", { name: "Who may use it" }).click();
+  await page.getByRole("option", { name: "On for everyone" }).click();
+  await page.getByRole("button", { name: "Save" }).click();
+  await expect(page.getByText("Tool settings saved.").last()).toBeVisible();
+  await context.close();
 });

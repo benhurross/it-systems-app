@@ -29,6 +29,7 @@ import {
   VULN_STATUSES,
 } from "./domain";
 import { ROLES } from "./permissions";
+import { TOOL_KEYS, TOOL_MODES } from "./tools";
 
 // Shared field shapes. Optional fields arrive as null (or are left out) and are stored as null.
 const name = z.string().trim().min(1).max(200);
@@ -442,3 +443,17 @@ export const idCardUpdate = z
     designationSize: z.number().min(5).max(10).nullable(),
   })
   .partial();
+
+/** Each tool's setting; a tool left out is on for everyone. */
+export const toolSettings = z.partialRecord(
+  z.enum(TOOL_KEYS),
+  z.object({ mode: z.enum(TOOL_MODES), blockedDepartments: z.array(code).max(50) }),
+);
+
+/** Asking for a tool that needs approval. */
+export const toolRequest = z.object({ note: optionalText });
+
+/** An admin allowing or blocking one person, whatever the tool's setting. */
+export const toolException = z.object({ userId: z.string().min(1), tool: z.enum(TOOL_KEYS), state: z.enum(["allowed", "blocked"]) });
+
+export const toolDecision = z.object({ grant: z.boolean() });

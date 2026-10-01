@@ -1,7 +1,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 import { session } from "./env";
-import { png, printedCardForAdmin, resolvedTicket, signedOut } from "./helpers";
+import { png, printedCardForAdmin, resolvedTicket, signedOut, TOOLS_IN_USE } from "./helpers";
 import { ALLOWED, resolve } from "./routes";
 
 // axe finds no serious or critical problem on any page. English in the light theme and Arabic in
@@ -104,6 +104,22 @@ test.describe("a printed ID card", () => {
     }
     expect(found, found.join("\n")).toEqual([]);
   });
+});
+
+test.describe("tools in use", () => {
+  test.use({ storageState: session("employee") });
+
+  for (const [route, use] of Object.entries(TOOLS_IN_USE)) {
+    test(`${route}, with files chosen, has no serious accessibility problems`, async ({ page }) => {
+      const found: string[] = [];
+      for (const mode of MODES) {
+        await open(page, route, mode);
+        await use(page);
+        found.push(...(await problems(page, mode)));
+      }
+      expect(found, found.join("\n")).toEqual([]);
+    });
+  }
 });
 
 test.describe("filtering by date", () => {

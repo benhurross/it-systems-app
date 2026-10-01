@@ -44,7 +44,8 @@
       "infrastructure": "Infrastructure",
       "management": "Management",
       "self": "Self service",
-      "system": "System"
+      "system": "System",
+      "workspace": "Workspace"
     },
     "dashboard": "Dashboard",
     "kpis": "KPIs",
@@ -62,7 +63,8 @@
     "settings": "Settings",
     "myRequests": "My requests",
     "newRequest": "New request",
-    "home": "My dashboard"
+    "home": "My dashboard",
+    "tools": "Tools"
   },
   "auth": {
     "title": "Sign in",
@@ -485,7 +487,8 @@
       "organisation": "Organization",
       "audit": "Audit log",
       "email": "Email",
-      "idCard": "ID card"
+      "idCard": "ID card",
+      "tools": "Tools"
     },
     "users": {
       "add": "Add user",
@@ -655,6 +658,44 @@
         "designSmall": "This image is too small to print sharp. Use one at least 640 pixels wide.",
         "generic": "Something went wrong. Please try again."
       }
+    },
+    "toolsAccess": {
+      "title": "Tools",
+      "description": "Who may use each tool. Tools are on for everyone unless you say otherwise.",
+      "mode": "Who may use it",
+      "modes": {
+        "on": "On for everyone",
+        "approval": "Needs approval",
+        "off": "Off"
+      },
+      "blockedDepartments": "Blocked departments",
+      "noneBlocked": "None",
+      "uses": "Used {recent, plural, one {# time} other {# times}} in the last {days} days, {total} in all",
+      "saved": "Tool settings saved.",
+      "requests": "Waiting for approval",
+      "noRequests": "No requests waiting.",
+      "grant": "Grant",
+      "decline": "Decline",
+      "granted": "Access granted.",
+      "declined": "Request declined.",
+      "people": "People",
+      "peopleHint": "Allow or block one person, whatever the tool's setting.",
+      "noPeople": "No one has an exception.",
+      "add": "Add a person",
+      "person": "Person",
+      "tool": "Tool",
+      "access": "Access",
+      "allow": "Allow",
+      "block": "Block",
+      "states": {
+        "allowed": "Allowed",
+        "blocked": "Blocked",
+        "requested": "Requested"
+      },
+      "remove": "Remove the exception for {name}",
+      "removed": "Exception removed.",
+      "exceptionSaved": "Exception saved.",
+      "by": "by {name}"
     }
   },
   "kpi": {
@@ -1553,5 +1594,144 @@
     "handedOverBy": "Handed over {date} by {name}",
     "confirmedBy": "{name} confirmed they have it ({date})",
     "awaitingConfirmation": "Ready to collect. {name} confirms they have it on request {ref}, which closes by itself if they don't answer."
+  },
+  "tools": {
+    "title": "Tools",
+    "intro": "Everyday tools for documents.",
+    "names": {
+      "pdf_merge": "Merge PDFs",
+      "pdf_split": "Split PDF",
+      "pdf_organize": "Organize pages",
+      "images_to_pdf": "Images to PDF",
+      "pdf_stamp": "Page numbers and watermark"
+    },
+    "descriptions": {
+      "pdf_merge": "Combine several PDFs into one, in the order you choose.",
+      "pdf_split": "Take out some pages, or split a PDF into several.",
+      "pdf_organize": "Turn, move or remove pages.",
+      "images_to_pdf": "Turn photos and scans into one PDF, a page each.",
+      "pdf_stamp": "Number the pages, or mark them CONFIDENTIAL or COPY."
+    },
+    "open": "Open",
+    "request": "Request access",
+    "requested": "Requested",
+    "viewRequest": "View request {ref}",
+    "needsApproval": "Needs approval from IT",
+    "blocked": "Not available for your account. Ask IT if you need it.",
+    "unavailable": "This tool is not available.",
+    "requestTitle": "Request {tool}",
+    "requestHint": "IT will look at your request. You will get an email with the answer.",
+    "requestNote": "Why do you need it?",
+    "requestSend": "Send request",
+    "requestSent": "Request {ref} sent to IT.",
+    "allTools": "All tools",
+    "privacy": "Your files stay on this computer. Nothing is uploaded.",
+    "files": {
+      "choose": "Choose files",
+      "chooseOne": "Choose a PDF",
+      "chooseImages": "Choose images",
+      "drop": "or drop them here",
+      "dropOne": "or drop it here",
+      "pages": "{count, plural, one {# page} other {# pages}}",
+      "remove": "Remove {name}",
+      "moveUp": "Move {name} up",
+      "moveDown": "Move {name} down",
+      "another": "Choose another file",
+      "working": "Working…",
+      "ready": "Your file is ready and downloading.",
+      "errors": {
+        "notPdf": "{name} is not a PDF.",
+        "encrypted": "{name} is protected with a password. Remove the password, then try again.",
+        "damaged": "{name} could not be read. It may be damaged.",
+        "notImage": "{name} is not an image this tool can read. Use JPG or PNG.",
+        "tooBig": "{name} is larger than {size}.",
+        "failed": "Something went wrong. Please try again."
+      }
+    },
+    "merge": {
+      "hint": "Put the PDFs in the order you want, then merge them into one.",
+      "empty": "Choose two or more PDFs to merge.",
+      "total": "{files, plural, one {# file} other {# files}}, {pages, plural, one {# page} other {# pages}}",
+      "action": "Merge and download"
+    },
+    "split": {
+      "pages": "Pages",
+      "pagesHint": "For example 1-3, 5, 8-10. Or click pages below.",
+      "invalid": "Use page numbers from 1 to {count}, like 1-3, 5.",
+      "selectAll": "Select all",
+      "clear": "Clear",
+      "chosen": "{count, plural, one {# page chosen} other {# pages chosen}}",
+      "output": "Download as",
+      "one": "One PDF with these pages",
+      "ranges": "A PDF for each range",
+      "every": "Every page as its own PDF",
+      "action": "Download",
+      "page": "Page {n}"
+    },
+    "organize": {
+      "hint": "Turn, move or remove pages, then save the PDF.",
+      "page": "Page {n}",
+      "rotateLeft": "Turn page {n} left",
+      "rotateRight": "Turn page {n} right",
+      "moveEarlier": "Move page {n} earlier",
+      "moveLater": "Move page {n} later",
+      "remove": "Remove page {n}",
+      "restore": "Put back page {n}",
+      "removed": "Removed",
+      "allRemoved": "Keep at least one page.",
+      "reset": "Start over",
+      "action": "Save PDF"
+    },
+    "images": {
+      "hint": "Each image becomes a page, in the order shown.",
+      "empty": "Choose the photos or scans to put in the PDF.",
+      "pageSize": "Page size",
+      "a4": "A4",
+      "fit": "Same as each image",
+      "orientation": "Orientation",
+      "auto": "Automatic",
+      "portrait": "Portrait",
+      "landscape": "Landscape",
+      "margin": "Margin",
+      "marginNone": "None",
+      "marginSmall": "Small",
+      "marginLarge": "Large",
+      "action": "Make PDF and download"
+    },
+    "stamp": {
+      "hint": "Choose what to add to every page, then download the PDF.",
+      "numbers": "Add page numbers",
+      "position": "Position",
+      "positions": {
+        "bottomCenter": "Bottom centre",
+        "bottomRight": "Bottom right",
+        "bottomLeft": "Bottom left",
+        "topCenter": "Top centre",
+        "topRight": "Top right",
+        "topLeft": "Top left"
+      },
+      "style": "Style",
+      "styles": {
+        "plain": "1",
+        "pageOf": "Page 1 of 10",
+        "slash": "1 / 10"
+      },
+      "start": "First number",
+      "size": "Size",
+      "watermark": "Add a watermark",
+      "text": "Watermark text",
+      "textHint": "Latin letters, numbers and punctuation, for example CONFIDENTIAL or COPY.",
+      "latinOnly": "Use Latin letters, numbers and punctuation only.",
+      "strength": "Strength",
+      "light": "Light",
+      "medium": "Medium",
+      "strong": "Strong",
+      "nothing": "Choose page numbers, a watermark or both.",
+      "action": "Apply and download",
+      "preview": "First page, as it will look",
+      "startInvalid": "Use a whole number from 0 to 9999.",
+      "sizeInvalid": "Use a size from 6 to 36.",
+      "textEmpty": "Enter the watermark text."
+    }
   }
 }

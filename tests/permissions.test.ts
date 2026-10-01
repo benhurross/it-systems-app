@@ -38,8 +38,12 @@ describe("navigation", () => {
     expect(keys("it_staff")).not.toContain("settings");
   });
 
-  it("gives employees only self service", () => {
-    expect(keys("employee")).toEqual(["home", "myRequests", "newRequest", "knowledge"]);
+  it("gives employees only self service and the tools", () => {
+    expect(keys("employee")).toEqual(["home", "myRequests", "newRequest", "knowledge", "tools"]);
+  });
+
+  it("gives everyone the tools", () => {
+    for (const role of ["admin", "it_staff", "employee"]) expect(keys(role)).toContain("tools");
   });
 
   it("sends each role to its own start page", () => {
@@ -52,6 +56,7 @@ describe("navigation", () => {
     const employee = navFor("employee");
     expect(activeHref(employee, "/requests/new")).toBe("/requests/new");
     expect(activeHref(employee, "/requests/42")).toBe("/requests");
+    expect(activeHref(employee, "/tools/pdf-merge")).toBe("/tools");
     const admin = navFor("admin");
     expect(activeHref(admin, "/")).toBe("/");
     expect(activeHref(admin, "/tickets/12")).toBe("/tickets");
