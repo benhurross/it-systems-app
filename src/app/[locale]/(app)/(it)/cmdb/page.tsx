@@ -131,7 +131,7 @@ function Cmdb() {
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                      <TriangleAlert className="size-4 text-warning" />
+                      <TriangleAlert className="size-4" />
                       {t("cmdb.impact")}
                     </CardTitle>
                   </CardHeader>

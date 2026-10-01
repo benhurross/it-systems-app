@@ -54,6 +54,12 @@
 
   --radius: 0.625rem;
 
+  /* The theme choices' icons, coloured when chosen; warnings share the sun's colour. */
+  --theme-light: #febf00;
+  --theme-dark: #00ffff;
+  --theme-system: #00ff00;
+  --warning-icon: #febf00;
+
   /* The mesh behind the pages (blue, the brand's teal, violet, a little pink) and the glass over it. */
   --mesh-1: rgb(96 165 250 / 0.34);
   --mesh-2: rgb(45 212 191 / 0.3);
@@ -150,6 +156,10 @@
   --color-foreground: var(--foreground);
   --color-card: var(--card);
   --shadow-glass: var(--glass-shadow);
+  --color-theme-light: var(--theme-light);
+  --color-theme-dark: var(--theme-dark);
+  --color-theme-system: var(--theme-system);
+  --color-warning-icon: var(--warning-icon);
   --color-card-foreground: var(--card-foreground);
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
@@ -211,6 +221,10 @@
   button:not(:disabled),
   [role="button"]:not([aria-disabled="true"]) {
     cursor: pointer;
+  }
+  /* Every warning triangle in the sun's yellow, wherever it is used. */
+  .lucide-triangle-alert {
+    color: var(--warning-icon);
   }
   /* Chart text follows the text-size setting: Recharts writes pixel sizes otherwise. */
   .recharts-text {

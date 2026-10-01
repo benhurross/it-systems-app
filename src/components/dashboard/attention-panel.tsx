@@ -29,7 +29,7 @@ export function AttentionPanel({ groups }: { groups: DashboardData["attention"] 
       <CardHeader>
         <CardTitle>
           <h2 className="flex items-center gap-2">
-            <TriangleAlert className="size-4 text-muted-foreground" />
+            <TriangleAlert className="size-4" />
             {t("title")}
           </h2>
         </CardTitle>

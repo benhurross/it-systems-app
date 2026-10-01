@@ -410,6 +410,11 @@ Requested by the owner: everyday document tools for everyone, under a "Workspace
 - [x] When a tool needs approval, an employee's "Request access" opens a ticket for IT; IT grants or declines it in Settings → Tools, which resolves the ticket with the answer (the person gets the usual email)
 - [x] Each file a tool makes is counted (never the file itself), shown in Settings → Tools for the last 30 days and in all
 
+### Look, feel and speed (added after Phase 10)
+- [x] The dashboard and KPIs load at once: dates were worked out with a new formatter each time (thousands per page), now each formatter is made once; the dashboard's monthly chart counts each ticket once; monitoring checks are indexed by time, so the last day is read without scanning the month kept
+- [x] Soft glows of blue, teal, violet and pink drift slowly behind the pages and the sign-in page (still for people who ask for less motion), under a faint grain. Cards, tables and the toolkit's panels are glass: clear enough for the colour to come through, with a sheen, a white edge and a soft shadow. Menus, dialogs and the sidebar stay solid. Secondary text is darker, to keep 4.5:1 over the colour
+- [x] The display card (theme and text size, from the top bar) shows the three themes as icons, the chosen one in its colour (light #febf00, dark #00ffff, system #00ff00), and the text size with large − and + and a Reset once it has changed. Warning triangles everywhere are the light theme's yellow
+
 ### Phase 11 - Handover
 - [ ] Minimal README: prerequisites (Node, Docker), setup, scripts, and where the demo accounts are defined
 - [ ] Lint, typecheck, unit, build and e2e all green, with no skipped tests

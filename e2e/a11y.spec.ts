@@ -122,6 +122,25 @@ test.describe("tools in use", () => {
   }
 });
 
+test.describe("the display card", () => {
+  test.use({ storageState: session("admin") });
+
+  test("open, in each theme choice, has no serious accessibility problems", async ({ page }) => {
+    const found: string[] = [];
+    for (const mode of MODES) {
+      await open(page, "/", mode);
+      await page.getByRole("button", { name: mode.locale === "ar" ? "العرض" : "Display" }).click();
+      for (const choice of mode.locale === "ar" ? ["فاتح", "داكن", "حسب النظام"] : ["Light", "Dark", "System"]) {
+        await page.getByRole("radio", { name: choice }).click();
+        await expect(page.getByRole("radio", { name: choice })).toHaveAttribute("aria-checked", "true");
+        found.push(...(await problems(page, mode)));
+      }
+      await page.keyboard.press("Escape");
+    }
+    expect(found, found.join("\n")).toEqual([]);
+  });
+});
+
 test.describe("filtering by date", () => {
   test.use({ storageState: session("admin") });
 
