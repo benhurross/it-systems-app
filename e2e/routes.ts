@@ -12,8 +12,6 @@ export const REQUEST = [
   "/knowledge/:article",
   "/tools",
   "/tools/pdf",
-  "/tools/images-to-pdf",
-  "/tools/pdf-stamp",
 ];
 export const IT = [
   "/",

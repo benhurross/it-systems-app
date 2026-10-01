@@ -29,30 +29,35 @@ async function toolkit(page: Page, mode: string) {
   return page.getByRole("tabpanel");
 }
 
-test("the tools list shows the PDF toolkit and the other tools, open to employees", async ({ page }) => {
+test("the tools list leads into each tool of the PDF toolkit", async ({ page }) => {
   const console = watchConsole(page);
   await page.goto("/en/home");
   await page.getByRole("link", { name: "Tools", exact: true }).click();
   await expect(page).toHaveURL(/\/en\/tools$/);
-  for (const name of ["PDF toolkit", "Images to PDF", "Page numbers and watermark"]) {
-    await expect(page.getByText(name, { exact: true })).toBeVisible();
-  }
-  await expect(page.getByRole("list", { name: "Choose a tool" }).getByRole("listitem")).toHaveText(["Merge", "Split", "Organize", "PDF to Word"]);
-  await expect(page.getByRole("link", { name: "Open" })).toHaveCount(3);
-
-  await page.getByRole("link", { name: "Open" }).first().click();
-  await expect(page).toHaveURL(/\/en\/tools\/pdf$/);
-  await expect(page.getByRole("tab")).toHaveText([/^Merge/, /^Split/, /^Organize/, /^PDF to Word/]);
+  await expect(page.getByRole("heading", { name: "PDF toolkit" })).toBeVisible();
+  const modes = [/^Merge/, /^Split/, /^Organize/, /^PDF to Word/, /^Images to PDF/, /^Numbers & watermark/];
+  await expect(page.getByRole("list", { name: "Choose a tool" }).getByRole("link")).toHaveText(modes);
   await expect(page.getByText("Files stay on this computer")).toBeVisible();
 
-  // Each mode keeps its address, and the pages the tools had before lead to their mode.
-  await page.getByRole("tab", { name: /^Split/ }).click();
+  // Straight into a mode, which the address keeps.
+  await page.getByRole("link", { name: /^Split/ }).click();
   await expect(page).toHaveURL(/\/en\/tools\/pdf\?mode=split$/);
-  await page.reload();
   await expect(page.getByRole("tab", { name: /^Split/ })).toHaveAttribute("aria-selected", "true");
-  await page.goto("/en/tools/pdf-organize");
+  await expect(page.getByRole("tab")).toHaveText(modes);
+  await page.getByRole("tab", { name: /^Organize/ }).click();
   await expect(page).toHaveURL(/\/en\/tools\/pdf\?mode=organize$/);
+  await page.reload();
   await expect(page.getByRole("tab", { name: /^Organize/ })).toHaveAttribute("aria-selected", "true");
+
+  // The pages the tools had before lead to their mode.
+  for (const [old, mode] of [
+    ["pdf-merge", "Merge"],
+    ["images-to-pdf", "Images to PDF"],
+    ["pdf-stamp", "Numbers & watermark"],
+  ]) {
+    await page.goto(`/en/tools/${old}`);
+    await expect(page.getByRole("tab", { name: new RegExp(`^${mode}`) })).toHaveAttribute("aria-selected", "true");
+  }
   console.assertClean();
 });
 
@@ -181,14 +186,14 @@ test("a PDF becomes a Word document with its headings, text and pictures", async
 
 test("images become a PDF, a page each", async ({ page }) => {
   const console = watchConsole(page);
-  await page.goto("/en/tools/images-to-pdf");
-  await page.getByLabel("Choose images").setInputFiles([
+  const panel = await toolkit(page, "Images to PDF");
+  await panel.getByLabel("Choose images").setInputFiles([
     { name: "wide.png", mimeType: "image/png", buffer: png(800, 400) },
     { name: "tall.png", mimeType: "image/png", buffer: png(300, 600) },
   ]);
-  await expect(page.getByText("800 × 400")).toBeVisible();
+  await expect(panel.getByText("800 × 400")).toBeVisible();
 
-  const a4 = await download(page, () => page.getByRole("button", { name: "Make PDF and download" }).click());
+  const a4 = await download(page, () => panel.getByRole("button", { name: "Make PDF and download" }).click());
   expect(a4.name).toBe("wide.pdf");
   const sizes = (await PDFDocument.load(a4.bytes)).getPages().map((p) => [Math.round(p.getWidth()), Math.round(p.getHeight())]);
   expect(sizes).toEqual([
@@ -197,39 +202,39 @@ test("images become a PDF, a page each", async ({ page }) => {
   ]);
 
   // Pages the size of each image, with the small margin around them.
-  await page.getByLabel("Same as each image").check();
-  await expect(page.getByText("Orientation")).toBeHidden();
-  const fitted = await download(page, () => page.getByRole("button", { name: "Make PDF and download" }).click());
+  await panel.getByLabel("Same as each image").check();
+  await expect(panel.getByText("Orientation")).toBeHidden();
+  const fitted = await download(page, () => panel.getByRole("button", { name: "Make PDF and download" }).click());
   expect((await PDFDocument.load(fitted.bytes)).getPage(0).getSize()).toEqual({ width: 636, height: 336 });
 
-  await page.getByLabel("Add images").setInputFiles({ name: "notes.txt", mimeType: "text/plain", buffer: Buffer.from("text") });
-  await expect(page.getByText("notes.txt is not an image this tool can read.")).toBeVisible();
+  await panel.getByLabel("Add images").setInputFiles({ name: "notes.txt", mimeType: "text/plain", buffer: Buffer.from("text") });
+  await expect(panel.getByText("notes.txt is not an image this tool can read.")).toBeVisible();
   console.assertClean();
 });
 
 test("pages are numbered and watermarked", async ({ page }) => {
   const console = watchConsole(page);
-  await page.goto("/en/tools/pdf-stamp");
-  await page.getByLabel("Choose a PDF").setInputFiles(await pdfFile("policy.pdf", 3, 500));
-  await drawn(page.getByRole("img", { name: "First page, as it will look" }));
+  const panel = await toolkit(page, "Numbers & watermark");
+  await panel.getByLabel("Choose a PDF").setInputFiles(await pdfFile("policy.pdf", 3, 500));
+  await drawn(panel.getByRole("img", { name: "First page, as it will look" }));
 
-  await page.getByRole("switch", { name: "Add a watermark" }).click();
-  const text = page.getByLabel("Watermark text");
+  await panel.getByRole("switch", { name: "Add a watermark" }).click();
+  const text = panel.getByLabel("Watermark text");
   await expect(text).toHaveValue("CONFIDENTIAL");
   await text.fill("سري");
-  await expect(page.getByText("Use Latin letters, numbers and punctuation only.")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Apply and download" })).toBeDisabled();
+  await expect(panel.getByText("Use Latin letters, numbers and punctuation only.")).toBeVisible();
+  await expect(panel.getByRole("button", { name: "Apply and download" })).toBeDisabled();
   await text.fill("COPY");
-  await page.getByLabel("Top right").check();
+  await panel.getByLabel("Top right").check();
 
-  const stamped = await download(page, () => page.getByRole("button", { name: "Apply and download" }).click());
+  const stamped = await download(page, () => panel.getByRole("button", { name: "Apply and download" }).click());
   expect(stamped.name).toBe("policy-stamped.pdf");
   expect(await widths(stamped.bytes)).toEqual([501, 502, 503]);
   expect(stamped.bytes.length).toBeGreaterThan((await pdfFile("policy.pdf", 3, 500)).buffer.length);
 
-  await page.getByRole("switch", { name: "Add page numbers" }).click();
-  await page.getByRole("switch", { name: "Add a watermark" }).click();
-  await expect(page.getByText("Choose page numbers, a watermark or both.")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Apply and download" })).toBeDisabled();
+  await panel.getByRole("switch", { name: "Add page numbers" }).click();
+  await panel.getByRole("switch", { name: "Add a watermark" }).click();
+  await expect(panel.getByText("Choose page numbers, a watermark or both.")).toBeVisible();
+  await expect(panel.getByRole("button", { name: "Apply and download" })).toBeDisabled();
   console.assertClean();
 });

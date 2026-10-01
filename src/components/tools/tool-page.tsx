@@ -1,27 +1,23 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft, Combine, FilePen, Files, Hash, Images, LayoutGrid, Lock, Scissors, ShieldCheck } from "lucide-react";
+import { ArrowLeft, Combine, FilePen, Hash, Images, LayoutGrid, Lock, Scissors, ShieldCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useState, type ReactNode } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import type { z } from "zod";
 import { FormDialog, TextareaField } from "@/components/form";
-import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useApi, useApiMutation } from "@/hooks/use-api";
+import { useApiMutation } from "@/hooks/use-api";
 import { Link } from "@/i18n/navigation";
 import { api } from "@/lib/api";
 import type { MyTool } from "@/lib/api-types";
 import { ref } from "@/lib/domain";
 import { toolRequest } from "@/lib/schemas";
-import { useNoStrayDrops } from "./files";
 import type { ToolKey } from "@/lib/tools";
 
 export const TOOL_ICONS = { pdf_merge: Combine, pdf_split: Scissors, pdf_organize: LayoutGrid, pdf_to_word: FilePen, images_to_pdf: Images, pdf_stamp: Hash } as const;
-export const CARD_ICONS = { pdf_kit: Files, images_to_pdf: Images, pdf_stamp: Hash } as const;
 
 /** Says files stay on this computer: the tools work in the browser. */
 export function PrivacyNote() {
@@ -101,28 +97,5 @@ function RequestToolDialog({ tool, onClose }: { tool: ToolKey; onClose: () => vo
     >
       <TextareaField name="note" label={t("requestNote")} rows={3} optional />
     </FormDialog>
-  );
-}
-
-/** A tool's page: its name, the privacy note, and the tool itself once the person may use it. */
-export function ToolPage({ tool, children }: { tool: ToolKey; children: ReactNode }) {
-  const t = useTranslations("tools");
-  const { data } = useApi<MyTool[]>("/tools");
-  const status = data?.find((x) => x.key === tool);
-  useNoStrayDrops();
-  return (
-    <div className="space-y-6">
-      <AllToolsLink />
-      <PageHeader title={t(`names.${tool}`)} description={t(`descriptions.${tool}`)} actions={<PrivacyNote />} />
-      {!status ? (
-        <Skeleton className="h-48 w-full max-w-5xl" />
-      ) : status.status === "allowed" ? (
-        <div className="max-w-5xl">{children}</div>
-      ) : (
-        <div className="max-w-3xl rounded-xl border p-6">
-          <ToolAccess tool={tool} status={status} />
-        </div>
-      )}
-    </div>
   );
 }

@@ -225,7 +225,7 @@ test("a tool that needs approval is asked for, granted by IT, and then opens", a
   expect((await context.request.post("/api/auth/sign-in/email", { data: { email: "employee@applus.test", password: DEMO_PASSWORD }, headers: { origin: BASE_URL } })).ok()).toBe(true);
   const employee = await context.newPage();
   await employee.goto("/en/tools");
-  await expect(employee.getByRole("link", { name: "Open" })).toHaveCount(3);
+  await expect(employee.getByRole("link", { name: "Open" })).toHaveCount(1);
   await expect(employee.getByRole("list", { name: "Choose a tool" }).getByRole("img", { name: "Needs approval" })).toHaveCount(1);
   await employee.goto("/en/tools/pdf?mode=merge");
   const mergeTab = employee.getByRole("tab", { name: /^Merge/ });

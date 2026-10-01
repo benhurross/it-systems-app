@@ -7,7 +7,6 @@ import { toast } from "sonner";
 import { Choices, Opening, ToolPanel } from "@/components/tools/controls";
 import { FileProblems, OrderedFiles } from "@/components/tools/file-list";
 import { baseName, downloadBytes, FileDrop, readFile, recordUse, useFileProblem, useSizeLimit } from "@/components/tools/files";
-import { ToolPage } from "@/components/tools/tool-page";
 import { Button } from "@/components/ui/button";
 import { formatBytes } from "@/lib/files";
 import { imageKind, type ImagePageOptions, imagesToPdf, jpegOrientation, type PdfImage } from "@/lib/pdf-tools";
@@ -17,14 +16,6 @@ type ImageFile = { id: number; name: string; size: number; url: string; image: P
 const MARGINS = { none: 0, small: 18, large: 36 } as const;
 const MARGIN_LABELS = { none: "marginNone", small: "marginSmall", large: "marginLarge" } as const;
 type Margin = keyof typeof MARGINS;
-
-export default function ImagesToPdfPage() {
-  return (
-    <ToolPage tool="images_to_pdf">
-      <ImagesToPdf />
-    </ToolPage>
-  );
-}
 
 /**
  * An image ready for a PDF page. PNGs and upright JPEGs go in as they are; anything else, or a
@@ -59,7 +50,8 @@ async function prepare(file: File): Promise<PdfImage> {
   }
 }
 
-function ImagesToPdf() {
+/** Photos and scans made into one PDF, a page each. */
+export function ImagesPanel() {
   const t = useTranslations("tools");
   const locale = useLocale();
   const problem = useFileProblem();

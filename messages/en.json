@@ -1766,7 +1766,7 @@
     "cards": {
       "pdf_kit": {
         "name": "PDF toolkit",
-        "description": "Merge, split and organize PDFs, or turn one into a Word document."
+        "description": "Merge, split and organize PDFs, turn them into Word, make them from images, and add page numbers or a watermark."
       }
     },
     "kit": {
@@ -1775,13 +1775,17 @@
         "merge": "Merge",
         "split": "Split",
         "organize": "Organize",
-        "word": "PDF to Word"
+        "word": "PDF to Word",
+        "images": "Images to PDF",
+        "stamp": "Numbers & watermark"
       },
       "hints": {
         "merge": "Combine PDFs into one",
         "split": "Take out pages, or split into several",
         "organize": "Turn, move or remove pages",
-        "word": "Edit the text in Word"
+        "word": "Edit the text in Word",
+        "images": "A page for each photo or scan",
+        "stamp": "Number pages, or mark them CONFIDENTIAL"
       },
       "needsApproval": "Needs approval",
       "requested": "Requested",

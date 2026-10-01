@@ -8,7 +8,6 @@ import { Choices, FileChip, Opening, ToolPanel } from "@/components/tools/contro
 import { FileProblems } from "@/components/tools/file-list";
 import { baseName, downloadBytes, FileDrop, type OnePdf, recordUse, useFileProblem, useOnePdf, useSizeLimit } from "@/components/tools/files";
 import { PdfThumb, usePdfDocument } from "@/components/tools/pdf-preview";
-import { ToolPage } from "@/components/tools/tool-page";
 import { Button } from "@/components/ui/button";
 import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -20,15 +19,8 @@ const STRENGTHS = { light: 0.15, medium: 0.25, strong: 0.4 } as const;
 type Strength = keyof typeof STRENGTHS;
 const WATERMARK_SIZE = 72;
 
-export default function StampPdfPage() {
-  return (
-    <ToolPage tool="pdf_stamp">
-      <Stamp />
-    </ToolPage>
-  );
-}
-
-function Stamp() {
+/** Page numbers and a watermark on every page of a PDF. */
+export function StampPanel() {
   const t = useTranslations("tools");
   const one = useOnePdf();
   const limit = useSizeLimit();

@@ -6,9 +6,11 @@ import { useTranslations } from "next-intl";
 import { Tabs as TabsPrimitive } from "radix-ui";
 import { useState } from "react";
 import { useNoStrayDrops } from "@/components/tools/files";
+import { ImagesPanel } from "@/components/tools/pdf-kit/images";
 import { MergePanel } from "@/components/tools/pdf-kit/merge";
 import { OrganizePanel } from "@/components/tools/pdf-kit/organize";
 import { SplitPanel } from "@/components/tools/pdf-kit/split";
+import { StampPanel } from "@/components/tools/pdf-kit/stamp";
 import { WordPanel } from "@/components/tools/pdf-kit/word";
 import { AllToolsLink, PrivacyNote, TOOL_ICONS, ToolAccess } from "@/components/tools/tool-page";
 import { PageHeader } from "@/components/page-header";
@@ -18,10 +20,11 @@ import type { MyTool } from "@/lib/api-types";
 import { PDF_MODES, type PdfMode } from "@/lib/tools";
 import { cn } from "@/lib/utils";
 
-const PANELS = { merge: MergePanel, split: SplitPanel, organize: OrganizePanel, word: WordPanel } as const;
+const PANELS = { merge: MergePanel, split: SplitPanel, organize: OrganizePanel, word: WordPanel, images: ImagesPanel, stamp: StampPanel } as const;
 
 /**
- * Merge, Split, Organize and PDF to Word in one place. Each mode is a tool of its own for who may
+ * Every PDF tool in one place: Merge, Split, Organize, PDF to Word, Images to PDF, and Page
+ * numbers and watermark. Each mode is a tool of its own for who may
  * use it: one that needs approval shows a lock and the way to ask; one that is off is not shown.
  * Each mode keeps its work while another is open.
  */
@@ -45,7 +48,7 @@ export default function PdfToolkitPage() {
       <AllToolsLink />
       <PageHeader title={t("cards.pdf_kit.name")} description={t("cards.pdf_kit.description")} actions={<PrivacyNote />} />
       {!data ? (
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
           {PDF_MODES.map((m) => (
             <Skeleton key={m.mode} className="h-20" />
           ))}
@@ -54,7 +57,7 @@ export default function PdfToolkitPage() {
         <p className="max-w-3xl rounded-xl border p-6 text-sm text-muted-foreground">{t("kit.none")}</p>
       ) : (
         <TabsPrimitive.Root value={current.mode} onValueChange={choose} className="space-y-6">
-          <TabsPrimitive.List aria-label={t("kit.choose")} className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-4">
+          <TabsPrimitive.List aria-label={t("kit.choose")} className="grid grid-cols-2 gap-2 sm:gap-3 md:grid-cols-3">
             {modes.map(({ mode, tool, status }) => {
               const Icon = TOOL_ICONS[tool];
               const locked = status!.status !== "allowed";

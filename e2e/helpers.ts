@@ -208,17 +208,19 @@ export const TOOLS_IN_USE: Record<string, (page: Page) => Promise<void>> = {
     await panel.locator('input[type="file"]').setInputFiles(await pdfFile("network-policy.pdf", 2));
     await expect(panel.getByRole("switch")).toHaveCount(2);
   },
-  "/tools/images-to-pdf": async (page) => {
-    await page.locator('input[type="file"]').setInputFiles([
+  "/tools/pdf?mode=images": async (page) => {
+    const panel = page.getByRole("tabpanel");
+    await panel.locator('input[type="file"]').setInputFiles([
       { name: "receipt-photo-from-phone.png", mimeType: "image/png", buffer: png(800, 400) },
       { name: "tall.png", mimeType: "image/png", buffer: png(300, 600) },
     ]);
-    await expect(page.locator("ol > li")).toHaveCount(2);
+    await expect(panel.locator("ol > li")).toHaveCount(2);
   },
-  "/tools/pdf-stamp": async (page) => {
-    await page.locator('input[type="file"]').setInputFiles(await pdfFile("policy.pdf", 3));
-    await expect(page.getByRole("switch")).toHaveCount(2);
-    await page.getByRole("switch").last().click();
-    await expect(page.getByRole("switch").last()).toHaveAttribute("aria-checked", "true");
+  "/tools/pdf?mode=stamp": async (page) => {
+    const panel = page.getByRole("tabpanel");
+    await panel.locator('input[type="file"]').setInputFiles(await pdfFile("policy.pdf", 3));
+    await expect(panel.getByRole("switch")).toHaveCount(2);
+    await panel.getByRole("switch").last().click();
+    await expect(panel.getByRole("switch").last()).toHaveAttribute("aria-checked", "true");
   },
 };
