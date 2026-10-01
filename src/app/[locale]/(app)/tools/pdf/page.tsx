@@ -66,7 +66,7 @@ export default function PdfToolkitPage() {
                   key={mode}
                   value={mode}
                   className={cn(
-                    "group flex min-w-0 flex-col items-start gap-2 rounded-xl border bg-card p-3 text-start shadow-glass transition-all outline-none sm:flex-row sm:gap-3 sm:p-4",
+                    "group flex min-w-0 flex-col items-start gap-2 rounded-xl border bg-card p-3 text-start shadow-glass glass-sheen transition-all outline-none sm:flex-row sm:gap-3 sm:p-4",
                     "hover:border-primary/40 focus-visible:ring-[3px] focus-visible:ring-ring/50",
                     "data-[state=active]:border-primary data-[state=active]:bg-brand-soft",
                   )}

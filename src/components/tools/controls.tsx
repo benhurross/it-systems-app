@@ -30,7 +30,7 @@ export function ToolPanel({
   children: ReactNode;
 }) {
   return (
-    <section className="overflow-hidden rounded-xl bg-card text-card-foreground shadow-glass ring-1 ring-foreground/10" aria-label={title}>
+    <section className="overflow-hidden rounded-xl bg-card text-card-foreground shadow-glass glass-sheen ring-1 ring-foreground/10" aria-label={title}>
       <div className="flex flex-wrap items-center gap-3 border-b px-4 py-3 sm:px-5">
         <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-brand-soft text-brand">
           <Icon className="size-5" aria-hidden />
