@@ -165,7 +165,7 @@ test.describe("as IT staff", () => {
 
   test("Settings is hidden and its pages refuse entry", async ({ page }) => {
     await page.goto("/en");
-    await expect(page.getByRole("link", { name: "Tickets" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Tickets", exact: true })).toBeVisible();
     await expect(page.getByRole("link", { name: "Settings" })).toHaveCount(0);
     await page.goto("/en/settings/users");
     await expect(page.getByRole("heading", { name: "Not available" })).toBeVisible();
