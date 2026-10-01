@@ -36,6 +36,13 @@
       "when": 1790797623090,
       "tag": "0004_id_cards",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1790834604824,
+      "tag": "0005_id_card_handover",
+      "breakpoints": true
     }
   ]
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation } from "@tanstack/react-query";
-import { ArrowLeft, Camera, CheckCircle2, ImageOff, Minus, Plus, Printer, Trash2 } from "lucide-react";
+import { ArrowLeft, Camera, CheckCircle2, HandHelping, ImageOff, Minus, Plus, Printer, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { use, useId, useState } from "react";
 import { toast } from "sonner";
@@ -77,6 +77,7 @@ function Editor({ card }: { card: IdCardDetail }) {
     success: t("idCards.saved"),
   });
   const printed = useApiMutation(() => api(`/id-cards/${card.id}/printed`, { method: "POST" }), { success: t("idCards.markedPrinted") });
+  const handOver = useApiMutation(() => api(`/id-cards/${card.id}/handed-over`, { method: "POST" }), { success: t("idCards.markedHandedOver") });
   const remove = useApiMutation(() => api(`/id-cards/${card.id}`, { method: "DELETE" }), {
     success: t("idCards.deleted"),
     gone: `/id-cards/${card.id}`,
@@ -97,7 +98,7 @@ function Editor({ card }: { card: IdCardDetail }) {
       </Link>
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0 space-y-2">
-          <EnumBadge kind="idCardStatus" value={card.status} />
+          <EnumBadge kind="idCardStage" value={card.stage} />
           <h1 className="text-2xl font-semibold tracking-tight break-words">{t("idCards.cardFor", { name: card.personName })}</h1>
           <p className="flex flex-wrap gap-x-2 text-muted-foreground">
             <span>{t(`enums.idCardReason.${card.reason}`)}</span>·<span>{t("idCards.startedOn", { date: format.date(card.createdAt) })}</span>
@@ -310,6 +311,28 @@ function Editor({ card }: { card: IdCardDetail }) {
                     </div>
                   )}
                 </Step>
+                {card.status === "printed" && (
+                  <Step n={5}>
+                    {card.stage === "handed_over" ? (
+                      <p className="flex items-center gap-2 text-success">
+                        <CheckCircle2 className="size-4" aria-hidden />
+                        {card.handedOverAt
+                          ? t("idCards.handedOverBy", { date: format.date(card.handedOverAt), name: card.handedOverBy ?? "" })
+                          : t("idCards.confirmedBy", { name: card.personName, date: format.date(card.ticketClosedAt ?? card.printedAt!) })}
+                      </p>
+                    ) : card.ticketId ? (
+                      <p className="text-muted-foreground">{t("idCards.awaitingConfirmation", { name: card.personName, ref: ref("ticket", card.ticketId) })}</p>
+                    ) : (
+                      <div className="space-y-1">
+                        <Button variant="outline" disabled={handOver.isPending} onClick={() => handOver.mutate(undefined)}>
+                          <HandHelping />
+                          {t("idCards.markHandedOver")}
+                        </Button>
+                        <p className="text-xs text-muted-foreground">{t("idCards.markHandedOverHint")}</p>
+                      </div>
+                    )}
+                  </Step>
+                )}
               </ol>
               {dirty && <p className="mt-4 text-sm text-muted-foreground">{t("idCards.saveFirst")}</p>}
             </CardContent>

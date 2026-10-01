@@ -7,7 +7,7 @@ import { and, eq } from "drizzle-orm";
 import { PDFDocument } from "pdf-lib";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import { ONBOARDING_TASKS } from "@/lib/domain";
-import { type CardText, firstAndLast, layoutCard, SIZES, TEXT } from "@/lib/id-card";
+import { type CardText, cardStage, firstAndLast, layoutCard, SIZES, TEXT } from "@/lib/id-card";
 import { createTestDb } from "./helpers/db";
 
 vi.mock("@/server/db", async () => ({ db: await createTestDb() }));
@@ -20,6 +20,7 @@ const { asUser, NOW } = await import("./helpers/seeded");
 const cards = await import("@/server/services/id-cards");
 const people = await import("@/server/services/people");
 const { cardPdf, pdfMeasure } = await import("@/server/id-card-pdf");
+const tickets = await import("@/server/services/tickets");
 
 /** A real PNG of a flat colour, as big as asked. */
 function png(width: number, height: number) {
@@ -274,5 +275,38 @@ describe("the employee's own card", () => {
     const { id, ticketId } = await cards.requestCard(admin, { reason: "lost", note: null, photo: PHOTO });
     expect((await cards.myCard(admin)).waiting).toMatchObject({ id, ticketId });
     await cards.deleteCard(id, it_);
+  });
+});
+
+describe("handing a card over", () => {
+  it("is ready to collect once printed, and handed over when its request closes or IT says so", () => {
+    expect(cardStage({ status: "requested", ticketStatus: "open", handedOverAt: null })).toBe("requested");
+    expect(cardStage({ status: "printed", ticketStatus: "resolved", handedOverAt: null })).toBe("printed");
+    expect(cardStage({ status: "printed", ticketStatus: "closed", handedOverAt: null })).toBe("handed_over");
+    expect(cardStage({ status: "printed", ticketStatus: null, handedOverAt: null })).toBe("printed");
+    expect(cardStage({ status: "printed", ticketStatus: null, handedOverAt: NOW })).toBe("handed_over");
+  });
+
+  it("shows the employee's card as handed over once they confirm they have it", async () => {
+    const before = (await cards.myCard(employee)).printed!;
+    expect(before).toMatchObject({ stage: "printed", handedOverAt: null });
+    await tickets.updateTicket(employee, before.ticketId!, { status: "closed", satisfaction: 5 });
+    const after = (await cards.myCard(employee)).printed!;
+    expect(after.stage).toBe("handed_over");
+    expect(after.handedOverAt).toBeInstanceOf(Date);
+    expect((await cards.getCard(after.id)).stage).toBe("handed_over");
+    await expect(cards.markHandedOver(after.id, it_)).rejects.toMatchObject({ status: 400, message: "confirmedByRequester" });
+  });
+
+  it("lets IT hand over a card nobody asked for, once printed", async () => {
+    const [record] = await db.select().from(s.employees).where(eq(s.employees.email, "it2@applus.test"));
+    const card = await cards.createCard({ employeeId: record.id, joinerId: null, reason: "other" }, it_);
+    await expect(cards.markHandedOver(card.id, it_)).rejects.toMatchObject({ message: "notPrinted" });
+    await cards.markPrinted(card.id, it_);
+    expect((await cards.getCard(card.id)).stage).toBe("printed");
+    const handed = await cards.markHandedOver(card.id, it_, NOW);
+    expect(handed).toMatchObject({ handedOverAt: NOW, handedOverBy: it_.name });
+    expect((await cards.getCard(card.id)).stage).toBe("handed_over");
+    await expect(cards.markHandedOver(card.id, it_)).rejects.toMatchObject({ message: "alreadyHandedOver" });
   });
 });

@@ -13,7 +13,7 @@ import { useFormat } from "@/hooks/use-format";
 import { useLookups } from "@/hooks/use-lookups";
 import { Link } from "@/i18n/navigation";
 import type { IdCard } from "@/lib/api-types";
-import { ID_CARD_REASONS, ID_CARD_STATUSES, ref } from "@/lib/domain";
+import { ID_CARD_REASONS, ID_CARD_STAGES, ref } from "@/lib/domain";
 
 const col = columnHelper<IdCard>();
 
@@ -57,10 +57,10 @@ export default function IdCardsPage() {
         );
       },
     }),
-    col.accessor("status", {
+    col.accessor("stage", {
       header: t("idCards.status"),
       filterFn: "arrHas",
-      cell: (info) => <EnumBadge kind="idCardStatus" value={info.getValue()} />,
+      cell: (info) => <EnumBadge kind="idCardStage" value={info.getValue()} />,
     }),
     col.accessor("createdAt", { header: t("idCards.requestedOn"), cell: (info) => format.date(info.getValue()) }),
     col.accessor("printedAt", { header: t("idCards.printedOn"), cell: (info) => (info.getValue() ? format.date(info.getValue()!) : "—") }),
@@ -81,7 +81,7 @@ export default function IdCardsPage() {
         columns={columns}
         loading={isLoading}
         facets={[
-          { column: "status", label: t("idCards.status"), options: ID_CARD_STATUSES.map((s) => ({ value: s, label: t(`enums.idCardStatus.${s}`) })) },
+          { column: "stage", label: t("idCards.status"), options: ID_CARD_STAGES.map((s) => ({ value: s, label: t(`enums.idCardStage.${s}`) })) },
           { column: "reason", label: t("idCards.reason"), options: ID_CARD_REASONS.map((r) => ({ value: r, label: t(`enums.idCardReason.${r}`) })) },
           { column: "department", label: t("people.department"), options: lookups.options("department") },
         ]}

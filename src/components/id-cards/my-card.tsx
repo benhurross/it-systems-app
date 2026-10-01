@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle2, Eye } from "lucide-react";
+import { CheckCircle2, Eye, IdCard } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { StatusBadge } from "@/components/status-badge";
@@ -15,8 +15,9 @@ import { ref } from "@/lib/domain";
 import { CardFace, CardPhoto, designUrl, useCardLines } from "./card-face";
 
 /**
- * The employee's own ID card on their dashboard: once IT has printed it, the card as printed,
- * marked as handed over, with a preview of both sides. A request still with IT shows here too.
+ * The employee's own ID card on their dashboard: once IT has printed it, the card as printed with
+ * a preview of both sides, ready to collect until they confirm they have it, then handed over. A
+ * request still with IT shows here too.
  */
 export function MyIdCard() {
   const t = useTranslations("home.myCard");
@@ -50,10 +51,26 @@ export function MyIdCard() {
         <div className="min-w-0 flex-1 basis-56 space-y-2">
           {card && card.printedAt && (
             <>
-              <StatusBadge tone="success" icon={CheckCircle2}>
-                {t("handedOver")}
-              </StatusBadge>
-              <p className="text-sm text-muted-foreground">{t("printedOn", { date: format.date(card.printedAt) })}</p>
+              <CardBadge card={card} />
+              {card.stage === "handed_over" ? (
+                <p className="text-sm text-muted-foreground">
+                  {t("printedOn", { date: format.date(card.printedAt) })}
+                  {card.handedOverAt && ` · ${t("handedOverOn", { date: format.date(card.handedOverAt) })}`}
+                </p>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  {card.ticketId ? (
+                    <>
+                      {t("readyText", { date: format.date(card.printedAt) })}{" "}
+                      <Link href={`/requests/${card.ticketId}`} className="text-primary hover:underline">
+                        {t("confirmLink", { ref: ref("ticket", card.ticketId) })}
+                      </Link>
+                    </>
+                  ) : (
+                    t("readyCollect", { date: format.date(card.printedAt) })
+                  )}
+                </p>
+              )}
               <Button variant="outline" size="sm" onClick={() => setPreviewing(true)}>
                 <Eye />
                 {t("preview")}
@@ -79,9 +96,7 @@ export function MyIdCard() {
             <DialogHeader>
               <DialogTitle>{t("title")}</DialogTitle>
               <DialogDescription className="flex flex-wrap items-center gap-2">
-                <StatusBadge tone="success" icon={CheckCircle2}>
-                  {t("handedOver")}
-                </StatusBadge>
+                <CardBadge card={card} />
                 {t("printedOn", { date: format.date(card.printedAt) })}
               </DialogDescription>
             </DialogHeader>
@@ -99,5 +114,19 @@ export function MyIdCard() {
         </Dialog>
       )}
     </Card>
+  );
+}
+
+/** Green and checked once the card is in their hands; until then, ready to collect. */
+function CardBadge({ card }: { card: NonNullable<MyCard["printed"]> }) {
+  const t = useTranslations("home.myCard");
+  return card.stage === "handed_over" ? (
+    <StatusBadge tone="success" icon={CheckCircle2}>
+      {t("handedOver")}
+    </StatusBadge>
+  ) : (
+    <StatusBadge tone="info" icon={IdCard}>
+      {t("ready")}
+    </StatusBadge>
   );
 }

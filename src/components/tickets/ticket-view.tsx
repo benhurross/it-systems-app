@@ -22,6 +22,7 @@ import { Link } from "@/i18n/navigation";
 import { api, ApiError } from "@/lib/api";
 import type { Article, Asset, Staff, TicketDetail } from "@/lib/api-types";
 import { PRIORITIES, ref, type TicketStatus } from "@/lib/domain";
+import { cardStage } from "@/lib/id-card";
 import { nextStatuses } from "@/lib/workflows";
 
 type Mode = "it" | "requester";
@@ -66,7 +67,7 @@ export function TicketView({ id, mode }: { id: number; mode: Mode }) {
           {mode === "it" && <History ticket={ticket} />}
         </div>
         <div className="space-y-6">
-          {mode === "it" && ticket.idCard && <IdCardPanel card={ticket.idCard} />}
+          {mode === "it" && ticket.idCard && <IdCardPanel card={ticket.idCard} ticket={ticket} />}
           <Details ticket={ticket} mode={mode} />
           <Suggestions issueType={ticket.issueType} />
         </div>
@@ -76,8 +77,9 @@ export function TicketView({ id, mode }: { id: number; mode: Mode }) {
 }
 
 /** An ID card request: the card itself is where IT checks it, prints it and marks it printed. */
-function IdCardPanel({ card }: { card: NonNullable<TicketDetail["idCard"]> }) {
+function IdCardPanel({ card, ticket }: { card: NonNullable<TicketDetail["idCard"]>; ticket: TicketDetail }) {
   const t = useTranslations("idCards");
+  const stage = cardStage({ ...card, ticketStatus: ticket.status });
   return (
     <Card>
       <CardHeader>
@@ -86,8 +88,8 @@ function IdCardPanel({ card }: { card: NonNullable<TicketDetail["idCard"]> }) {
           {t("ticketPanel")}
         </CardTitle>
         <CardDescription className="flex flex-wrap items-center gap-2">
-          <EnumBadge kind="idCardStatus" value={card.status} />
-          {card.status === "requested" ? t("ticketPanelWaiting") : t("ticketPanelPrinted")}
+          <EnumBadge kind="idCardStage" value={stage} />
+          {t(`ticketPanel_${stage}`)}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -169,6 +171,8 @@ function ResolveDialog({ ticket, onClose }: { ticket: TicketDetail; onClose: () 
 function ConfirmFix({ ticket }: { ticket: TicketDetail }) {
   const t = useTranslations("requests");
   const format = useFormat();
+  // An ID card request is confirmed by having the card, which marks it handed over.
+  const card = ticket.idCard !== null;
   const [rating, setRating] = useState<number | null>(null);
   const close = useApiMutation(
     () => api(`/tickets/${ticket.id}`, { method: "PATCH", body: { status: "closed", satisfaction: rating } }),
@@ -181,9 +185,9 @@ function ConfirmFix({ ticket }: { ticket: TicketDetail }) {
   return (
     <Card className="border-success/40 bg-success-soft/40">
       <CardHeader>
-        <CardTitle>{t("confirmTitle")}</CardTitle>
+        <CardTitle>{card ? t("cardConfirmTitle") : t("confirmTitle")}</CardTitle>
         <p className="text-sm text-muted-foreground">
-          {t("confirmText")} {ticket.closesAt && t("autoClose", { date: format.date(ticket.closesAt) })}
+          {card ? t("cardConfirmText") : t("confirmText")} {ticket.closesAt && t("autoClose", { date: format.date(ticket.closesAt) })}
         </p>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -209,10 +213,10 @@ function ConfirmFix({ ticket }: { ticket: TicketDetail }) {
         </div>
         <div className="flex flex-wrap gap-2">
           <Button onClick={() => close.mutate(undefined)} disabled={close.isPending}>
-            {t("confirm")}
+            {card ? t("cardConfirm") : t("confirm")}
           </Button>
           <Button variant="outline" onClick={() => reopen.mutate(undefined)} disabled={reopen.isPending}>
-            {t("notFixed")}
+            {card ? t("cardNotFixed") : t("notFixed")}
           </Button>
         </div>
       </CardContent>

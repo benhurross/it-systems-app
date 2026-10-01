@@ -437,9 +437,10 @@
       "new_joiner": "موظف جديد",
       "other": "أخرى"
     },
-    "idCardStatus": {
+    "idCardStage": {
       "requested": "بانتظار الطباعة",
-      "printed": "مطبوعة"
+      "printed": "جاهزة للاستلام",
+      "handed_over": "سُلّمت"
     }
   },
   "validation": {
@@ -735,7 +736,11 @@
     "empty": "لم تقدم أي طلبات بعد.",
     "device": "الجهاز",
     "removeDevice": "ليس عن هذا الجهاز",
-    "autoClose": "إذا لم ترد، يُغلق تلقائياً في {date}."
+    "autoClose": "إذا لم ترد، يُغلق تلقائياً في {date}.",
+    "cardConfirmTitle": "هل استلمت بطاقة هويتك؟",
+    "cardConfirmText": "طبع قسم تقنية المعلومات بطاقتك الجديدة. استلمها من القسم ثم أكّد استلامها، أو أعد فتح الطلب إن كان فيها خطأ.",
+    "cardConfirm": "نعم، استلمتها",
+    "cardNotFixed": "لا، هناك خطأ"
   },
   "kb": {
     "title": "قاعدة المعرفة",
@@ -1289,7 +1294,12 @@
       "requestedOn": "طُلبت في {date}، وهي الآن لدى قسم تقنية المعلومات.",
       "viewRequest": "عرض الطلب {ref}",
       "front": "الأمام",
-      "back": "الخلف"
+      "back": "الخلف",
+      "ready": "جاهزة للاستلام من قسم تقنية المعلومات",
+      "readyText": "طُبعت في {date}. بعد استلامها يرجى التأكيد:",
+      "confirmLink": "الطلب {ref}",
+      "handedOverOn": "سُلّمت في {date}",
+      "readyCollect": "طُبعت في {date}. استلمها من قسم تقنية المعلومات."
     }
   },
   "email": {
@@ -1505,13 +1515,20 @@
     "photoDialogHint": "اختر الصورة ثم اسحبها وكبّرها حتى يملأ الوجه الإطار.",
     "savePhoto": "حفظ الصورة",
     "ticketPanel": "بطاقة الهوية",
-    "ticketPanelWaiting": "راجع البطاقة ثم اطبعها.",
-    "ticketPanelPrinted": "طُبعت البطاقة.",
     "openCard": "فتح البطاقة",
     "openForJoiner": "فتح البطاقة",
     "whatName": "الاسم",
     "whatDesignation": "المسمى الوظيفي",
     "size": "الحجم",
-    "font": "الخط"
+    "font": "الخط",
+    "ticketPanel_requested": "راجع البطاقة ثم اطبعها.",
+    "ticketPanel_printed": "طُبعت. يؤكد الموظف هنا عند استلامها.",
+    "ticketPanel_handed_over": "طُبعت وسُلّمت.",
+    "markedHandedOver": "تم تعليم البطاقة كمُسلّمة.",
+    "markHandedOver": "تعليم كمُسلّمة",
+    "markHandedOverHint": "عندما تصبح البطاقة في يد صاحبها. تظهر بعدها كمُسلّمة في لوحته.",
+    "handedOverBy": "سُلّمت في {date} بواسطة {name}",
+    "confirmedBy": "أكّد {name} استلامها ({date})",
+    "awaitingConfirmation": "جاهزة للاستلام. يؤكد {name} استلامها في الطلب {ref}، ويُغلق الطلب تلقائياً إن لم يرد."
   }
 }

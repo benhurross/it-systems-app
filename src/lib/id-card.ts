@@ -1,3 +1,5 @@
+import type { IdCardStage, IdCardStatus, TicketStatus } from "./domain";
+
 /**
  * The ID card: its size, where the photo and text go on the company design, and how text is
  * fitted. Shared by the live preview (measuring with the browser) and the printed PDF (measuring
@@ -140,3 +142,12 @@ export const FONT_FILES: Record<CardFont, Record<"regular" | "bold", string>> = 
   regular: { regular: "LiberationSans-Regular.ttf", bold: "LiberationSans-Bold.ttf" },
   narrow: { regular: "RobotoCondensed-Regular.ttf", bold: "RobotoCondensed-Bold.ttf" },
 };
+
+/**
+ * Where a card is. A card someone asked for is handed over once their request closes: they
+ * confirmed they have it, or did not answer and it closed by itself. IT marks any other card.
+ */
+export function cardStage(card: { status: IdCardStatus; ticketStatus: TicketStatus | null; handedOverAt: Date | string | null }): IdCardStage {
+  if (card.status === "requested") return "requested";
+  return card.handedOverAt !== null || card.ticketStatus === "closed" ? "handed_over" : "printed";
+}

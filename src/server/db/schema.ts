@@ -677,6 +677,9 @@ export const idCards = pgTable(
     status: text().$type<IdCardStatus>().notNull().default("requested"),
     printedAt: timestamp({ withTimezone: true }),
     printedBy: text(),
+    /** Set by IT for a card nobody asked for. A requested card is handed over when its request closes. */
+    handedOverAt: timestamp({ withTimezone: true }),
+    handedOverBy: text(),
     createdBy: text().references(() => users.id, { onDelete: "set null" }),
     createdAt: createdAt(),
     updatedAt: updatedAt(),

@@ -110,20 +110,29 @@ test("an employee asks for a new ID card with their photo, and IT prints it", as
   await expect(page.getByText("Card marked as printed.")).toBeVisible();
   await expect(page.getByText(/^Printed .* by Omar Haddad$/)).toBeVisible();
 
-  // The employee's request is resolved, saying the card is ready.
-  await employee.goto(`/en/requests/${ticket}`);
-  await expect(employee.getByText("Your new ID card is printed and ready to collect from IT.")).toBeVisible();
-
-  // Their dashboard shows the card as printed and handed over, with a preview of both sides.
+  // Their dashboard shows the card ready to collect, with a preview of both sides.
   await employee.goto("/en/home");
   const myCard = employee.locator('[data-slot="card"]').filter({ has: employee.locator('[data-slot="card-title"]', { hasText: /^Your ID card$/ }) });
-  await expect(myCard.getByText("Printed and handed over")).toBeVisible();
+  await expect(myCard.getByText("Ready to collect from IT")).toBeVisible();
+  await expect(myCard.getByText("Printed and handed over")).toBeHidden();
   await myCard.getByRole("button", { name: "Preview" }).click();
   const preview = employee.getByRole("dialog", { name: "Your ID card" });
   const front = preview.getByRole("img", { name: "Front of your ID card" });
   await expect(front.locator("text").first()).toHaveText(person.name);
   await expect(front.locator('image[href^="/api/id-cards/mine/photo"]')).toHaveCount(1);
   await expect(preview.getByRole("img", { name: "Back of your ID card" })).toBeVisible();
+  await employee.keyboard.press("Escape");
+
+  // Once they have it, they confirm on their request, and the card shows as handed over.
+  await myCard.getByRole("link", { name: /^request IT\d+$/ }).click();
+  await expect(employee.getByText("Your new ID card is printed and ready to collect from IT.")).toBeVisible();
+  await expect(employee.getByText("Have you received your ID card?")).toBeVisible();
+  await employee.getByRole("button", { name: "Yes, I have it" }).click();
+  await expect(employee.getByText("Have you received your ID card?")).toBeHidden();
+  await employee.goto("/en/home");
+  await expect(myCard.getByText("Printed and handed over")).toBeVisible();
+  await page.reload();
+  await expect(page.getByText(`${person.name} confirmed they have it`)).toBeVisible();
   await employee.context().close();
   employeeConsole.assertClean();
   console.assertClean();
@@ -168,6 +177,10 @@ test("IT starts a card from a joiner's checklist, and printing it ticks the step
   await page.getByRole("button", { name: "Mark as printed" }).click();
   await page.getByRole("alertdialog").getByRole("button", { name: "Mark as printed" }).click();
   await expect(page.getByText("Card marked as printed.")).toBeVisible();
+  // Nobody asked for this card, so IT says when it is handed over.
+  await page.getByRole("button", { name: "Mark as handed over" }).click();
+  await expect(page.getByText("Card marked as handed over.")).toBeVisible();
+  await expect(page.getByText(/^Handed over .* by Omar Haddad$/)).toBeVisible();
 
   await page.getByRole("link", { name: "Onboarding" }).first().click();
   await page.getByRole("textbox", { name: "Filter rows" }).fill(joinerName);

@@ -2,7 +2,7 @@ import { and, desc, eq, getTableColumns, sql } from "drizzle-orm";
 import type { z } from "zod";
 import type { IdCardReason } from "@/lib/domain";
 import { MAX_UPLOAD_BYTES, imageSize, sniffType } from "@/lib/files";
-import { CARD, type CardSide, DESIGN_MIN_WIDTH, PHOTO_PIXELS } from "@/lib/id-card";
+import { CARD, type CardSide, cardStage, DESIGN_MIN_WIDTH, PHOTO_PIXELS } from "@/lib/id-card";
 import type { idCardCreate, idCardUpdate } from "@/lib/schemas";
 import { audit, type Actor } from "../audit";
 import type { SessionUser } from "../auth";
@@ -105,6 +105,7 @@ const listed = {
   personName: sql<string>`coalesce(${employees.name}, ${joiners.name})`,
   department: sql<string>`coalesce(${employees.department}, ${joiners.department})`,
   ticketStatus: tickets.status,
+  ticketClosedAt: tickets.closedAt,
 };
 
 const withPeople = () =>
@@ -118,7 +119,7 @@ const withPeople = () =>
 /** Every card, newest first, with who it is for. */
 export async function listCards() {
   const rows = await withPeople().orderBy(desc(idCards.createdAt), desc(idCards.id));
-  return rows.map(({ photoKey, ...row }) => ({ ...row, hasPhoto: photoKey !== null }));
+  return rows.map(({ photoKey, ...row }) => ({ ...row, hasPhoto: photoKey !== null, stage: cardStage(row) }));
 }
 
 /** What the person's record says, for a new card and for putting an adjusted one back. */
@@ -140,7 +141,7 @@ export async function getCard(id: number) {
   if (!row) throw notFound();
   const { photoKey, ...card } = row;
   const [record, design] = await Promise.all([recordOf(card), designInfo()]);
-  return { ...card, hasPhoto: photoKey !== null, record, design };
+  return { ...card, hasPhoto: photoKey !== null, stage: cardStage(card), record, design };
 }
 
 async function cardRow(id: number) {
@@ -251,6 +252,20 @@ export async function markPrinted(id: number, user: SessionUser, now = new Date(
   return row;
 }
 
+/**
+ * IT hands over a card nobody asked for, such as a joiner's. A card someone asked for is handed
+ * over when they confirm they have it, which closes their request.
+ */
+export async function markHandedOver(id: number, actor: Actor, now = new Date()) {
+  const card = await cardRow(id);
+  if (card.status !== "printed") throw badRequest("notPrinted");
+  if (card.ticketId) throw badRequest("confirmedByRequester");
+  if (card.handedOverAt) throw badRequest("alreadyHandedOver");
+  const row = one(await db.update(idCards).set({ handedOverAt: now, handedOverBy: actor.name }).where(eq(idCards.id, id)).returning());
+  await audit(actor, "update", "id_card", id, `Handed over the ID card for ${row.name}`);
+  return row;
+}
+
 export async function deleteCard(id: number, actor: Actor) {
   const row = one(await db.delete(idCards).where(eq(idCards.id, id)).returning());
   if (row.photoKey) await removeStoredFile(row.photoKey);
@@ -307,8 +322,9 @@ async function waitingFor(employeeId: number) {
 /** The person's latest printed card, the one they hold now. */
 async function latestPrinted(employeeId: number) {
   const [card] = await db
-    .select()
+    .select({ ...getTableColumns(idCards), ticketStatus: tickets.status, ticketClosedAt: tickets.closedAt })
     .from(idCards)
+    .leftJoin(tickets, eq(tickets.id, idCards.ticketId))
     .where(and(eq(idCards.employeeId, employeeId), eq(idCards.status, "printed")))
     .orderBy(desc(idCards.printedAt), desc(idCards.id))
     .limit(1);
@@ -334,6 +350,10 @@ export async function myCard(user: SessionUser) {
     hasPhoto: card.photoKey !== null,
     printedAt: card.printedAt,
     updatedAt: card.updatedAt,
+    // Ready to collect until they confirm they have it (closing the request), or IT says so.
+    stage: cardStage(card),
+    handedOverAt: card.handedOverAt ?? (card.ticketStatus === "closed" ? card.ticketClosedAt : null),
+    ticketId: card.ticketId,
   };
   return { printed, waiting, design };
 }

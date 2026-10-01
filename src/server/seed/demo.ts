@@ -918,7 +918,7 @@ export async function seedDemo(now = new Date(), options: { people?: Person[] } 
 
   // ---------------------------------------------------------------- ID cards
 
-  // A joiner's card waiting to print and a recent hire's already printed. No photos: those come
+  // A joiner's card waiting to print and a recent hire's printed and handed over. No photos: those come
   // from the people themselves.
   const joinerRows = await db.select().from(s.joiners).orderBy(s.joiners.startDate);
   const upcoming = joinerRows.find((j) => !j.completedAt);
@@ -937,7 +937,16 @@ export async function seedDemo(now = new Date(), options: { people?: Person[] } 
   if (upcoming) cards.push({ ...cardOf(upcoming), createdAt: at(day(-2), 10) });
   if (hired?.completedAt) {
     const printedAt = new Date(hired.completedAt.getTime() - 2 * 86_400_000);
-    cards.push({ ...cardOf(hired), status: "printed", printedAt, printedBy: printer?.name ?? null, createdAt: at(day(-45), 9) });
+    const handedOverAt = new Date(printedAt.getTime() + 86_400_000);
+    cards.push({
+      ...cardOf(hired),
+      status: "printed",
+      printedAt,
+      printedBy: printer?.name ?? null,
+      handedOverAt,
+      handedOverBy: printer?.name ?? null,
+      createdAt: at(day(-45), 9),
+    });
   }
   if (cards.length) await db.insert(s.idCards).values(cards);
 

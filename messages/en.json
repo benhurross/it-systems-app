@@ -437,9 +437,10 @@
       "new_joiner": "New joiner",
       "other": "Other"
     },
-    "idCardStatus": {
+    "idCardStage": {
       "requested": "To print",
-      "printed": "Printed"
+      "printed": "Ready to collect",
+      "handed_over": "Handed over"
     }
   },
   "validation": {
@@ -735,7 +736,11 @@
     "empty": "You have not raised any requests yet.",
     "device": "Device",
     "removeDevice": "Not about this device",
-    "autoClose": "If you do not answer, it closes by itself on {date}."
+    "autoClose": "If you do not answer, it closes by itself on {date}.",
+    "cardConfirmTitle": "Have you received your ID card?",
+    "cardConfirmText": "IT printed your new card. Collect it from IT, then confirm you have it, or reopen the request if something is wrong.",
+    "cardConfirm": "Yes, I have it",
+    "cardNotFixed": "No, something is wrong"
   },
   "kb": {
     "title": "Knowledge Base",
@@ -1289,7 +1294,12 @@
       "requestedOn": "Asked for on {date}, with IT now.",
       "viewRequest": "View request {ref}",
       "front": "Front",
-      "back": "Back"
+      "back": "Back",
+      "ready": "Ready to collect from IT",
+      "readyText": "Printed on {date}. Once you have it, please confirm:",
+      "confirmLink": "request {ref}",
+      "handedOverOn": "handed over on {date}",
+      "readyCollect": "Printed on {date}. Collect it from IT."
     }
   },
   "email": {
@@ -1505,13 +1515,20 @@
     "photoDialogHint": "Choose the photo, then drag and zoom it until the face fills the frame.",
     "savePhoto": "Save photo",
     "ticketPanel": "ID card",
-    "ticketPanelWaiting": "Check the card, then print it.",
-    "ticketPanelPrinted": "The card is printed.",
     "openCard": "Open the card",
     "openForJoiner": "Open card",
     "whatName": "name",
     "whatDesignation": "designation",
     "size": "Size",
-    "font": "Font"
+    "font": "Font",
+    "ticketPanel_requested": "Check the card, then print it.",
+    "ticketPanel_printed": "Printed. The employee confirms here once they have it.",
+    "ticketPanel_handed_over": "Printed and handed over.",
+    "markedHandedOver": "Card marked as handed over.",
+    "markHandedOver": "Mark as handed over",
+    "markHandedOverHint": "Once the card is in the person's hands. It then shows as handed over on their dashboard.",
+    "handedOverBy": "Handed over {date} by {name}",
+    "confirmedBy": "{name} confirmed they have it ({date})",
+    "awaitingConfirmation": "Ready to collect. {name} confirms they have it on request {ref}, which closes by itself if they don't answer."
   }
 }

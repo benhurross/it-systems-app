@@ -54,7 +54,7 @@ export async function getTicket(user: SessionUser, id: number) {
       ? db.select({ id: assets.id, name: assets.name }).from(assets).where(eq(assets.id, ticket.assetId))
       : [],
     // An ID card request carries the card to print.
-    db.select({ id: idCards.id, status: idCards.status }).from(idCards).where(eq(idCards.ticketId, id)),
+    db.select({ id: idCards.id, status: idCards.status, handedOverAt: idCards.handedOverAt }).from(idCards).where(eq(idCards.ticketId, id)),
   ]);
   // A resolved ticket closes by itself if the requester does not answer; say when.
   const closesAt = ticket.status === "resolved" && ticket.resolvedAt ? await autoCloseAt(ticket.resolvedAt) : null;

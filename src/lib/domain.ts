@@ -122,6 +122,8 @@ export const ATTACHMENT_KINDS_FOR = {
 export const ID_CARD_REASONS = ["lost", "damaged", "details_changed", "new_joiner", "other"] as const;
 /** requested: waiting for IT; printed: done. */
 export const ID_CARD_STATUSES = ["requested", "printed"] as const;
+/** Where a card is, as people see it: waiting to print, printed and ready to collect, or handed over. */
+export const ID_CARD_STAGES = ["requested", "printed", "handed_over"] as const;
 
 export const KPI_KEYS = ["tat", "complaints", "training_hours", "iso_ncs", "satisfaction"] as const;
 /** KPIs entered by hand each quarter; the rest are computed from tickets. */
@@ -157,6 +159,7 @@ export type AttachmentEntity = (typeof ATTACHMENT_ENTITIES)[number];
 export type AttachmentKind = (typeof ATTACHMENT_KINDS)[number];
 export type IdCardReason = (typeof ID_CARD_REASONS)[number];
 export type IdCardStatus = (typeof ID_CARD_STATUSES)[number];
+export type IdCardStage = (typeof ID_CARD_STAGES)[number];
 
 /** Display references in the workbook's style: IT000351, AST-0142, LIC-001. */
 export const REF_PREFIX = {

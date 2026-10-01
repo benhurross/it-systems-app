@@ -31,7 +31,7 @@ const TONES = {
   leaverState: { forwarding: "info", due: "danger", completed: "success" },
   rag: { green: "success", amber: "warning", red: "danger", none: "neutral" },
   emailStatus: { pending: "info", sending: "info", sent: "success", held: "neutral", failed: "danger" },
-  idCardStatus: { requested: "warning", printed: "success" },
+  idCardStage: { requested: "warning", printed: "info", handed_over: "success" },
 } satisfies Record<string, Record<string, Tone>>;
 
 type Kind = keyof typeof TONES;
