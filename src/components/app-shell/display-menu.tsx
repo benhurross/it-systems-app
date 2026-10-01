@@ -32,7 +32,7 @@ export function DisplayMenu() {
           <ALargeSmall />
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-72 space-y-5 rounded-3xl p-5">
+      <PopoverContent align="end" aria-label={t("title")} className="w-72 space-y-5 rounded-3xl p-5">
         <ToggleGroup
           type="single"
           aria-label={t("theme")}
