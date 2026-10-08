@@ -19,6 +19,9 @@ next-env.d.ts
 
 # the source workbook holds real employee data and credentials
 *.xlsx
+# database dumps (pg_dump, npm run backup) hold all the app's data; migrations in drizzle/ stay
+/*.sql
+/*.dump
 
 # uploaded files (invoices, contracts, ID photos) stay on the machine that holds them
 /uploads
