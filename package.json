@@ -21,7 +21,9 @@
     "admin:create": "tsx --env-file-if-exists=.env.local scripts/create-admin.ts",
     "people:check": "tsx --env-file-if-exists=.env.local scripts/people-check.ts",
     "people:ids": "tsx --env-file-if-exists=.env.local scripts/people-ids.ts",
-    "tickets:import": "tsx --env-file-if-exists=.env.local scripts/tickets-import.ts"
+    "tickets:import": "tsx --env-file-if-exists=.env.local scripts/tickets-import.ts",
+    "backup": "tsx --env-file-if-exists=.env.local scripts/backup.ts",
+    "restore": "tsx --env-file-if-exists=.env.local scripts/restore.ts"
   },
   "overrides": {
     "@swc/core": "1.16.2"

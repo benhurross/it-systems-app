@@ -159,7 +159,8 @@ AP IT System App/
   docker-compose.yml         Postgres for this project only (port 5433)
   .env.example               DATABASE_URL, BETTER_AUTH_SECRET, BETTER_AUTH_URL
   drizzle/                   generated SQL migrations
-  scripts/                   migrate, seed (reference lists + settings), seed-demo, create-admin
+  scripts/                   migrate, seed (reference lists + settings), seed-demo, create-admin, backup, restore
+  scripts/windows/           start, stop, update and backup on the Windows computer that runs it, and their one-time setup
   public/brand/              logo files copied from AP Web v2
   messages/en.json, ar.json
   src/proxy.ts               locale routing + redirect to sign-in
@@ -416,7 +417,9 @@ Requested by the owner: everyday document tools for everyone, under a "Workspace
 - [x] The display card (theme and text size, from the top bar) shows the three themes as icons, the chosen one in its colour (light #febf00, dark #00ffff, system #00ff00), and the text size with − and + and a Reset once it has changed. It is small, frosted glass, and the highlight glides slowly to the chosen theme; switching between light and dark cross-fades the page over 0.7 s (at once for people who ask for less motion, and in browsers without view transitions). Warning triangles everywhere are the light theme's yellow
 
 ### Phase 11 - Handover
-- [ ] Minimal README: prerequisites (Node, Docker), setup, scripts, and where the demo accounts are defined
+- [x] README: what the computer needs, first install, `.env.local`, keeping it running, updating, backups, restoring, moving to another computer, the commands, demo data, and checks for developers
+- [x] Backups: `npm run backup` saves the database (pg_dump from the Docker container, or the computer's own PostgreSQL tools when Docker is not running), the uploaded files and `.env.local` into a dated folder under `BACKUP_DIR`, keeping the newest `BACKUP_KEEP` (14). Files unchanged since the last backup are hard-linked rather than copied, and a backup cut off part way is never mistaken for a finished one. `npm run restore -- latest` (or a folder) asks first, refuses while the app is running, replaces the database and runs the migrations, and sets the old uploads aside rather than deleting them. Tested both ways against Postgres 18 in Docker and 16 on the machine
+- [x] Running on Windows: `scripts/windows/setup-windows.ps1` (once, as administrator) adds a task that starts the app at sign-in and keeps it running (waits for Docker, starts it again if it stops, logs to `logs/app.log`), a daily backup task that catches up after the computer was off, and the firewall rule for port 3200. `stop-app.cmd`, `start-app.cmd` and `update.cmd` (backup, stop, pull, install, migrate, build, start). The database container restarts with Docker
 - [ ] Lint, typecheck, unit, build and e2e all green, with no skipped tests
 - [ ] Postgres up, migrated and loaded with demo data
 - [ ] `.claude/launch.json` added and the dev server started with `preview_start`

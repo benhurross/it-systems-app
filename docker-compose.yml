@@ -5,6 +5,8 @@ name: ap-it-systems
 services:
   postgres:
     image: postgres:18-alpine
+    # Starts again with Docker, so the database is back after the computer restarts.
+    restart: unless-stopped
     environment:
       POSTGRES_USER: apit
       POSTGRES_PASSWORD: apit

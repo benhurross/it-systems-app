@@ -22,6 +22,11 @@ next-env.d.ts
 
 # uploaded files (invoices, contracts, ID photos) stay on the machine that holds them
 /uploads
+/uploads-before-restore-*
+
+# backups (database, files and settings) and the app's log, kept on this machine
+/backups
+/logs
 
 # local tool settings
 .claude/settings.local.json
