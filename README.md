@@ -28,7 +28,7 @@ In `.env.local`, fill in the following settings:
 | Setting | What to put |
 | --- | --- |
 | `BETTER_AUTH_SECRET` | 32 or more random characters. Make some with `node -e "console.log(crypto.randomBytes(32).toString('base64url'))"`. **Keep it safe, and never change it.** It keeps people signed in and unlocks the saved email password. |
-| `BETTER_AUTH_URL` | The address people open, e.g. `http://192.168.0.159:3200` |
+| `BETTER_AUTH_URL` | The address people open, e.g. `http://192.168.0.119:3200` |
 | `BETTER_AUTH_TRUSTED_ORIGINS` | Any other addresses people use to open the app, comma separated, e.g. `http://localhost:3200` |
 | `UPLOADS_DIR` | Optional. Where uploaded files are kept. The default is the `uploads` folder in the app folder. |
 | `BACKUP_DIR`, `BACKUP_KEEP` | Optional. Where backups go, and how many to keep (see [Backups](#backups)). |
@@ -140,7 +140,7 @@ The restore does four things:
 
 ## Moving to another computer
 
-The data moves with a backup: the database, the uploaded files and the settings. Keep the new computer's IP address the same as the old one if you can (`192.168.0.159`), so that bookmarks and links in old emails keep working.
+The data moves with a backup: the database, the uploaded files and the settings. Give the new computer the address the app has now, `192.168.0.119`, if you can, so that bookmarks and links in old emails keep working. That means taking the old computer off that address first (in its network settings, or in the router if the router hands out the address).
 
 **On the old computer:**
 

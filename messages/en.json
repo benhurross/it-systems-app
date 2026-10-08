@@ -604,7 +604,7 @@
       "fromName": "Sender name",
       "fromAddress": "Sender address",
       "appUrl": "App address for links",
-      "appUrlHint": "What people open from links in emails, as they would type it in a browser, for example http://192.168.0.159:3200.",
+      "appUrlHint": "What people open from links in emails, as they would type it in a browser, for example http://192.168.0.119:3200.",
       "testTitle": "Send a test email",
       "testDescription": "Uses the saved settings, even while sending is off.",
       "testTo": "Send to",
