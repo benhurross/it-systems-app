@@ -7,6 +7,7 @@
 #   - the task "AP IT System backup": a backup every day at 12:30 (or -BackupTime "18:00"), or as
 #     soon as the computer is on again if it was off at that time
 #   - a Windows Firewall rule so other computers on the network can open the app (port 3200)
+#   - no sleeping while plugged in, since a sleeping computer doesn't answer the others
 # Running it again replaces the tasks, to change the backup time say.
 param([string]$BackupTime = "12:30")
 $ErrorActionPreference = "Stop"
@@ -38,14 +39,22 @@ $backup = @{
 Register-ScheduledTask @backup -Force | Out-Null
 
 $rule = "AP IT System (port 3200)"
-if (-not (Get-NetFirewallRule -DisplayName $rule -ErrorAction SilentlyContinue)) {
-  New-NetFirewallRule -DisplayName $rule -Direction Inbound -Protocol TCP -LocalPort 3200 -Action Allow -Profile Domain, Private | Out-Null
+# Every network type: Windows can re-label the office network as Public (after it drops for a
+# moment, say), and a rule for Private networks alone would then shut the others out overnight.
+if (Get-NetFirewallRule -DisplayName $rule -ErrorAction SilentlyContinue) {
+  Set-NetFirewallRule -DisplayName $rule -Profile Any -Action Allow -Enabled True
+} else {
+  New-NetFirewallRule -DisplayName $rule -Direction Inbound -Protocol TCP -LocalPort 3200 -Action Allow -Profile Any | Out-Null
 }
+
+powercfg /change standby-timeout-ac 0
+powercfg /change hibernate-timeout-ac 0
 
 Write-Host "Set up for $user`:"
 Write-Host "  - The app starts when you sign in to Windows (task: AP IT System)."
 Write-Host "  - A backup runs every day at $BackupTime (task: AP IT System backup)."
 Write-Host "  - Other computers on the network can reach port 3200 (firewall rule: $rule)."
+Write-Host "  - This computer no longer sleeps while plugged in (the screen still turns off)."
 if (-not (Get-NetTCPConnection -LocalPort 3200 -State Listen -ErrorAction SilentlyContinue)) {
   Start-ScheduledTask -TaskName "AP IT System"
   Write-Host "The app is starting now."

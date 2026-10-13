@@ -61,13 +61,13 @@ cd "C:\path\to\AP IT System App"
 powershell -ExecutionPolicy Bypass -File scripts\windows\setup-windows.ps1
 ```
 
-This does three things:
+This does four things:
 - **Starts the app whenever you sign in to Windows.** It waits for Docker and the database first. If the app ever stops, it is started again 10 seconds later. Its window says the app is running; closing that window stops it.
 - **Runs a backup every day at 12:30.** If the computer was off at that time, the backup runs once it is on again. To choose another time, add `-BackupTime "18:00"` to the command.
-- **Opens port 3200 in Windows Firewall**, so other computers can reach the app. This applies on networks marked Private or Domain.
+- **Opens port 3200 in Windows Firewall**, so other computers can reach the app. The rule holds whatever type Windows gives the network, since Windows can re-label the office network as Public overnight.
+- **Stops the computer sleeping while plugged in.** A sleeping computer still looks switched on, but the others can't reach the app. The screen still turns off.
 
-Two Windows settings help too:
-- **Never sleep while plugged in.** Run `powercfg /change standby-timeout-ac 0`.
+One more thing to know:
 - **Sign in after a restart.** The app starts only once someone signs in, because Docker Desktop needs a signed-in user. After Windows updates restart the computer, sign in again. Alternatively, turn on Settings → Accounts → Sign-in options → **Use my sign-in info to automatically finish setting up after an update**.
 
 | To... | Run |
