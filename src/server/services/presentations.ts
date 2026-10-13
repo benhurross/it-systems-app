@@ -41,6 +41,8 @@ const shown = (d: DeckRow) => ({
   category: d.category,
   fileName: d.fileName,
   fileSize: d.fileSize,
+  /** Changes with the file, so the slide pictures are fetched again only then. */
+  version: d.previewKey.slice(-12),
   slides: d.slides,
   font: d.font,
   color: d.color,
@@ -52,14 +54,13 @@ const shown = (d: DeckRow) => ({
   updatedAt: d.updatedAt,
 });
 
-/** The decks to build from: every deck for admins, the ones in use for everyone else. */
+/**
+ * The library's decks. Hidden ones are listed too, so slides already taken from them still show;
+ * only decks in use are offered for new slides and presentations.
+ */
 export async function listDecks(user: SessionUser) {
   await requireAccess(user);
-  const rows = await db
-    .select()
-    .from(decks)
-    .where(isAdmin(user) ? undefined : eq(decks.active, true))
-    .orderBy(decks.category, decks.name);
+  const rows = await db.select().from(decks).orderBy(decks.category, decks.name);
   return rows.map(shown);
 }
 
@@ -133,10 +134,14 @@ const cleanName = (name: string, extension: string) =>
       .slice(0, 120) || "presentation"
   }.${extension}`;
 
-/** A slide meant for writing on: one titled as an extra or blank slide. */
-const writingSlide = (slides: { id: number; title: string }[]) => slides.find((s) => /\b(extra|blank|template)\b/i.test(s.title))?.id ?? null;
+/** Whether a slide is meant for writing on: titled as an extra or blank slide. */
+const forWriting = (title: string) => /\b(extra|blank|template)\b/i.test(title);
+const writingSlide = (slides: { id: number; title: string }[]) => slides.find((s) => forWriting(s.title))?.id ?? null;
 
-/** Adds a deck to the library. Its slides start chosen, hidden ones aside. */
+/** Slides start chosen in new presentations, but not hidden ones or ones meant for writing on. */
+const startsChosen = (slide: { title: string; hidden: boolean }) => !slide.hidden && !forWriting(slide.title);
+
+/** Adds a deck to the library. Its slides start chosen, hidden ones and ones for writing on aside. */
 export async function addDeck(
   input: { name: string; category: DeckCategory; file: { name: string; bytes: Uint8Array }; preview: Uint8Array | null },
   actor: Actor,
@@ -155,7 +160,7 @@ export async function addDeck(
         fileName: cleanName(input.file.name, "pptx"),
         fileSize: input.file.bytes.length,
         previewKey,
-        slides: info.slides.map((s) => ({ ...s, default: !s.hidden })),
+        slides: info.slides.map((s) => ({ ...s, default: startsChosen(s) })),
         font: info.font,
         color: info.color ?? DEFAULT_DECK_COLOR,
         textSlideId: writingSlide(info.slides),
@@ -178,7 +183,7 @@ export async function replaceDeckFile(id: number, input: { file: { name: string;
   const before = new Map(old.slides.map((s) => [s.id, s]));
   const slides: LibrarySlide[] = info.slides.map((s) => {
     const kept = before.get(s.id);
-    return kept ? { ...s, title: kept.title || s.title, default: kept.default } : { ...s, default: !s.hidden };
+    return kept ? { ...s, title: kept.title || s.title, default: kept.default } : { ...s, default: startsChosen(s) };
   });
   const fileKey = await storeFile(input.file.bytes);
   const previewKey = await storeFile(pdf);

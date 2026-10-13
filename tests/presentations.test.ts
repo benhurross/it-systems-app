@@ -47,11 +47,11 @@ beforeAll(async () => {
 }, 120_000);
 
 describe("the library", () => {
-  it("lists a deck's slides by id, all chosen to start with, with its font and colour", () => {
+  it("lists a deck's slides by id, chosen to start with but for the one to write on, with its font and colour", () => {
     expect(generic.slides.map((x) => [x.title, x.default])).toEqual([
       ["Welcome {client}", true],
       ["Our services", true],
-      ["Extra slide", true],
+      ["Extra slide", false],
     ]);
     expect(generic.font).toBe("Arial");
     expect(generic.color).toMatch(/^[0-9A-F]{6}$/);
@@ -102,8 +102,8 @@ describe("a presentation", () => {
     const p = await service.createPresentation(employee, { deckId: generic.id, title: "Proposal", client: "Example Co.", contact: null, date: "2026-10-01", presenter: "Sales" });
     id = p.id;
     items = p.items;
-    expect(p.items.map((i) => i.type)).toEqual(["cover", "slide", "slide", "slide"]);
-    expect(await service.listPresentations(employee)).toEqual([expect.objectContaining({ id, slides: 4, client: "Example Co." })]);
+    expect(p.items.map((i) => i.type)).toEqual(["cover", "slide", "slide"]);
+    expect(await service.listPresentations(employee)).toEqual([expect.objectContaining({ id, slides: 3, client: "Example Co." })]);
   });
 
   it("is its owner's alone", async () => {
@@ -171,7 +171,11 @@ describe("a presentation", () => {
 
   it("still builds when its deck is hidden, and from its other slides when its deck is removed", async () => {
     await service.updateDeck(generic.id, { active: false }, admin);
-    expect((await service.listDecks(employee)).map((d) => d.name)).toEqual(["Engineering"]);
+    expect((await service.listDecks(employee)).map((d) => [d.name, d.active])).toEqual([
+      ["Engineering", true],
+      ["Generic", false],
+    ]);
+    await expect(service.createPresentation(employee, { deckId: generic.id, title: "x", client: "y", contact: null, date: null, presenter: null })).rejects.toMatchObject({ message: "deckMissing" });
     expect(readDeck((await service.presentationFile(employee, id, "pptx")).bytes).slides).toHaveLength(4);
     await service.deleteDeck(generic.id, admin);
     // The engineering slide becomes the base; the cover and text slide take its look.

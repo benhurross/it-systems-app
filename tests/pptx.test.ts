@@ -122,6 +122,30 @@ describe("building a presentation", () => {
     expect(out.parts().filter((p) => /^ppt\/slides\/[^/]+\.xml$/.test(p))).toHaveLength(7);
   });
 
+  it("keeps each slide's own pictures, whatever the app added before them", () => {
+    // PowerPoint names pictures image1.png, image2.png…, as the app names the cover's logo: a
+    // slide's picture must stay its own even when the cover, added first, took the same name.
+    const pictureOf = (pkg: Package, part: string) => {
+      const rel = pkg.rels(part).find((r) => relKind(r.type) === "image")!;
+      return pkg.bytes(resolveTarget(part, rel.target));
+    };
+    const source = Package.open(deck("generic"));
+    const services = slideRefs(source)[1];
+    const rels = source.rels(services.part);
+    const picture = rels.find((r) => relKind(r.type) === "image")!;
+    // A picture unlike the cover's, so a mix-up shows.
+    const bytes = logos.color;
+    source.set("ppt/media/image1.png", bytes);
+    source.setContentType("ppt/media/image1.png", "image/png");
+    source.setRels(services.part, rels.map((r) => (r === picture ? { ...r, target: "../media/image1.png" } : r)));
+    source.removeUnreachable();
+
+    const built = Package.open(
+      buildPresentation(new Map([["generic", source.toBytes()]]), [items[0], { kind: "slide", deck: "generic", slideId: services.id }], { values: {}, title: "x", logos }),
+    );
+    expect(pictureOf(built, slideRefs(built)[1].part)).toEqual(bytes);
+  });
+
   it("refuses a slide that is not in its deck", () => {
     expect(() => buildPresentation(sources, [{ kind: "slide", deck: "generic", slideId: 9999 }], { values: {}, title: "x", logos })).toThrow("missingSlide");
   });

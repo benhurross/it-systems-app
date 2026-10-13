@@ -53,6 +53,8 @@ const extension = (type: Image["type"]) => (type === "image/png" ? "png" : "jpeg
 class Builder {
   readonly out: Package;
   private shared = new Map<string, Map<string, string>>();
+  /** The base deck's own parts still in the file once its slides are gone: its masters, layouts, theme and their pictures. */
+  private kept = new Set<string>();
   private sizes: { cx: number; cy: number };
   private nextShape = 2;
 
@@ -65,6 +67,7 @@ class Builder {
     this.out = basePkg.clone();
     this.sizes = slideSize(basePkg);
     this.emptySlides();
+    this.kept = new Set(this.out.parts());
   }
 
   /** The base deck without its slides, and without what refers to them. */
@@ -110,7 +113,9 @@ class Builder {
     const map = isShared ? this.sharedMap(deck) : local;
     const known = map.get(part);
     if (known) return known;
-    if (isShared && deck === this.base && this.out.has(part)) {
+    // Only the base deck's own parts are used where they are: a part the app added since may
+    // have taken a name the deck also uses (a cover's logo as image1.png, say).
+    if (isShared && deck === this.base && this.kept.has(part)) {
       map.set(part, part);
       return part;
     }

@@ -5,6 +5,8 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
+// The ignore comments keep the build from treating these runtime paths as files to bundle.
+//
 // LibreOffice turns PowerPoint files into PDFs: for the slide pictures in the library, and for a
 // presentation downloaded as a PDF. It runs as its own program, one file at a time, with a
 // settings folder of its own, so it never clashes with LibreOffice open on the same computer.
@@ -21,11 +23,12 @@ const CANDIDATES = [
 /** Where LibreOffice is: SOFFICE_PATH, or where it installs itself; null when it is not there. */
 export function officePath() {
   const set = process.env.SOFFICE_PATH;
-  if (set) return existsSync(set) ? set : null;
-  return CANDIDATES.find((p) => existsSync(p)) ?? null;
+  if (set) return existsSync(/*turbopackIgnore: true*/ set) ? set : null;
+  return CANDIDATES.find((p) => existsSync(/*turbopackIgnore: true*/ p)) ?? null;
 }
 
-const TIMEOUT_MS = 180_000;
+// A large deck (tens of megabytes, many pictures) can take a few minutes.
+const TIMEOUT_MS = 300_000;
 let queue: Promise<unknown> = Promise.resolve();
 
 /**
@@ -41,13 +44,13 @@ export function toPdf(pptx: Uint8Array): Promise<Uint8Array> {
 async function convert(pptx: Uint8Array) {
   const soffice = officePath();
   if (!soffice) throw new Error("officeMissing");
-  const dir = await mkdtemp(path.join(tmpdir(), "ap-office-"));
+  const dir = await mkdtemp(path.join(/*turbopackIgnore: true*/ tmpdir(), "ap-office-"));
   try {
     const input = path.join(dir, "deck.pptx");
-    await writeFile(input, pptx);
+    await writeFile(/*turbopackIgnore: true*/ input, pptx);
     await new Promise<void>((resolve, reject) => {
       const child = spawn(
-        soffice,
+        /*turbopackIgnore: true*/ soffice,
         [
           `-env:UserInstallation=${pathToFileURL(path.join(dir, "profile")).href}`,
           "--headless",
@@ -77,9 +80,9 @@ async function convert(pptx: Uint8Array) {
       });
     });
     const output = path.join(dir, "deck.pdf");
-    if (!existsSync(output)) throw new Error("officeFailed");
-    return new Uint8Array(await readFile(output));
+    if (!existsSync(/*turbopackIgnore: true*/ output)) throw new Error("officeFailed");
+    return new Uint8Array(await readFile(/*turbopackIgnore: true*/ output));
   } finally {
-    await rm(dir, { recursive: true, force: true }).catch(() => {});
+    await rm(/*turbopackIgnore: true*/ dir, { recursive: true, force: true }).catch(() => {});
   }
 }
