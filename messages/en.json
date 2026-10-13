@@ -1604,7 +1604,8 @@
       "pdf_organize": "Organize pages",
       "images_to_pdf": "Images to PDF",
       "pdf_stamp": "Page numbers and watermark",
-      "pdf_to_word": "PDF to Word"
+      "pdf_to_word": "PDF to Word",
+      "presentations": "Presentations"
     },
     "descriptions": {
       "pdf_merge": "Combine several PDFs into one, in the order you choose.",

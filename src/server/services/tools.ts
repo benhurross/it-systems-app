@@ -1,7 +1,7 @@
 import { and, count, desc, eq, gte } from "drizzle-orm";
 import type { z } from "zod";
 import type { toolException } from "@/lib/schemas";
-import { DEFAULT_TOOL_SETTING, TOOL_KEYS, type ToolKey, type ToolSetting, toolStatus } from "@/lib/tools";
+import { defaultToolSetting, TOOL_KEYS, type ToolKey, type ToolSetting, toolStatus } from "@/lib/tools";
 import ar from "../../../messages/ar.json";
 import en from "../../../messages/en.json";
 import { audit, type Actor } from "../audit";
@@ -18,7 +18,7 @@ const arabicName = (tool: ToolKey) => ar.tools.names[tool];
 
 async function settingsFor() {
   const saved = await getSetting("tools");
-  return (tool: ToolKey): ToolSetting => saved[tool] ?? DEFAULT_TOOL_SETTING;
+  return (tool: ToolKey): ToolSetting => saved[tool] ?? defaultToolSetting(tool);
 }
 
 async function departmentOf(user: SessionUser) {
@@ -69,10 +69,15 @@ export async function requestTool(user: SessionUser, tool: ToolKey, note: string
   return { ticketId: ticket.id };
 }
 
-/** A tool produced a file. Counted for Settings; refused for someone the tool is not open to. */
-export async function recordUse(user: SessionUser, tool: ToolKey) {
+/** Refuses someone a tool is not open to. */
+export async function requireTool(user: SessionUser, tool: ToolKey) {
   const { status } = await statusOf(user, tool);
   if (status !== "allowed") throw forbidden();
+}
+
+/** A tool produced a file. Counted for Settings; refused for someone the tool is not open to. */
+export async function recordUse(user: SessionUser, tool: ToolKey) {
+  await requireTool(user, tool);
   await db.insert(toolUses).values({ tool, userId: user.id });
   return { ok: true };
 }

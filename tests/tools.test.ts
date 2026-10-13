@@ -36,8 +36,10 @@ describe("who may use a tool", () => {
     expect(toolStatus(on, "finance", null)).toBe("allowed");
   });
 
-  it("opens every tool to everyone until an admin says otherwise", async () => {
-    expect((await tools.myTools(employee)).every((t) => t.status === "allowed")).toBe(true);
+  it("opens every tool to everyone until an admin says otherwise, but Presentations after approval", async () => {
+    const mine = await tools.myTools(employee);
+    expect(mine.filter((t) => t.key !== "presentations").every((t) => t.status === "allowed")).toBe(true);
+    expect(mine.find((t) => t.key === "presentations")?.status).toBe("approval");
   });
 });
 

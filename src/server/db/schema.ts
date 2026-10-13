@@ -41,6 +41,7 @@ import type {
   VulnStatus,
 } from "@/lib/domain";
 import type { FontChoice } from "@/lib/id-card";
+import type { DeckCategory, LibrarySlide, PresentationItem } from "@/lib/presentations";
 import type { ToolAccessState, ToolKey } from "@/lib/tools";
 
 const id = () => integer().primaryKey().generatedAlwaysAsIdentity();
@@ -724,4 +725,58 @@ export const toolUses = pgTable(
     at: timestamp({ withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index().on(t.tool, t.at)],
+);
+
+// ---------------------------------------------------------------- presentations
+
+/**
+ * A master deck in the presentations library: the PowerPoint file and a PDF of it for the slide
+ * pictures, both under UPLOADS_DIR. Its slides are listed by the ids PowerPoint keeps, so a
+ * newer version of the same file keeps the choices made about each slide.
+ */
+export const decks = pgTable("decks", {
+  id: id(),
+  name: text().notNull(),
+  category: text().$type<DeckCategory>().notNull(),
+  fileKey: text().notNull(),
+  fileName: text().notNull(),
+  fileSize: integer().notNull(),
+  previewKey: text().notNull(),
+  slides: jsonb().$type<LibrarySlide[]>().notNull(),
+  font: text(),
+  /** The cover's colour, hex without the #. */
+  color: text().notNull(),
+  /** A picture behind the cover, PNG or JPEG. */
+  coverImageKey: text(),
+  coverImageType: text(),
+  /** The slide salespeople's own slides are written on; none for a plain slide. */
+  textSlideId: integer(),
+  active: boolean().notNull().default(true),
+  updatedBy: text(),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+});
+
+/** A salesperson's presentation: who it is for, and its slides in order. Theirs alone. */
+export const presentations = pgTable(
+  "presentations",
+  {
+    id: id(),
+    ownerId: text()
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    title: text().notNull(),
+    client: text().notNull(),
+    contact: text(),
+    date: day(),
+    presenter: text(),
+    /** The deck it was started from: the cover and the salesperson's own slides take its look. */
+    deckId: integer().references(() => decks.id, { onDelete: "set null" }),
+    items: jsonb().$type<PresentationItem[]>().notNull(),
+    /** Pictures uploaded for its own slides, under UPLOADS_DIR. */
+    images: jsonb().$type<{ key: string; type: "image/png" | "image/jpeg"; at: string }[]>().notNull().default([]),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [index().on(t.ownerId, t.updatedAt)],
 );

@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft, Combine, FilePen, Hash, Images, LayoutGrid, Lock, Scissors, ShieldCheck } from "lucide-react";
+import { ArrowLeft, Combine, FilePen, Hash, Images, LayoutGrid, Lock, Presentation, Scissors, ShieldCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -17,7 +17,7 @@ import { ref } from "@/lib/domain";
 import { toolRequest } from "@/lib/schemas";
 import type { ToolKey } from "@/lib/tools";
 
-export const TOOL_ICONS = { pdf_merge: Combine, pdf_split: Scissors, pdf_organize: LayoutGrid, pdf_to_word: FilePen, images_to_pdf: Images, pdf_stamp: Hash } as const;
+export const TOOL_ICONS = { pdf_merge: Combine, pdf_split: Scissors, pdf_organize: LayoutGrid, pdf_to_word: FilePen, images_to_pdf: Images, pdf_stamp: Hash, presentations: Presentation } as const;
 
 /** Says files stay on this computer: the tools work in the browser. */
 export function PrivacyNote() {

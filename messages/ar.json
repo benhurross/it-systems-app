@@ -1604,7 +1604,8 @@
       "pdf_organize": "ترتيب الصفحات",
       "images_to_pdf": "صور إلى PDF",
       "pdf_stamp": "أرقام الصفحات والعلامة المائية",
-      "pdf_to_word": "PDF إلى Word"
+      "pdf_to_word": "PDF إلى Word",
+      "presentations": "العروض التقديمية"
     },
     "descriptions": {
       "pdf_merge": "اجمع عدة ملفات PDF في ملف واحد بالترتيب الذي تختاره.",

@@ -29,6 +29,7 @@ import {
   VULN_STATUSES,
 } from "./domain";
 import { ROLES } from "./permissions";
+import { DECK_CATEGORIES, MAX_ITEMS } from "./presentations";
 import { TOOL_KEYS, TOOL_MODES } from "./tools";
 
 // Shared field shapes. Optional fields arrive as null (or are left out) and are stored as null.
@@ -444,7 +445,7 @@ export const idCardUpdate = z
   })
   .partial();
 
-/** Each tool's setting; a tool left out is on for everyone. */
+/** Each tool's setting; a tool left out has its default (see defaultToolSetting). */
 export const toolSettings = z.partialRecord(
   z.enum(TOOL_KEYS),
   z.object({ mode: z.enum(TOOL_MODES), blockedDepartments: z.array(code).max(50) }),
@@ -457,3 +458,54 @@ export const toolRequest = z.object({ note: optionalText });
 export const toolException = z.object({ userId: z.string().min(1), tool: z.enum(TOOL_KEYS), state: z.enum(["allowed", "blocked"]) });
 
 export const toolDecision = z.object({ grant: z.boolean() });
+
+// ---------------------------------------------------------------- presentations
+
+const shortText = z.string().trim().max(200).nullish().transform((v) => v || null);
+const color = z
+  .string()
+  .trim()
+  .regex(/^#?[0-9a-fA-F]{6}$/)
+  .transform((v) => v.replace("#", "").toUpperCase());
+
+/** The fields sent with a deck's file. */
+export const deckUpload = z.object({ name, category: z.enum(DECK_CATEGORIES) });
+
+/** What an admin changes about a library deck. `slides` renames slides or sets which start chosen. */
+export const deckUpdate = z
+  .object({
+    name,
+    category: z.enum(DECK_CATEGORIES),
+    active: z.boolean(),
+    color,
+    textSlideId: id.nullable(),
+    slides: z.array(z.object({ id, title: z.string().trim().max(160), default: z.boolean() })).max(500),
+  })
+  .partial();
+
+export const presentationDetails = z.object({
+  title: name,
+  client: name,
+  contact: shortText,
+  date: optionalDay,
+  presenter: shortText,
+});
+
+export const presentationCreate = presentationDetails.extend({ deckId: id });
+
+const itemKey = z.string().min(1).max(40);
+export const presentationItem = z.discriminatedUnion("type", [
+  z.object({ key: itemKey, type: z.literal("cover") }),
+  z.object({ key: itemKey, type: z.literal("slide"), deckId: id, slideId: id }),
+  z.object({
+    key: itemKey,
+    type: z.literal("text"),
+    title: z.string().trim().max(200),
+    body: z.string().max(4000),
+    imageKey: z.string().max(80).nullable(),
+  }),
+]);
+
+export const presentationUpdate = presentationDetails
+  .extend({ deckId: id, items: z.array(presentationItem).max(MAX_ITEMS) })
+  .partial();

@@ -1,9 +1,10 @@
 /**
- * Tools staff use for everyday work, in the app so documents never go to outside websites. Each
- * runs in the person's own browser: files are not uploaded. Each is switched on, off or put
- * behind approval on its own, though all are shown together in the PDF toolkit.
+ * Tools staff use for everyday work, in the app so documents never go to outside websites. The
+ * PDF tools run in the person's own browser: files are not uploaded; they are shown together in
+ * the PDF toolkit. Presentations are built on the server from the company's own decks. Each tool
+ * is switched on, off or put behind approval on its own.
  */
-export const TOOL_KEYS = ["pdf_merge", "pdf_split", "pdf_organize", "pdf_to_word", "images_to_pdf", "pdf_stamp"] as const;
+export const TOOL_KEYS = ["pdf_merge", "pdf_split", "pdf_organize", "pdf_to_word", "images_to_pdf", "pdf_stamp", "presentations"] as const;
 export type ToolKey = (typeof TOOL_KEYS)[number];
 
 /** The PDF toolkit's modes, each one of the tools. */
@@ -26,7 +27,9 @@ export const TOOL_ACCESS_STATES = ["allowed", "blocked", "requested"] as const;
 export type ToolAccessState = (typeof TOOL_ACCESS_STATES)[number];
 
 export type ToolSetting = { mode: ToolMode; blockedDepartments: string[] };
-export const DEFAULT_TOOL_SETTING: ToolSetting = { mode: "on", blockedDepartments: [] };
+
+/** A tool's setting until an admin changes it: on for everyone, but presentations (sales material) after approval. */
+export const defaultToolSetting = (tool: ToolKey): ToolSetting => ({ mode: tool === "presentations" ? "approval" : "on", blockedDepartments: [] });
 
 /** What a person may do with a tool: use it, ask for it, wait for an answer, or nothing. */
 export type ToolStatus = "allowed" | "approval" | "requested" | "blocked" | "off";
