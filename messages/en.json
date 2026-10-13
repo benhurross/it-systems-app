@@ -1952,6 +1952,7 @@
       "coverHint": "Each presentation's cover is made in this deck's look: its colour, with a picture behind it if you add one.",
       "color": "Colour",
       "colorHint": "Hex, for example 0047BA.",
+      "colorPicker": "Choose the colour",
       "picture": "Picture behind the cover",
       "pictureHint": "Optional. A wide JPG or PNG, up to 10 MB.",
       "uploadPicture": "Upload a picture",

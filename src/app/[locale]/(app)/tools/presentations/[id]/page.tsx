@@ -22,11 +22,11 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import type { z } from "zod";
 import { DateField, FormDialog, TextField } from "@/components/form";
+import { StatusPage } from "@/components/status-page";
 import { usePresentationsAccess } from "@/components/tools/presentations/access";
 import { fileNameOf, saveFile, sendForm, useProblem, usePresentationMutation } from "@/components/tools/presentations/requests";
 import { CoverSlide, DeckSlide, OwnSlide, SlideFrame, useDeckPdf } from "@/components/tools/presentations/slides";
 import { moved, useDragOrder } from "@/components/tools/reorder";
-import { ToolAccess } from "@/components/tools/tool-page";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -57,17 +57,16 @@ export default function PresentationPage({ params }: PageProps<"/[locale]/tools/
   const { data, error } = useApi<PresentationDetail>(access.allowed ? `/presentations/${id}` : null);
   const { data: decks } = useApi<LibraryDeck[]>(access.allowed ? "/presentations/decks" : null);
 
+  // Someone the tool is not open to asks for it from the list of presentations.
+  if (access.ready && !access.allowed) return <StatusPage kind="forbidden" home="/tools/presentations" />;
+  if (error instanceof ApiError && error.status === 404) return <StatusPage kind="notFound" home="/tools/presentations" />;
   return (
     <div className="space-y-6">
       <Link href="/tools/presentations" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
         <ArrowLeft className="size-4 rtl:rotate-180" />
         {t("builder.back")}
       </Link>
-      {access.ready && !access.allowed ? (
-        <div className="max-w-3xl rounded-xl border p-6">{access.status && <ToolAccess tool="presentations" status={access.status} />}</div>
-      ) : error instanceof ApiError && error.status === 404 ? (
-        <p className="rounded-xl border p-6 text-sm text-muted-foreground">{t("errors.generic")}</p>
-      ) : !data || !decks ? (
+      {!data || !decks ? (
         <div className="space-y-4">
           <Skeleton className="h-10 w-80" />
           <Skeleton className="h-96 w-full" />

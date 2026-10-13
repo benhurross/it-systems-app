@@ -12,6 +12,9 @@ All the commands below are typed in **Command Prompt** (`cmd`), in the app folde
 - **[Node.js](https://nodejs.org) 22 or 24 (LTS)**.
 - **[Git](https://git-scm.com/download/win)**.
 - **[Docker Desktop](https://www.docker.com/products/docker-desktop/)**, which runs the database (PostgreSQL 18). In Docker Desktop, open Settings → General and turn on **Start Docker Desktop when you sign in to your computer**.
+- For **Presentations**:
+  - **[LibreOffice](https://www.libreoffice.org/download/download/)**. It makes the slide pictures and the PDF downloads, and the app finds it where it installs itself.
+  - **The fonts the company decks use** (Plus Jakarta Sans, from [Google Fonts](https://fonts.google.com/specimen/Plus+Jakarta+Sans)). To install them, right-click each `.ttf` file and choose **Install for all users**. Install them on the salespeople's computers too, so the decks look right when they open them in PowerPoint.
 
 ## First install
 
@@ -109,7 +112,7 @@ Each backup is a folder named for its time, e.g. `backups\ap-it-2026-10-08_1230`
 | File | What it is |
 | --- | --- |
 | `ap_it.dump` | The whole database. |
-| `uploads\` | Every uploaded file: invoices, contracts, ID photos and the ID card design. |
+| `uploads\` | Every uploaded file: invoices, contracts, ID photos, the ID card design, and the presentations library's decks and pictures. |
 | `env.local` | A copy of `.env.local`. **It contains the secret, so keep backups private.** |
 | `backup.json` | When the backup was made, and from which version. |
 
@@ -190,6 +193,28 @@ The data moves with a backup: the database, the uploaded files and the settings.
 - Tell people the new address.
 
 Once everything works on the new computer for a few days, you can remove the app from the old one.
+
+## Presentations
+
+Tools → Presentations lets salespeople make a client presentation from the company's own PowerPoint slides: they pick the slides, fill in who it is for, add slides of their own, and download PowerPoint or PDF.
+
+**The slide library** (Tools → Presentations → Slide library, for admins) holds the master decks:
+
+- **Add a deck:** a widescreen (16:9) `.pptx` file, labelled Generic, Medical or Engineering.
+  - The app makes the slide pictures with LibreOffice; a large deck can take a few minutes.
+  - Without LibreOffice, also add a PDF of the deck saved from PowerPoint, with hidden slides included.
+  - A 4:3 deck is refused. In PowerPoint, choose Design → Slide Size → Widescreen, then save.
+- **Fill-ins:** where a slide should show the client's name, type `{client}` on it in PowerPoint. `{contact}`, `{date}`, `{presenter}` and `{title}` work the same way.
+- **Each deck's settings:**
+  - The **cover** the app makes for every presentation: the deck's colour, and a picture behind it if you add one.
+  - The **slide salespeople write their own slides on**, e.g. a blank "extra slide" of the deck.
+  - Which slides **start chosen** in a new presentation, and slide names.
+- **New version:** upload the changed file. Slides still in it keep their settings; new ones start chosen.
+- **Hide a deck** to stop offering it while presentations that use it keep working. **Remove** takes its slides out of those presentations.
+
+**Who may use it:** Presentations starts as **Needs approval**. Open it to the sales team in **Settings → Tools**: allow each salesperson, or set it to "On" and block the departments that should not have it.
+
+If LibreOffice is installed somewhere unusual, set `SOFFICE_PATH` in `.env.local` to its `soffice.exe`.
 
 ## Commands
 

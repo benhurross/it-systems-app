@@ -12,6 +12,7 @@ export const REQUEST = [
   "/knowledge/:article",
   "/tools",
   "/tools/pdf",
+  "/tools/presentations",
 ];
 export const IT = [
   "/",
@@ -64,6 +65,10 @@ export const SETTINGS = [
   "/settings/kpis",
   "/settings/organisation",
   "/settings/audit",
+  // Presentations: open to admins, and to others only once an admin opens the tool to them.
+  "/tools/presentations/:presentation",
+  "/tools/presentations/library",
+  "/tools/presentations/library/:deck",
 ];
 
 export const ALLOWED: Record<Role, string[]> = {
@@ -82,6 +87,8 @@ const SOURCES: Record<string, string> = {
   project: "/api/projects",
   employee: "/api/employees",
   card: "/api/id-cards",
+  presentation: "/api/presentations",
+  deck: "/api/presentations/decks",
 };
 
 /** The route with each placeholder replaced by the id of a record the signed-in role can see. */

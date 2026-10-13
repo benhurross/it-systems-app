@@ -3,7 +3,7 @@
 import { ArrowLeft, ImageUp, Save, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { use, useId, useRef, useState } from "react";
-import { usePresentationsAccess } from "@/components/tools/presentations/access";
+import { StatusPage } from "@/components/status-page";
 import { sendForm, useProblem, usePresentationMutation } from "@/components/tools/presentations/requests";
 import { CoverSlide, DeckSlide, SlideFrame, useDeckPdf } from "@/components/tools/presentations/slides";
 import { Badge } from "@/components/ui/badge";
@@ -27,9 +27,7 @@ const NONE = "none";
 export default function DeckSettingsPage({ params }: PageProps<"/[locale]/tools/presentations/library/[id]">) {
   const { id } = use(params);
   const t = useTranslations("presentations");
-  const errors = useTranslations("errors");
-  const access = usePresentationsAccess();
-  const { data: decks } = useApi<LibraryDeck[]>(access.admin ? "/presentations/decks" : null);
+  const { data: decks } = useApi<LibraryDeck[]>("/presentations/decks");
   const deck = decks?.find((d) => d.id === Number(id));
 
   return (
@@ -38,12 +36,10 @@ export default function DeckSettingsPage({ params }: PageProps<"/[locale]/tools/
         <ArrowLeft className="size-4 rtl:rotate-180" />
         {t("deck.back")}
       </Link>
-      {!access.admin ? (
-        <p className="rounded-xl border p-6 text-sm text-muted-foreground">{errors("forbidden")}</p>
-      ) : !decks ? (
+      {!decks ? (
         <Skeleton className="h-96 w-full" />
       ) : !deck ? (
-        <p className="rounded-xl border p-6 text-sm text-muted-foreground">{errors("notFound")}</p>
+        <StatusPage kind="notFound" home="/tools/presentations/library" />
       ) : (
         // Built afresh when the deck changes on the server (a new version, say).
         <DeckSettings key={`${deck.id}-${deck.version}`} deck={deck} />
@@ -192,7 +188,7 @@ function DeckSettings({ deck }: { deck: LibraryDeck }) {
                 <div className="flex items-center gap-2">
                   <input
                     type="color"
-                    aria-label={t("deck.color")}
+                    aria-label={t("deck.colorPicker")}
                     value={`#${validColor ? color : deck.color}`}
                     onChange={(e) => setColor(e.target.value.slice(1).toUpperCase())}
                     className="size-9 shrink-0 cursor-pointer rounded-md border bg-transparent p-0.5"

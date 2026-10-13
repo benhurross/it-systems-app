@@ -5,7 +5,6 @@ import { useLocale, useTranslations } from "next-intl";
 import { useId, useState } from "react";
 import { EmptyState } from "@/components/empty-state";
 import { PageHeader } from "@/components/page-header";
-import { usePresentationsAccess } from "@/components/tools/presentations/access";
 import { sendForm, useProblem, usePresentationMutation } from "@/components/tools/presentations/requests";
 import { DeckSlide, SlideFrame, useDeckPdf } from "@/components/tools/presentations/slides";
 import {
@@ -36,9 +35,7 @@ import { DECK_CATEGORIES, type DeckCategory, MAX_DECK_BYTES } from "@/lib/presen
 /** The library of master decks, for admins: adding, replacing and removing them. */
 export default function LibraryPage() {
   const t = useTranslations("presentations");
-  const errors = useTranslations("errors");
-  const access = usePresentationsAccess();
-  const { data: decks } = useApi<LibraryDeck[]>(access.admin ? "/presentations/decks" : null);
+  const { data: decks } = useApi<LibraryDeck[]>("/presentations/decks");
   const [adding, setAdding] = useState(false);
 
   return (
@@ -51,17 +48,13 @@ export default function LibraryPage() {
         title={t("library")}
         description={t("admin.intro")}
         actions={
-          access.admin && (
-            <Button onClick={() => setAdding(true)}>
-              <Plus />
-              {t("admin.upload")}
-            </Button>
-          )
+          <Button onClick={() => setAdding(true)}>
+            <Plus />
+            {t("admin.upload")}
+          </Button>
         }
       />
-      {!access.admin ? (
-        <p className="rounded-xl border p-6 text-sm text-muted-foreground">{errors("forbidden")}</p>
-      ) : !decks ? (
+      {!decks ? (
         <Skeleton className="h-64 w-full" />
       ) : decks.length === 0 ? (
         <EmptyState

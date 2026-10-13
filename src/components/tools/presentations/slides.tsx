@@ -77,8 +77,10 @@ export function CoverSlide({ color, imageUrl, text, label }: { color: string; im
   const width = imageUrl ? "49.5%" : "61.5%";
   return (
     <div
+      // A picture of a slide: named when it stands alone, else decoration beside its name.
       role={label ? "img" : undefined}
       aria-label={label}
+      aria-hidden={label ? undefined : true}
       dir="ltr"
       className="@container relative aspect-video w-full overflow-hidden rounded-md ring-1 ring-border"
       style={{ backgroundColor: `#${color}`, color: dark ? "#fff" : "#1F2937" }}
@@ -125,7 +127,13 @@ export function OwnSlide({ color, title, body, imageUrl, label }: { color: strin
     .map((l) => l.replace(/^\s*[-•*]\s*/, "").trim())
     .filter(Boolean);
   return (
-    <div role={label ? "img" : undefined} aria-label={label} dir="ltr" className="@container relative aspect-video w-full overflow-hidden rounded-md bg-white text-[#374151] ring-1 ring-border">
+    <div
+      role={label ? "img" : undefined}
+      aria-label={label}
+      aria-hidden={label ? undefined : true}
+      dir="ltr"
+      className="@container relative aspect-video w-full overflow-hidden rounded-md bg-white text-[#374151] ring-1 ring-border"
+    >
       <p dir="auto" className="absolute top-[6%] right-[4.5%] left-[4.5%] truncate text-[2.92cqw] font-bold" style={{ color: `#${color}` }}>
         {title}
       </p>

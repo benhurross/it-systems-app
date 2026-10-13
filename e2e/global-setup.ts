@@ -10,8 +10,8 @@ export default async function globalSetup() {
   await admin.query("CREATE DATABASE ap_it_test");
   await admin.end();
 
-  for (const script of ["migrate", "seed", "seed-demo"]) {
-    execSync(`npx tsx scripts/${script}.ts`, {
+  for (const script of ["scripts/migrate", "scripts/seed", "scripts/seed-demo", "e2e/seed-presentations"]) {
+    execSync(`npx tsx ${script}.ts`, {
       stdio: "inherit",
       env: { ...process.env, DATABASE_URL: TEST_DATABASE_URL, BETTER_AUTH_URL: BASE_URL },
     });

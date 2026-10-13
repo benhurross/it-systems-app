@@ -161,6 +161,8 @@ AP IT System App/
   drizzle/                   generated SQL migrations
   scripts/                   migrate, seed (reference lists + settings), seed-demo, create-admin, backup, restore
   scripts/windows/           start, stop, update and backup on the Windows computer that runs it, and their one-time setup
+  src/server/pptx/           reading decks, building presentations from their slides, the cover and own slides
+  src/server/office.ts       LibreOffice: PowerPoint to PDF
   public/brand/              logo files copied from AP Web v2
   messages/en.json, ar.json
   src/proxy.ts               locale routing + redirect to sign-in
@@ -415,6 +417,13 @@ Requested by the owner: everyday document tools for everyone, under a "Workspace
 - [x] The dashboard and KPIs load at once: dates were worked out with a new formatter each time (thousands per page), now each formatter is made once; the dashboard's monthly chart counts each ticket once; monitoring checks are indexed by time, so the last day is read without scanning the month kept
 - [x] Soft glows of blue, teal, violet and pink drift slowly behind the pages and the sign-in page (still for people who ask for less motion), under a faint grain. Cards, tables and the toolkit's panels are glass: clear enough for the colour to come through, with a sheen, a white edge and a soft shadow. Menus, dialogs and the sidebar stay solid. Secondary text is darker, to keep 4.5:1 over the colour
 - [x] The display card (theme and text size, from the top bar) shows the three themes as icons, the chosen one in its colour (light #febf00, dark #00ffff, system #00ff00), and the text size with − and + and a Reset once it has changed. It is small, frosted glass, and the highlight glides slowly to the chosen theme; switching between light and dark cross-fades the page over 0.7 s (at once for people who ask for less motion, and in browsers without view transitions). Warning triangles everywhere are the light theme's yellow
+
+### Presentations (added after Phase 10)
+- [x] A library of the company's master decks, kept by admins (Tools → Presentations → Slide library): widescreen PowerPoint files only (a 4:3 deck is refused, saying how to make it widescreen), labelled Generic, Medical or Engineering. Slides are listed by the ids PowerPoint keeps, so a new version of a deck keeps each slide's name and whether it starts chosen. Slide pictures come from a PDF of the deck that LibreOffice makes (hidden slides included), or one uploaded with it. Each deck sets the cover's colour and picture, the slide salespeople write on, and which slides start chosen (not the ones meant for writing on). A hidden deck is not offered for new presentations but keeps working in old ones
+- [x] Salespeople make presentations of their own: from a deck (its usual slides chosen), with the client, contact, date and presenter; slides dragged into order or moved with arrows; slides added from any deck in use; slides of their own (a title, points and a picture), previewed as they will come out; duplicated for another client. Saved as they change
+- [x] PowerPoint is built from the decks' own slides, each keeping its layouts, master and theme, so they look exactly as in their deck; slides from several decks mix. `{client}`, `{contact}`, `{date}`, `{presenter}` and `{title}` typed on a slide are filled in, even where PowerPoint split them across runs. The app draws the cover (the deck's colour or picture, the logo, the title and who it is for) and the salespeople's own slides (on the deck's writing slide, or plain). Speaker notes stay for the first deck's slides; comments never travel. PDF comes from the PowerPoint through LibreOffice. Checked against the real decks: PowerPoint's own validation passes, and LibreOffice draws every slide as in its deck
+- [x] Presentations is a tool in Settings → Tools, starting at "Needs approval" (sales material); admins always have it. Each download is counted
+- [x] Unit tests for the engine on invented decks (including a slide's picture named as the cover's logo), service tests, and a journey for the admin and a salesperson, including the PDF
 
 ### Phase 11 - Handover
 - [x] README: what the computer needs, first install, `.env.local`, keeping it running, updating, backups, restoring, moving to another computer, the commands, demo data, and checks for developers
