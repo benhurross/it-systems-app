@@ -430,6 +430,8 @@ Requested by the owner: everyday document tools for everyone, under a "Workspace
 
 Microsoft 365 / Active Directory sign-in, importing the workbook's records, and multi-server deployment of the monitoring scheduler.
 
+Active Directory sign-in was looked at again after handover and left for later: there is no Microsoft 365, but there is an on-premises Active Directory. When it is picked up, the plan is sign-in with the domain username and password checked against a domain controller over LDAPS (no passwords kept), a local admin account kept for when the domain controller is down, and people matched by email, username or employee ID. Windows automatic sign-in (Kerberos) would come after that, if at all. Until then IT resets passwords in Settings → Users.
+
 ## MVP success criteria
 
 1. Every brief module, Settings and the four extras work end to end, in English and Arabic.
