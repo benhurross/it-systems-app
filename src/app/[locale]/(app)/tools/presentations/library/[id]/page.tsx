@@ -19,7 +19,7 @@ import { useApi } from "@/hooks/use-api";
 import { Link } from "@/i18n/navigation";
 import { api } from "@/lib/api";
 import type { LibraryDeck } from "@/lib/api-types";
-import { DECK_CATEGORIES, type DeckCategory } from "@/lib/presentations";
+import { DECK_CATEGORIES, type DeckCategory, NUMBER_POSITIONS, type NumberPosition } from "@/lib/presentations";
 
 const NONE = "none";
 
@@ -57,17 +57,18 @@ function DeckSettings({ deck }: { deck: LibraryDeck }) {
   const [active, setActive] = useState(deck.active);
   const [color, setColor] = useState(deck.color);
   const [textSlideId, setTextSlideId] = useState(deck.textSlideId);
+  const [numberPosition, setNumberPosition] = useState<NumberPosition>(deck.numberPosition);
   const [slides, setSlides] = useState(deck.slides);
   const [pictureError, setPictureError] = useState<string | null>(null);
   const pictureInput = useRef<HTMLInputElement>(null);
-  const ids = { name: useId(), category: useId(), active: useId(), color: useId(), colorHint: useId(), picture: useId(), pictureHint: useId(), writing: useId() };
+  const ids = { name: useId(), category: useId(), active: useId(), color: useId(), colorHint: useId(), picture: useId(), pictureHint: useId(), writing: useId(), numbers: useId() };
   const validColor = /^[0-9A-Fa-f]{6}$/.test(color);
 
   const save = usePresentationMutation(
     () =>
       api(`/presentations/decks/${deck.id}`, {
         method: "PATCH",
-        body: { name: name.trim(), category, active, color, textSlideId, slides: slides.map((s) => ({ id: s.id, title: s.title, default: s.default })) },
+        body: { name: name.trim(), category, active, color, textSlideId, numberPosition, slides: slides.map((s) => ({ id: s.id, title: s.title, default: s.default })) },
       }),
     { success: t("deck.saved") },
   );
@@ -166,6 +167,22 @@ function DeckSettings({ deck }: { deck: LibraryDeck }) {
                 </SelectContent>
               </Select>
               <FieldDescription id={`${ids.writing}-hint`}>{t("deck.writingHint")}</FieldDescription>
+            </Field>
+            <Field>
+              <FieldLabel htmlFor={ids.numbers}>{t("deck.numbers")}</FieldLabel>
+              <Select value={numberPosition} onValueChange={(v) => v && setNumberPosition(v as NumberPosition)}>
+                <SelectTrigger id={ids.numbers} className="w-full" aria-describedby={`${ids.numbers}-hint`}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {NUMBER_POSITIONS.map((p) => (
+                    <SelectItem key={p} value={p}>
+                      {t(`deck.positions.${p}`)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FieldDescription id={`${ids.numbers}-hint`}>{t("deck.numbersHint")}</FieldDescription>
             </Field>
           </CardContent>
         </Card>

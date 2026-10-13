@@ -6,7 +6,7 @@ import { PDFDocument } from "pdf-lib";
 import type { z } from "zod";
 import { MAX_UPLOAD_BYTES, sniffType } from "@/lib/files";
 import { can } from "@/lib/permissions";
-import { type DeckCategory, DEFAULT_DECK_COLOR, type LibrarySlide, MAX_DECK_BYTES, type PresentationItem } from "@/lib/presentations";
+import { type DeckCategory, DEFAULT_CONTENTS_TITLE, DEFAULT_DECK_COLOR, type LibrarySlide, MAX_DECK_BYTES, type PresentationItem } from "@/lib/presentations";
 import type { deckUpdate, presentationCreate, presentationUpdate } from "@/lib/schemas";
 import { audit, type Actor } from "../audit";
 import type { SessionUser } from "../auth";
@@ -48,6 +48,7 @@ const shown = (d: DeckRow) => ({
   color: d.color,
   hasCoverImage: d.coverImageKey !== null,
   textSlideId: d.textSlideId,
+  numberPosition: d.numberPosition,
   active: d.active,
   updatedBy: d.updatedBy,
   createdAt: d.createdAt,
@@ -308,6 +309,7 @@ const shownPresentation = (p: PresentationRow) => ({
   presenter: p.presenter,
   deckId: p.deckId,
   items: p.items,
+  slideNumbers: p.slideNumbers,
   images: p.images.map((i) => i.key),
   createdAt: p.createdAt,
   updatedAt: p.updatedAt,
@@ -319,7 +321,7 @@ export async function getPresentation(user: SessionUser, id: number) {
 
 const newKey = () => randomUUID().slice(0, 8);
 
-/** A new presentation from a deck: its cover, then the deck's slides that start chosen. */
+/** A new presentation from a deck: its cover, the contents, then the deck's slides that start chosen. */
 export async function createPresentation(user: SessionUser, input: z.output<typeof presentationCreate>) {
   await requireAccess(user);
   const [deck] = await db
@@ -329,6 +331,7 @@ export async function createPresentation(user: SessionUser, input: z.output<type
   if (!deck) throw badRequest("deckMissing");
   const items: PresentationItem[] = [
     { key: newKey(), type: "cover" },
+    { key: newKey(), type: "contents", title: DEFAULT_CONTENTS_TITLE },
     ...deck.slides.filter((s) => s.default).map((s) => ({ key: newKey(), type: "slide" as const, deckId: deck.id, slideId: s.id })),
   ];
   const { deckId, ...details } = input;
@@ -453,9 +456,9 @@ export async function presentationFile(user: SessionUser, id: number, format: "p
   if (row.deckId) wanted.add(row.deckId);
   const rows = wanted.size ? await db.select().from(decks).where(inArray(decks.id, [...wanted])) : [];
   const byId = new Map(rows.map((d) => [d.id, d]));
-  const hasSlide = (deckId: number, slideId: number) => byId.get(deckId)?.slides.some((s) => s.id === slideId) ?? false;
+  const slideOf = (deckId: number, slideId: number) => byId.get(deckId)?.slides.find((s) => s.id === slideId);
 
-  const firstSlide = row.items.find((i) => i.type === "slide" && hasSlide(i.deckId, i.slideId));
+  const firstSlide = row.items.find((i) => i.type === "slide" && slideOf(i.deckId, i.slideId));
   const main = (row.deckId ? byId.get(row.deckId) : undefined) ?? (firstSlide?.type === "slide" ? byId.get(firstSlide.deckId) : undefined);
   if (!main) throw badRequest("noDeck");
 
@@ -475,8 +478,12 @@ export async function presentationFile(user: SessionUser, id: number, format: "p
         deck: String(main.id),
         cover: { ...style, title: row.title, client: row.client, contact: row.contact, date, presenter: row.presenter, background },
       });
+    } else if (item.type === "contents") {
+      items.push({ kind: "contents", deck: String(main.id), contents: { ...style, heading: item.title } });
     } else if (item.type === "slide") {
-      if (hasSlide(item.deckId, item.slideId)) items.push({ kind: "slide", deck: String(item.deckId), slideId: item.slideId });
+      // The contents lists it by the name the library gives it.
+      const slide = slideOf(item.deckId, item.slideId);
+      if (slide) items.push({ kind: "slide", deck: String(item.deckId), slideId: item.slideId, title: slide.title });
     } else {
       items.push({
         kind: "text",
@@ -497,6 +504,7 @@ export async function presentationFile(user: SessionUser, id: number, format: "p
       values: { client: row.client, contact: row.contact ?? undefined, date: date ?? undefined, presenter: row.presenter ?? undefined, title: row.title },
       title: row.title,
       logos: await companyLogos(),
+      numbers: { ...style, on: row.slideNumbers, position: main.numberPosition },
     });
   } catch (error) {
     if ((error as Error).message === "missingSlide") throw badRequest("missingSlide");

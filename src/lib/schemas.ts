@@ -29,7 +29,7 @@ import {
   VULN_STATUSES,
 } from "./domain";
 import { ROLES } from "./permissions";
-import { DECK_CATEGORIES, MAX_ITEMS } from "./presentations";
+import { DECK_CATEGORIES, MAX_ITEMS, NUMBER_POSITIONS } from "./presentations";
 import { TOOL_KEYS, TOOL_MODES } from "./tools";
 
 // Shared field shapes. Optional fields arrive as null (or are left out) and are stored as null.
@@ -479,6 +479,7 @@ export const deckUpdate = z
     active: z.boolean(),
     color,
     textSlideId: id.nullable(),
+    numberPosition: z.enum(NUMBER_POSITIONS),
     slides: z.array(z.object({ id, title: z.string().trim().max(160), default: z.boolean() })).max(500),
   })
   .partial();
@@ -496,6 +497,7 @@ export const presentationCreate = presentationDetails.extend({ deckId: id });
 const itemKey = z.string().min(1).max(40);
 export const presentationItem = z.discriminatedUnion("type", [
   z.object({ key: itemKey, type: z.literal("cover") }),
+  z.object({ key: itemKey, type: z.literal("contents"), title: z.string().trim().min(1).max(200) }),
   z.object({ key: itemKey, type: z.literal("slide"), deckId: id, slideId: id }),
   z.object({
     key: itemKey,
@@ -507,5 +509,5 @@ export const presentationItem = z.discriminatedUnion("type", [
 ]);
 
 export const presentationUpdate = presentationDetails
-  .extend({ deckId: id, items: z.array(presentationItem).max(MAX_ITEMS) })
+  .extend({ deckId: id, items: z.array(presentationItem).max(MAX_ITEMS), slideNumbers: z.boolean() })
   .partial();

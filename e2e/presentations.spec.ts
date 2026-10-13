@@ -21,17 +21,20 @@ async function download(page: Page, action: () => Promise<unknown>) {
   return { name: file.suggestedFilename(), bytes: await readFile((await file.path())!) };
 }
 
-/** The text of each slide of a PowerPoint file, in the order they are shown. */
-function slideTexts(bytes: Uint8Array) {
+/** The XML of each slide of a PowerPoint file, in the order they are shown. */
+function slideXml(bytes: Uint8Array) {
   const files = unzipSync(bytes);
   const presentation = strFromU8(files["ppt/presentation.xml"]);
   const rels = strFromU8(files["ppt/_rels/presentation.xml.rels"]);
   return [...presentation.matchAll(/<p:sldId [^>]*r:id="([^"]+)"/g)].map(([, id]) => {
     const target = rels.match(new RegExp(`Id="${id}"[^>]*Target="([^"]+)"`))![1];
-    const xml = strFromU8(files[`ppt/${target}`]);
-    return [...xml.matchAll(/<a:p>[\s\S]*?<\/a:p>/g)].map(([p]) => [...p.matchAll(/<a:t>([^<]*)<\/a:t>/g)].map((t) => t[1]).join("")).join(" ");
+    return strFromU8(files[`ppt/${target}`]);
   });
 }
+
+/** The text of each slide of a PowerPoint file, in the order they are shown. */
+const slideTexts = (bytes: Uint8Array) =>
+  slideXml(bytes).map((xml) => [...xml.matchAll(/<a:p>[\s\S]*?<\/a:p>/g)].map(([p]) => [...p.matchAll(/<a:t>([^<]*)<\/a:t>/g)].map((t) => t[1]).join("")).join(" "));
 
 // Browsers run side by side; each makes presentations as a salesperson, under its own titles.
 const salesperson = (info: TestInfo) => (info.project.name === "firefox" ? "it3@applus.test" : "it2@applus.test");
@@ -122,16 +125,18 @@ test.describe("a salesperson", () => {
     await expect(page).toHaveURL(/\/en\/tools\/presentations\/\d+$/);
     await expect(page.getByRole("heading", { name: title, level: 1 })).toBeVisible();
 
-    // The cover, then the deck's slides chosen to start with: not the one meant for writing on.
+    // The cover, the contents, then the deck's slides chosen to start with: not the one meant for writing on.
     const chosen = page.getByRole("region", { name: "Slides in this presentation" }).getByRole("listitem");
-    await expect(chosen).toHaveCount(3);
+    await expect(chosen).toHaveCount(4);
     await expect(chosen.nth(0)).toContainText("Cover");
-    await expect(chosen.nth(1)).toContainText("Welcome {client}");
+    await expect(chosen.nth(1)).toContainText("Contents");
+    await expect(chosen.nth(1)).toContainText("03Welcome {client}");
+    await expect(chosen.nth(2)).toContainText("Welcome {client}");
 
     // A slide from the library, then a slide of their own with a picture.
     const library = page.getByRole("complementary", { name: "Add slides" });
     await library.getByRole("button", { name: "Add “Extra slide”" }).click();
-    await expect(chosen).toHaveCount(4);
+    await expect(chosen).toHaveCount(5);
     await page.getByRole("button", { name: "Add your own slide" }).click();
     const own = page.getByRole("dialog");
     await own.getByRole("textbox", { name: "Title", exact: true }).fill("Why {client}");
@@ -139,31 +144,38 @@ test.describe("a salesperson", () => {
     await own.getByLabel("Picture", { exact: true }).setInputFiles({ name: "team.png", mimeType: "image/png", buffer: png(800, 600) });
     await expect(own.getByRole("button", { name: "Remove the picture" })).toBeVisible();
     await own.getByRole("button", { name: "Save slide" }).click();
-    await expect(chosen).toHaveCount(5);
-    await page.getByRole("button", { name: "Move slide 5 earlier" }).click();
-    await expect(chosen.nth(3)).toContainText("Why {client}");
+    await expect(chosen).toHaveCount(6);
+    await page.getByRole("button", { name: "Move slide 6 earlier" }).click();
+    await expect(chosen.nth(4)).toContainText("Why {client}");
+    // The contents follows: the own slide is now slide 5.
+    await expect(chosen.nth(1)).toContainText("05Why {client}");
     await expect(page.getByText("All changes saved")).toBeVisible();
 
     // PowerPoint: the slides in order, the fill-ins filled in.
     const pptx = await download(page, () => page.getByRole("button", { name: "PowerPoint" }).click());
     expect(pptx.name).toBe(`${title} - Example Trading Co.pptx`);
     const texts = slideTexts(pptx.bytes);
-    expect(texts).toHaveLength(5);
+    expect(texts).toHaveLength(6);
     expect(texts[0]).toContain(title);
     expect(texts[0]).toContain("Example Trading Co.");
-    expect(texts[1]).toContain("Welcome Example Trading Co.");
-    expect(texts[3]).toContain("Why Example Trading Co.");
+    expect(texts[1]).toContain("Contents");
+    expect(texts[1]).toContain("03 Welcome Example Trading Co.");
+    expect(texts[1]).toContain("05 Why Example Trading Co.");
+    expect(texts[2]).toContain("Welcome Example Trading Co.");
+    expect(texts[4]).toContain("Why Example Trading Co.");
+    // Every slide but the cover is numbered.
+    expect(slideXml(pptx.bytes).map((xml) => xml.includes('type="slidenum"'))).toEqual([false, true, true, true, true, true]);
 
     // PDF, made by LibreOffice: a page a slide.
     const pdf = await download(page, () => page.getByRole("button", { name: "PDF" }).click());
-    expect((await PDFDocument.load(pdf.bytes)).getPageCount()).toBe(5);
+    expect((await PDFDocument.load(pdf.bytes)).getPageCount()).toBe(6);
 
     // Kept: the same slides after a reload, and in the list of their presentations.
     await page.reload();
-    await expect(chosen).toHaveCount(5);
+    await expect(chosen).toHaveCount(6);
     await page.getByRole("link", { name: "My presentations" }).click();
     const card = page.getByRole("listitem").filter({ hasText: title });
-    await expect(card).toContainText("5 slides");
+    await expect(card).toContainText("6 slides");
 
     // A copy for another client opens to be changed; deleting it leaves the original.
     await card.getByRole("button", { name: "Duplicate" }).click();

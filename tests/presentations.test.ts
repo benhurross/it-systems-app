@@ -98,12 +98,14 @@ describe("a presentation", () => {
   let id: number;
   let items: PresentationItem[];
 
-  it("starts from a deck: its cover, then the slides chosen to start with", async () => {
+  it("starts from a deck: its cover, the contents, then the slides chosen to start with", async () => {
     const p = await service.createPresentation(employee, { deckId: generic.id, title: "Proposal", client: "Example Co.", contact: null, date: "2026-10-01", presenter: "Sales" });
     id = p.id;
     items = p.items;
-    expect(p.items.map((i) => i.type)).toEqual(["cover", "slide", "slide"]);
-    expect(await service.listPresentations(employee)).toEqual([expect.objectContaining({ id, slides: 3, client: "Example Co." })]);
+    expect(p.items.map((i) => i.type)).toEqual(["cover", "contents", "slide", "slide"]);
+    expect(p.items[1]).toMatchObject({ title: "Contents" });
+    expect(p.slideNumbers).toBe(true);
+    expect(await service.listPresentations(employee)).toEqual([expect.objectContaining({ id, slides: 4, client: "Example Co." })]);
   });
 
   it("is its owner's alone", async () => {
@@ -117,13 +119,18 @@ describe("a presentation", () => {
     items = [
       items[0],
       { key: "e1", type: "slide", deckId: engineering.id, slideId: engineering.slides[1].id },
-      items[2],
+      items[3],
       { key: "t1", type: "text", title: "Why {client}", body: "One\nTwo", imageKey: key },
     ];
     const saved = await service.updatePresentation(employee, id, { items });
     expect(saved.items).toEqual(items);
     await expect(service.updatePresentation(employee, id, { items: [{ key: "x", type: "slide", deckId: generic.id, slideId: 9999 }] })).rejects.toMatchObject({ message: "unknownSlide" });
     await expect(service.updatePresentation(employee, id, { items: [{ key: "x", type: "text", title: "", body: "", imageKey: "2026-01/00000000-0000-0000-0000-000000000000" }] })).rejects.toMatchObject({ message: "unknownImage" });
+  });
+
+  it("keeps whether its slides are numbered", async () => {
+    expect((await service.updatePresentation(employee, id, { slideNumbers: false })).slideNumbers).toBe(false);
+    expect((await service.updatePresentation(employee, id, { slideNumbers: true })).slideNumbers).toBe(true);
   });
 
   it("downloads as PowerPoint with the fill-ins filled in, and counts the use", async () => {

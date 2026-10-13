@@ -4,7 +4,7 @@ import type { PDFDocumentProxy } from "pdfjs-dist";
 import { useEffect, useState } from "react";
 import { loadPdfJs, PdfThumb } from "@/components/tools/pdf-preview";
 import type { LibraryDeck } from "@/lib/api-types";
-import { isDark } from "@/lib/presentations";
+import { type ContentsEntry, isDark } from "@/lib/presentations";
 import { cn } from "@/lib/utils";
 
 // Pictures of slides: a library deck's slides drawn from its PDF, and the slides the app makes
@@ -148,6 +148,34 @@ export function OwnSlide({ color, title, body, imageUrl, label }: { color: strin
         // eslint-disable-next-line @next/next/no-img-element -- the salesperson's own picture
         <img src={imageUrl} alt="" className="absolute top-[21%] right-[4.5%] h-[67%] w-[38%] object-contain" />
       )}
+    </div>
+  );
+}
+
+/** The contents as the app draws it: its heading, then each titled slide after it with its number. */
+export function ContentsSlide({ color, heading, entries }: { color: string; heading: string; entries: ContentsEntry[] }) {
+  const columns = entries.length <= 8 ? 1 : entries.length <= 24 ? 2 : 3;
+  const rows = Math.max(1, Math.ceil(entries.length / columns));
+  return (
+    <div aria-hidden dir="ltr" className="@container relative aspect-video w-full overflow-hidden rounded-md bg-white text-[#374151] ring-1 ring-border">
+      <p dir="auto" className="absolute top-[6%] right-[22%] left-[4.5%] truncate text-[2.92cqw] font-bold" style={{ color: `#${color}` }}>
+        {heading}
+      </p>
+      <ol
+        className="absolute top-[21%] right-[4.5%] bottom-[13%] left-[4.5%] grid grid-flow-col gap-x-[3.7%]"
+        style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`, gridTemplateRows: `repeat(${rows}, minmax(0, ${100 / Math.max(rows, 9)}%))` }}
+      >
+        {entries.map((entry) => (
+          <li key={entry.page} className="flex min-w-0 items-center gap-[1cqw]" style={{ fontSize: `${Math.max(1, Math.min(1.88, 100 / Math.max(rows, 9) / 4.2))}cqw` }}>
+            <span className="shrink-0 font-bold tabular-nums" style={{ color: `#${color}` }}>
+              {String(entry.page).padStart(2, "0")}
+            </span>
+            <span dir="auto" className="truncate">
+              {entry.title}
+            </span>
+          </li>
+        ))}
+      </ol>
     </div>
   );
 }

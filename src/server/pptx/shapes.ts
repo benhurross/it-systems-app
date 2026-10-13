@@ -1,6 +1,8 @@
+import { randomUUID } from "node:crypto";
+import { isDark } from "@/lib/presentations";
 import { escapeXml } from "./package";
 
-export { isDark } from "@/lib/presentations";
+export { isDark };
 
 // DrawingML for the few things the app draws on a slide itself: text boxes, pictures and plain
 // shapes. Positions and sizes are in EMU; colours are hex without the #.
@@ -49,10 +51,17 @@ function paragraphXml(p: Paragraph) {
   return `<a:p><a:pPr algn="${align}"${rtl ? ' rtl="1"' : ""}${indent}>${spacing}${bullet}</a:pPr><a:r>${run}<a:t>${escapeXml(p.text)}</a:t></a:r></a:p>`;
 }
 
-/** A text box. Text that does not fit is shrunk by PowerPoint rather than spilling out. */
-export function textBox(id: number, name: string, box: Box, paragraphs: Paragraph[], anchor: "t" | "ctr" | "b" = "t") {
+/** A link from a shape to another slide of the show, by the relationship that points at it. */
+const slideLink = (relId: string) => `<a:hlinkClick r:id="${relId}" action="ppaction://hlinksldjump"/>`;
+
+/**
+ * A text box. Text that does not fit is shrunk by PowerPoint rather than spilling out. With
+ * `link`, clicking it during the show goes to the slide that relationship points at.
+ */
+export function textBox(id: number, name: string, box: Box, paragraphs: Paragraph[], anchor: "t" | "ctr" | "b" = "t", link?: string) {
+  const nvPr = link ? `<p:cNvPr id="${id}" name="${escapeXml(name)}">${slideLink(link)}</p:cNvPr>` : `<p:cNvPr id="${id}" name="${escapeXml(name)}"/>`;
   return (
-    `<p:sp><p:nvSpPr><p:cNvPr id="${id}" name="${escapeXml(name)}"/><p:cNvSpPr txBox="1"/><p:nvPr/></p:nvSpPr>` +
+    `<p:sp><p:nvSpPr>${nvPr}<p:cNvSpPr txBox="1"/><p:nvPr/></p:nvSpPr>` +
     `<p:spPr>${xfrm(box)}<a:prstGeom prst="rect"><a:avLst/></a:prstGeom><a:noFill/></p:spPr>` +
     `<p:txBody><a:bodyPr wrap="square" lIns="0" tIns="0" rIns="0" bIns="0" anchor="${anchor}"><a:normAutofit/></a:bodyPr><a:lstStyle/>` +
     paragraphs.map(paragraphXml).join("") +
@@ -107,5 +116,22 @@ export function slideXml(background: string, shapes: string[]) {
     `<p:grpSpPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="0" cy="0"/><a:chOff x="0" y="0"/><a:chExt cx="0" cy="0"/></a:xfrm></p:grpSpPr>` +
     shapes.join("") +
     `</p:spTree></p:cSld><p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr></p:sld>`
+  );
+}
+
+/**
+ * A slide-number field: PowerPoint shows the slide's own number in it, however the slides are
+ * moved about later. `shown` is what it says until PowerPoint works it out.
+ */
+export const slideNumberField = (rPr: string, shown: number) => `<a:fld id="{${randomUUID().toUpperCase()}}" type="slidenum">${rPr}<a:t>${shown}</a:t></a:fld>`;
+
+/** A small tag in the deck's colour holding the slide's number. */
+export function numberTag(id: number, box: Box, color: string, font: string | null, shown: number) {
+  const fontXml = font ? `<a:latin typeface="${escapeXml(font)}"/><a:cs typeface="${escapeXml(font)}"/>` : "";
+  const rPr = `<a:rPr lang="en-US" sz="1100" b="1" dirty="0">${solidFill(isDark(color) ? "FFFFFF" : "1F2937")}${fontXml}</a:rPr>`;
+  return (
+    `<p:sp><p:nvSpPr><p:cNvPr id="${id}" name="Slide number"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>` +
+    `<p:spPr>${xfrm(box)}<a:prstGeom prst="roundRect"><a:avLst/></a:prstGeom>${solidFill(color)}<a:ln><a:noFill/></a:ln></p:spPr>` +
+    `<p:txBody><a:bodyPr wrap="none" lIns="0" tIns="0" rIns="0" bIns="0" anchor="ctr"/><a:lstStyle/><a:p><a:pPr algn="ctr"/>${slideNumberField(rPr, shown)}</a:p></p:txBody></p:sp>`
   );
 }

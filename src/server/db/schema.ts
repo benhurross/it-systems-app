@@ -41,7 +41,7 @@ import type {
   VulnStatus,
 } from "@/lib/domain";
 import type { FontChoice } from "@/lib/id-card";
-import type { DeckCategory, LibrarySlide, PresentationItem } from "@/lib/presentations";
+import type { DeckCategory, LibrarySlide, NumberPosition, PresentationItem } from "@/lib/presentations";
 import type { ToolAccessState, ToolKey } from "@/lib/tools";
 
 const id = () => integer().primaryKey().generatedAlwaysAsIdentity();
@@ -751,6 +751,8 @@ export const decks = pgTable("decks", {
   coverImageType: text(),
   /** The slide salespeople's own slides are written on; none for a plain slide. */
   textSlideId: integer(),
+  /** Where slides show their number, clear of the deck's logo. */
+  numberPosition: text().$type<NumberPosition>().notNull().default("bottom-left"),
   active: boolean().notNull().default(true),
   updatedBy: text(),
   createdAt: createdAt(),
@@ -773,6 +775,8 @@ export const presentations = pgTable(
     /** The deck it was started from: the cover and the salesperson's own slides take its look. */
     deckId: integer().references(() => decks.id, { onDelete: "set null" }),
     items: jsonb().$type<PresentationItem[]>().notNull(),
+    /** A number on every slide but the cover. */
+    slideNumbers: boolean().notNull().default(true),
     /** Pictures uploaded for its own slides, under UPLOADS_DIR. */
     images: jsonb().$type<{ key: string; type: "image/png" | "image/jpeg"; at: string }[]>().notNull().default([]),
     createdAt: createdAt(),

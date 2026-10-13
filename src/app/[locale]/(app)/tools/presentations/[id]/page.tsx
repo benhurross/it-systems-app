@@ -25,7 +25,7 @@ import { DateField, FormDialog, TextField } from "@/components/form";
 import { StatusPage } from "@/components/status-page";
 import { usePresentationsAccess } from "@/components/tools/presentations/access";
 import { fileNameOf, saveFile, sendForm, useProblem, usePresentationMutation } from "@/components/tools/presentations/requests";
-import { CoverSlide, DeckSlide, OwnSlide, SlideFrame, useDeckPdf } from "@/components/tools/presentations/slides";
+import { ContentsSlide, CoverSlide, DeckSlide, OwnSlide, SlideFrame, useDeckPdf } from "@/components/tools/presentations/slides";
 import { moved, useDragOrder } from "@/components/tools/reorder";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -34,12 +34,13 @@ import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useApi } from "@/hooks/use-api";
 import { Link } from "@/i18n/navigation";
 import { api, ApiError } from "@/lib/api";
 import type { LibraryDeck, PresentationDetail } from "@/lib/api-types";
-import { DECK_CATEGORIES, DEFAULT_DECK_COLOR, MAX_ITEMS, type PresentationItem } from "@/lib/presentations";
+import { contentsEntries, DECK_CATEGORIES, DEFAULT_CONTENTS_TITLE, DEFAULT_DECK_COLOR, MAX_ITEMS, type OutlineSlide, type PresentationItem } from "@/lib/presentations";
 import { presentationDetails } from "@/lib/schemas";
 import { cn } from "@/lib/utils";
 
@@ -86,7 +87,9 @@ function Builder({ presentation, decks }: { presentation: PresentationDetail; de
   const problem = useProblem();
   const [items, setItems] = useState<Item[]>(presentation.items);
   const [editing, setEditing] = useState<Item | "new" | null>(null);
+  const [contents, setContents] = useState<Extract<Item, { type: "contents" }> | null>(null);
   const [details, setDetails] = useState(false);
+  const [numbers, setNumbers] = useState(presentation.slideNumbers);
   const [busy, setBusy] = useState<"pptx" | "pdf" | null>(null);
   const saving = useRef<Promise<unknown>>(Promise.resolve());
 
@@ -99,12 +102,24 @@ function Builder({ presentation, decks }: { presentation: PresentationDetail; de
     saving.current = save.mutateAsync(next).catch(() => {});
   };
   const order = useDragOrder(items, change);
+  const saveNumbers = usePresentationMutation((on: boolean) => api(`/presentations/${presentation.id}`, { method: "PATCH", body: { slideNumbers: on } }), {
+    scope: `presentation-${presentation.id}`,
+  });
+  const numbersId = useId();
 
   const main = decks.find((d) => d.id === presentation.deckId);
   const color = main?.color ?? DEFAULT_DECK_COLOR;
   const deckOf = (id: number) => decks.find((d) => d.id === id);
   const missing = (item: Item) => item.type === "slide" && !deckOf(item.deckId)?.slides.some((s) => s.id === item.slideId);
   const full = items.length >= MAX_ITEMS;
+
+  // The slides as the file will have them (slides gone from the library are left out), for the contents.
+  const kept = items.filter((item) => !missing(item));
+  const outline: OutlineSlide[] = kept.map((item) => ({
+    kind: item.type,
+    title: item.type === "slide" ? (deckOf(item.deckId)?.slides.find((s) => s.id === item.slideId)?.title ?? "") : item.type === "cover" ? "" : item.title,
+  }));
+  const entriesFor = (key: string) => contentsEntries(outline, kept.findIndex((i) => i.key === key));
 
   const add = (item: Item) => !full && change([...items, item]);
   const replace = (item: Item) => change(items.some((i) => i.key === item.key) ? items.map((i) => (i.key === item.key ? item : i)) : [...items, item]);
@@ -139,6 +154,17 @@ function Builder({ presentation, decks }: { presentation: PresentationDetail; de
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <label htmlFor={numbersId} className="me-2 flex cursor-pointer items-center gap-2 text-sm">
+            <Switch
+              id={numbersId}
+              checked={numbers}
+              onCheckedChange={(on) => {
+                setNumbers(on);
+                saving.current = saveNumbers.mutateAsync(on).catch(() => {});
+              }}
+            />
+            {t("builder.numbers")}
+          </label>
           <Button variant="outline" onClick={() => setDetails(true)}>
             <SquarePen />
             {t("details.edit")}
@@ -179,9 +205,11 @@ function Builder({ presentation, decks }: { presentation: PresentationDetail; de
                 const label =
                   item.type === "cover"
                     ? t("builder.cover")
-                    : item.type === "text"
-                      ? item.title || t("builder.own")
-                      : slide?.title || t("builder.untitled", { n: (deck?.slides.findIndex((s) => s.id === item.slideId) ?? -1) + 1 });
+                    : item.type === "contents"
+                      ? item.title
+                      : item.type === "text"
+                        ? item.title || t("builder.own")
+                        : slide?.title || t("builder.untitled", { n: (deck?.slides.findIndex((s) => s.id === item.slideId) ?? -1) + 1 });
                 return (
                   <li
                     key={item.key}
@@ -201,14 +229,16 @@ function Builder({ presentation, decks }: { presentation: PresentationDetail; de
                         <span className="sr-only">{t("builder.position", { n })}: </span>
                         {label}
                       </span>
-                      {item.type === "text" && (
+                      {(item.type === "text" || item.type === "contents") && (
                         <Badge variant="secondary" className="shrink-0">
-                          {t("builder.own")}
+                          {item.type === "text" ? t("builder.own") : t("builder.auto")}
                         </Badge>
                       )}
                     </div>
                     {item.type === "cover" ? (
                       <CoverSlide color={color} imageUrl={coverUrl(main)} text={cover} />
+                    ) : item.type === "contents" ? (
+                      <ContentsSlide color={color} heading={item.title} entries={entriesFor(item.key)} />
                     ) : item.type === "text" ? (
                       <OwnSlide color={color} title={item.title} body={item.body} imageUrl={item.imageKey ? imageUrl(presentation.id, item.imageKey) : null} />
                     ) : (
@@ -227,7 +257,12 @@ function Builder({ presentation, decks }: { presentation: PresentationDetail; de
                         <ArrowRight className="rtl:rotate-180" />
                       </Button>
                       {item.type !== "slide" && (
-                        <Button variant="ghost" size="icon-sm" aria-label={t("builder.edit", { n })} onClick={() => (item.type === "cover" ? setDetails(true) : setEditing(item))}>
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          aria-label={t("builder.edit", { n })}
+                          onClick={() => (item.type === "cover" ? setDetails(true) : item.type === "contents" ? setContents(item) : setEditing(item))}
+                        >
                           <Pencil />
                         </Button>
                       )}
@@ -256,6 +291,7 @@ function Builder({ presentation, decks }: { presentation: PresentationDetail; de
           onAdd={add}
           onAddOwn={() => setEditing("new")}
           onAddCover={() => add({ key: newKey(), type: "cover" })}
+          onAddContents={() => add({ key: newKey(), type: "contents", title: DEFAULT_CONTENTS_TITLE })}
         />
       </div>
 
@@ -269,6 +305,16 @@ function Builder({ presentation, decks }: { presentation: PresentationDetail; de
             setEditing(null);
           }}
           onClose={() => setEditing(null)}
+        />
+      )}
+      {contents && (
+        <ContentsDialog
+          item={contents}
+          onSave={(item) => {
+            replace(item);
+            setContents(null);
+          }}
+          onClose={() => setContents(null)}
         />
       )}
       {details && <DetailsDialog presentation={presentation} decks={decks} onClose={() => setDetails(false)} />}
@@ -285,7 +331,7 @@ function LibrarySlidePicture({ deck, slideId, dimmed, label, size }: { deck: Lib
   );
 }
 
-/** The library to add from: a deck's slides, your own slide, and the cover. */
+/** The library to add from: a deck's slides, your own slide, the cover and the contents. */
 function AddSlides({
   decks,
   items,
@@ -294,6 +340,7 @@ function AddSlides({
   onAdd,
   onAddOwn,
   onAddCover,
+  onAddContents,
 }: {
   decks: LibraryDeck[];
   items: Item[];
@@ -302,6 +349,7 @@ function AddSlides({
   onAdd: (item: Item) => void;
   onAddOwn: () => void;
   onAddCover: () => void;
+  onAddContents: () => void;
 }) {
   const t = useTranslations("presentations");
   const usable = decks.filter((d) => d.active);
@@ -327,6 +375,12 @@ function AddSlides({
           <Button variant="outline" size="sm" disabled={full} onClick={onAddCover}>
             <Plus />
             {t("builder.addCover")}
+          </Button>
+        )}
+        {!items.some((i) => i.type === "contents") && (
+          <Button variant="outline" size="sm" disabled={full} onClick={onAddContents}>
+            <Plus />
+            {t("builder.addContents")}
           </Button>
         )}
       </div>
@@ -501,6 +555,36 @@ function OwnSlideDialog({
             onClick={() => onSave({ key: item?.key ?? newKey(), type: "text", title: title.trim(), body, imageKey })}
           >
             {t("own.save")}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/** The contents slide's heading; its lines are worked out from the slides after it. */
+function ContentsDialog({ item, onSave, onClose }: { item: Extract<Item, { type: "contents" }>; onSave: (item: Item) => void; onClose: () => void }) {
+  const t = useTranslations("presentations");
+  const common = useTranslations("common");
+  const [title, setTitle] = useState(item.title);
+  const id = useId();
+  return (
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>{t("contents.edit")}</DialogTitle>
+          <DialogDescription>{t("contents.hint")}</DialogDescription>
+        </DialogHeader>
+        <Field>
+          <FieldLabel htmlFor={id}>{t("contents.heading")}</FieldLabel>
+          <Input id={id} value={title} maxLength={200} onChange={(e) => setTitle(e.target.value)} />
+        </Field>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>
+            {common("cancel")}
+          </Button>
+          <Button disabled={!title.trim()} onClick={() => onSave({ ...item, title: title.trim() })}>
+            {common("save")}
           </Button>
         </DialogFooter>
       </DialogContent>

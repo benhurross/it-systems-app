@@ -205,10 +205,17 @@ Tools → Presentations lets salespeople make a client presentation from the com
   - Without LibreOffice, also add a PDF of the deck saved from PowerPoint, with hidden slides included.
   - A 4:3 deck is refused. In PowerPoint, choose Design → Slide Size → Widescreen, then save.
 - **Fill-ins:** where a slide should show the client's name, type `{client}` on it in PowerPoint. `{contact}`, `{date}`, `{presenter}` and `{title}` work the same way.
+- **Contents and slide numbers:** a new presentation starts with a contents slide after the cover.
+  - It lists the slides after it by their names in the library, with their numbers, and is worked out again at every download.
+  - In PowerPoint, each line goes to its slide.
+  - Every slide but the cover is numbered; salespeople can switch the numbers off.
+  - Numbers typed at the top or foot of a deck's own slides become real slide numbers, so they stay right in any order.
+  - Each deck's settings say where the other slides show their number: bottom left, right or centre, clear of its logo.
 - **Each deck's settings:**
   - The **cover** the app makes for every presentation: the deck's colour, and a picture behind it if you add one.
   - The **slide salespeople write their own slides on**, e.g. a blank "extra slide" of the deck.
-  - Which slides **start chosen** in a new presentation, and slide names.
+  - Which slides **start chosen** in a new presentation, and slide names (they are what the contents lists).
+  - Where **slide numbers** go.
 - **New version:** upload the changed file. Slides still in it keep their settings; new ones start chosen.
 - **Hide a deck** to stop offering it while presentations that use it keep working. **Remove** takes its slides out of those presentations.
 

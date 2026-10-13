@@ -1896,7 +1896,15 @@
       "downloading": "Making the file…",
       "downloaded": "Downloaded.",
       "count": "{count, plural, one {# slide} other {# slides}}",
-      "fillIns": "Text typed on the library's slides as '{client}', '{date}' and so on is filled in from the details."
+      "fillIns": "Text typed on the library's slides as '{client}', '{date}' and so on is filled in from the details.",
+      "numbers": "Slide numbers",
+      "auto": "Automatic",
+      "addContents": "Add the contents"
+    },
+    "contents": {
+      "edit": "Contents slide",
+      "hint": "It lists the slides after it with their numbers, worked out again whenever you download, so it stays right as slides move. In PowerPoint, clicking a line goes to that slide.",
+      "heading": "Heading"
     },
     "own": {
       "add": "Your own slide",
@@ -1970,7 +1978,14 @@
       "startChosen": "Start chosen",
       "slideName": "Name of slide {n}",
       "hiddenSlide": "Hidden in the deck",
-      "save": "Save"
+      "save": "Save",
+      "numbers": "Slide numbers go",
+      "numbersHint": "Where each slide shows its number, clear of the deck's logo. A number already typed at the top or foot of the deck's own slides stays where it is, and shows the right number.",
+      "positions": {
+        "bottom-left": "Bottom left",
+        "bottom-right": "Bottom right",
+        "bottom-center": "Bottom centre"
+      }
     },
     "errors": {
       "fileEmpty": "Choose a file first.",

@@ -4,6 +4,7 @@ import { buildPresentation, type Item } from "@/server/pptx/build";
 import { paragraphs, readDeck, slideRefs } from "@/server/pptx/deck";
 import { fillIn } from "@/server/pptx/fill";
 import { Package, relKind, resolveTarget } from "@/server/pptx/package";
+import { contentsEntries } from "@/lib/presentations";
 import { officePath, toPdf } from "@/server/office";
 
 // The decks in tests/fixtures/decks are invented, made with pptxgenjs: "generic" (white, three
@@ -61,14 +62,15 @@ describe("building a presentation", () => {
   const style = { color: "1D4ED8", font: "Arial" };
   const items: Item[] = [
     { kind: "cover", deck: "generic", cover: { ...style, title: "Proposal", client: "Example Co.", contact: "Attn: Ops", date: "1 May 2026", presenter: "Sales", background: { bytes: PNG, type: "image/png" } } },
-    { kind: "slide", deck: "generic", slideId: g[0].id },
-    { kind: "slide", deck: "engineering", slideId: e[0].id },
-    { kind: "slide", deck: "generic", slideId: g[1].id },
-    { kind: "slide", deck: "engineering", slideId: e[1].id },
+    { kind: "slide", deck: "generic", slideId: g[0].id, title: g[0].title },
+    { kind: "slide", deck: "engineering", slideId: e[0].id, title: e[0].title },
+    { kind: "slide", deck: "generic", slideId: g[1].id, title: g[1].title },
+    { kind: "slide", deck: "engineering", slideId: e[1].id, title: e[1].title },
     { kind: "text", deck: "generic", text: { ...style, title: "Why {client}", body: "One\nTwo", image: { bytes: PNG, type: "image/png" }, baseSlideId: g[2].id } },
     { kind: "text", deck: "engineering", text: { ...style, title: "Next steps", body: "Call us", image: null, baseSlideId: null } },
   ];
-  const bytes = buildPresentation(sources, items, { values: { client: "Example Co.", date: "1 May 2026" }, title: "Proposal", logos });
+  const numbers = { ...style, on: true, position: "bottom-left" as const };
+  const bytes = buildPresentation(sources, items, { values: { client: "Example Co.", date: "1 May 2026" }, title: "Proposal", logos, numbers });
   const out = Package.open(bytes);
   const slides = slideRefs(out);
 
@@ -141,13 +143,13 @@ describe("building a presentation", () => {
     source.removeUnreachable();
 
     const built = Package.open(
-      buildPresentation(new Map([["generic", source.toBytes()]]), [items[0], { kind: "slide", deck: "generic", slideId: services.id }], { values: {}, title: "x", logos }),
+      buildPresentation(new Map([["generic", source.toBytes()]]), [items[0], { kind: "slide", deck: "generic", slideId: services.id, title: "" }], { values: {}, title: "x", logos, numbers }),
     );
     expect(pictureOf(built, slideRefs(built)[1].part)).toEqual(bytes);
   });
 
   it("refuses a slide that is not in its deck", () => {
-    expect(() => buildPresentation(sources, [{ kind: "slide", deck: "generic", slideId: 9999 }], { values: {}, title: "x", logos })).toThrow("missingSlide");
+    expect(() => buildPresentation(sources, [{ kind: "slide", deck: "generic", slideId: 9999, title: "" }], { values: {}, title: "x", logos, numbers })).toThrow("missingSlide");
   });
 
   it("opens in LibreOffice, a page a slide", { timeout: 120_000 }, async () => {
@@ -157,5 +159,77 @@ describe("building a presentation", () => {
     }
     const pdf = new TextDecoder("latin1").decode(await toPdf(bytes));
     expect(pdf.match(/\/Type\s*\/Page\b/g)).toHaveLength(7);
+  });
+});
+
+describe("the contents and slide numbers", () => {
+  const sources = new Map([
+    ["generic", deck("generic")],
+    ["engineering", deck("engineering")],
+  ]);
+  const [g1, g2] = readDeck(deck("generic")).slides;
+  const [e1, e2] = readDeck(deck("engineering")).slides;
+  const style = { color: "1D4ED8", font: "Arial" };
+  const cover = { ...style, title: "Proposal", client: "Example Co.", contact: null, date: null, presenter: null, background: null };
+  const items = (heading: string): Item[] => [
+    { kind: "cover", deck: "generic", cover },
+    { kind: "contents", deck: "generic", contents: { ...style, heading } },
+    { kind: "slide", deck: "generic", slideId: g1.id, title: "Welcome" },
+    { kind: "slide", deck: "engineering", slideId: e1.id, title: "Construction cover" },
+    // The same title again, straight after: listed once. An untitled slide is left out.
+    { kind: "slide", deck: "engineering", slideId: e2.id, title: "Construction cover" },
+    { kind: "slide", deck: "generic", slideId: g2.id, title: "" },
+    { kind: "text", deck: "generic", text: { ...style, title: "Next steps", body: "Call us", image: null, baseSlideId: null } },
+  ];
+  const build = (on: boolean) =>
+    Package.open(buildPresentation(sources, items("Agenda"), { values: {}, title: "x", logos, numbers: { ...style, on, position: "bottom-right" } }));
+  const out = build(true);
+  const slides = slideRefs(out);
+  const xml = (i: number) => out.text(slides[i].part);
+
+  it("lists the slides after it with their numbers, each going to its slide", () => {
+    const text = textOf(out, slides[1].part);
+    expect(text).toContain("Agenda");
+    expect(text).toContain("03 Welcome 04 Construction cover 07 Next steps");
+    expect(text).not.toContain("05");
+    expect(text).not.toContain("06");
+    const links = out.rels(slides[1].part).filter((r) => relKind(r.type) === "slide");
+    expect(links.map((r) => resolveTarget(slides[1].part, r.target))).toEqual([slides[2].part, slides[3].part, slides[6].part]);
+    // The number and the title of each line go there.
+    expect(xml(1).match(/ppaction:\/\/hlinksldjump/g)).toHaveLength(6);
+    assertWhole(out);
+  });
+
+  it("numbers every slide but the cover, turning a number typed on a library slide into a field", () => {
+    expect(xml(0)).not.toContain('type="slidenum"');
+    for (let i = 1; i < slides.length; i++) expect(xml(i), `slide ${i + 1}`).toContain('type="slidenum"');
+    // The generic deck's second slide had "2" typed at its foot: it is now this slide's number.
+    expect(xml(5)).not.toContain('name="Slide number"');
+    expect(xml(5)).toMatch(/type="slidenum">[\s\S]*?<a:t>6<\/a:t>/);
+    expect(textOf(out, slides[5].part)).not.toMatch(/\b2\b/);
+    // Others get a numbered tag.
+    expect(xml(2)).toContain('name="Slide number"');
+  });
+
+  it("with numbers off adds no tags, but still corrects numbers typed on library slides", () => {
+    const plain = build(false);
+    const [, , welcome, , , services] = slideRefs(plain);
+    expect(plain.text(welcome.part)).not.toContain('type="slidenum"');
+    expect(plain.text(services.part)).toMatch(/type="slidenum">[\s\S]*?<a:t>6<\/a:t>/);
+  });
+
+  it("works out the contents the same way for the page and the file", () => {
+    const outline = [
+      { kind: "cover" as const, title: "" },
+      { kind: "contents" as const, title: "Contents" },
+      { kind: "slide" as const, title: "Impact" },
+      { kind: "slide" as const, title: " impact " },
+      { kind: "text" as const, title: "" },
+      { kind: "slide" as const, title: "Costs" },
+    ];
+    expect(contentsEntries(outline, 1)).toEqual([
+      { title: "Impact", page: 3 },
+      { title: "Costs", page: 6 },
+    ]);
   });
 });

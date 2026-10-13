@@ -1,8 +1,9 @@
 import { imageSize } from "@/lib/files";
-import { EMU_PER_INCH, isBlankLayout, layoutOf, slideRefs, slideSize, titleShape } from "./deck";
+import { contentsEntries, type NumberPosition, type OutlineSlide } from "@/lib/presentations";
+import { EMU_PER_INCH, isBlankLayout, layoutOf, slideRefs, slideSize, textShapes, titleShape } from "./deck";
 import { type FillIn, fillIn } from "./fill";
 import { escapeXml, Package, REL, type Relationship, relKind, relativeTarget, resolveTarget } from "./package";
-import { type Box, coverCrop, fitInside, isDark, picture, shape, slideXml, solidFill, textBox } from "./shapes";
+import { type Box, coverCrop, fitInside, isDark, numberTag, picture, shape, slideNumberField, slideXml, solidFill, textBox } from "./shapes";
 
 // Builds a presentation from slides of the library's decks, plus a cover and text slides the app
 // makes. The first item's deck is the base: the new file starts as that deck emptied of slides,
@@ -31,10 +32,17 @@ export type TextSlide = Style & {
   baseSlideId: number | null;
 };
 
+/** The contents: the slides after it, with their numbers, worked out once every slide is in place. */
+export type Contents = Style & { heading: string };
+
 export type Item =
-  | { kind: "slide"; deck: string; slideId: number }
+  | { kind: "slide"; deck: string; slideId: number; /** For the contents. */ title: string }
   | { kind: "cover"; deck: string; cover: Cover }
+  | { kind: "contents"; deck: string; contents: Contents }
   | { kind: "text"; deck: string; text: TextSlide };
+
+/** Slide numbers: a tag on each slide but the cover (`on`), where the deck has them go. */
+export type Numbers = Style & { on: boolean; position: NumberPosition };
 
 export type Logos = { white: Uint8Array; color: Uint8Array };
 
@@ -57,6 +65,8 @@ class Builder {
   private kept = new Set<string>();
   private sizes: { cx: number; cy: number };
   private nextShape = 2;
+  /** The slides in order: what each is, for the contents and the numbers. */
+  private outline: (OutlineSlide & { part: string; contents?: Contents })[] = [];
 
   constructor(
     private sources: Map<string, Package>,
@@ -169,7 +179,8 @@ class Builder {
   }
 
   /** Puts a slide at the end of the show. */
-  private appendSlide(part: string) {
+  private appendSlide(part: string, slide: OutlineSlide & { contents?: Contents }) {
+    this.outline.push({ ...slide, part });
     const pres = "ppt/presentation.xml";
     const relId = this.out.freeRelId(pres);
     this.out.setRels(pres, [...this.out.rels(pres), { id: relId, type: `${REL}/slide`, target: relativeTarget(pres, part), external: false }]);
@@ -272,7 +283,86 @@ class Builder {
       if (footer) shapes.push(textBox(this.id(), "Date and presenter", this.box(0.75, 6.45, textWidth, 0.4), [text(footer, 13, false, 85)]));
       return slideXml(background, shapes);
     });
-    this.appendSlide(slide);
+    this.appendSlide(slide, { kind: "cover", title: "" });
+  }
+
+  /** The contents, drawn once every slide is in place (see `drawContents`). */
+  addContents(deck: string, contents: Contents) {
+    const slide = this.newSlide(deck, () => slideXml(solidFill("FFFFFF"), []));
+    this.appendSlide(slide, { kind: "contents", title: contents.heading, contents });
+  }
+
+  /** The app's small logo at the top right of its own slides, clear of the slide numbers. */
+  private cornerLogo(slide: string, rels: Relationship[]) {
+    const logo = this.addImage(this.logos.color, "image/png", slide, rels);
+    return picture(this.id(), "Logo", logo, this.box(13.33 - 0.6 - 0.45 * LOGO_RATIO, 0.67, 0.45 * LOGO_RATIO, 0.45));
+  }
+
+  /**
+   * The contents at `at`: its heading, then each titled slide after it with its number, in one
+   * to three columns. Each line goes to its slide when clicked in the show.
+   */
+  private drawContents(at: number) {
+    const { part, contents } = this.outline[at];
+    const c = contents!;
+    const entries = contentsEntries(this.outline, at);
+    const rels = this.out.rels(part).filter((r) => relKind(r.type) === "slideLayout");
+    this.nextShape = 2;
+    const shapes = [
+      textBox(this.id(), "Title", this.box(0.6, 0.45, 10.4, 0.9), [{ text: c.heading, size: 28, bold: true, fill: solidFill(c.color), font: c.font }], "ctr"),
+      this.cornerLogo(part, rels),
+    ];
+    const columns = entries.length <= 8 ? 1 : entries.length <= 24 ? 2 : 3;
+    const rows = Math.max(1, Math.ceil(entries.length / columns));
+    const [left, top, width, height, gap] = [0.6, 1.6, 12.13, 4.9, 0.5];
+    const rowHeight = Math.min(0.55, height / rows);
+    const size = Math.max(9, Math.min(18, Math.round(rowHeight * 72 * 0.5)));
+    const columnWidth = (width - gap * (columns - 1)) / columns;
+    entries.forEach((entry, k) => {
+      const x = left + Math.floor(k / rows) * (columnWidth + gap);
+      const y = top + (k % rows) * rowHeight;
+      const relId = `rId${rels.length + 1}`;
+      rels.push({ id: relId, type: `${REL}/slide`, target: relativeTarget(part, this.outline[entry.page - 1].part), external: false });
+      const number = String(entry.page).padStart(2, "0");
+      shapes.push(textBox(this.id(), `Contents ${k + 1} number`, this.box(x, y, 0.7, rowHeight), [{ text: number, size, bold: true, fill: solidFill(c.color), font: c.font }], "ctr", relId));
+      shapes.push(textBox(this.id(), `Contents ${k + 1}`, this.box(x + 0.75, y, columnWidth - 0.75, rowHeight), [{ text: entry.title, size, fill: solidFill("374151"), font: c.font }], "ctr", relId));
+    });
+    this.out.set(part, slideXml(solidFill("FFFFFF"), shapes));
+    this.out.setRels(part, rels);
+  }
+
+  /**
+   * Numbers a slide. A number typed near the top or bottom edge of a library slide (a page
+   * number in the deck's own design) becomes a slide-number field, so it is right wherever the
+   * slide now sits. Other slides get a tag where the deck has its numbers go, when numbers are on.
+   */
+  private numberSlide(at: number, numbers: Numbers) {
+    const { part } = this.outline[at];
+    const { cy } = this.sizes;
+    let xml = this.out.text(part);
+    const typed = textShapes(xml).filter((s) => /^\d{1,3}$/.test(s.text) && (s.y < cy * 0.15 || s.y > cy * 0.85));
+    for (const s of [...typed].reverse()) {
+      const rPr = s.xml.match(/<a:rPr\b[^>]*\/>|<a:rPr\b[^>]*[^/]>[\s\S]*?<\/a:rPr>/)?.[0] ?? '<a:rPr lang="en-US" dirty="0"/>';
+      let first = true;
+      const numbered = s.xml.replace(/(<a:p\b[^>]*>|<a:p>)([\s\S]*?)(<\/a:p>)/g, (_, open: string, inner: string, close: string) => {
+        const bare = inner.replace(/<a:r>[\s\S]*?<\/a:r>/g, "");
+        if (!first) return `${open}${bare}${close}`;
+        first = false;
+        const end = bare.indexOf("<a:endParaRPr");
+        const field = slideNumberField(rPr, at + 1);
+        return `${open}${end >= 0 ? bare.slice(0, end) + field + bare.slice(end) : bare + field}${close}`;
+      });
+      xml = xml.slice(0, s.start) + numbered + xml.slice(s.start + s.xml.length);
+    }
+    if (!typed.length && numbers.on) {
+      const ids = [...xml.matchAll(/<p:cNvPr\b[^>]*\bid="(\d+)"/g)].map((m) => Number(m[1]));
+      const [w, h, margin] = [0.55, 0.32, 0.35];
+      const x = numbers.position === "bottom-left" ? margin : numbers.position === "bottom-right" ? 13.33 - margin - w : (13.33 - w) / 2;
+      const tag = numberTag(Math.max(1, ...ids) + 1, this.box(x, 7.5 - 0.3 - h, w, h), numbers.color, numbers.font, at + 1);
+      const end = xml.lastIndexOf("</p:spTree>");
+      xml = xml.slice(0, end) + tag + xml.slice(end);
+    }
+    this.out.set(part, xml);
   }
 
   /** The body text as paragraphs: a line each, as bullets when there are several. */
@@ -320,20 +410,19 @@ class Builder {
       xml = xml.replace(/<\/p:spTree>/, `${shapes.join("")}</p:spTree>`);
       this.out.set(slide, xml);
       this.out.setRels(slide, rels);
-      this.appendSlide(slide);
+      this.appendSlide(slide, { kind: "text", title: t.title });
       return;
     }
 
     const slide = this.newSlide(deck, (slide, rels) => {
       const shapes = [
-        textBox(this.id(), "Title", this.box(0.6, 0.45, 12.1, 0.9), [{ text: t.title, size: 28, bold: true, fill: solidFill(t.color), font: t.font }], "ctr"),
+        textBox(this.id(), "Title", this.box(0.6, 0.45, 10.4, 0.9), [{ text: t.title, size: 28, bold: true, fill: solidFill(t.color), font: t.font }], "ctr"),
         ...this.textAndPicture(slide, rels, t, this.box(0.6, 1.6, 12.1, 5.0), solidFill("374151")),
       ];
-      const logo = this.addImage(this.logos.color, "image/png", slide, rels);
-      shapes.push(picture(this.id(), "Logo", logo, this.box(13.33 - 0.6 - 0.45 * LOGO_RATIO, 6.8, 0.45 * LOGO_RATIO, 0.45)));
+      shapes.push(this.cornerLogo(slide, rels));
       return slideXml(solidFill("FFFFFF"), shapes);
     });
-    this.appendSlide(slide);
+    this.appendSlide(slide, { kind: "text", title: t.title });
   }
 
   /** The text, with the picture beside it when there is one. */
@@ -351,12 +440,17 @@ class Builder {
     return shapes;
   }
 
-  addSlide(deck: string, slideId: number) {
-    this.appendSlide(this.copySlide(deck, slideId));
+  addSlide(deck: string, slideId: number, title: string) {
+    this.appendSlide(this.copySlide(deck, slideId), { kind: "slide", title });
   }
 
-  /** Fills in the slides' fill-ins, tidies away what nothing uses, and writes the file. */
-  finish(values: Partial<Record<FillIn, string>>, title: string) {
+  /**
+   * Draws the contents and numbers the slides now that each is in place, fills in the fill-ins,
+   * tidies away what nothing uses, and writes the file.
+   */
+  finish(values: Partial<Record<FillIn, string>>, title: string, numbers: Numbers) {
+    this.outline.forEach((slide, i) => slide.kind === "contents" && this.drawContents(i));
+    this.outline.forEach((slide, i) => slide.kind !== "cover" && this.numberSlide(i, numbers));
     for (const { part } of slideRefs(this.out)) this.out.set(part, fillIn(this.out.text(part), values));
     this.out.removeUnreachable();
     const slides = slideRefs(this.out).length;
@@ -384,16 +478,17 @@ class Builder {
 export function buildPresentation(
   sources: Map<string, Uint8Array>,
   items: Item[],
-  options: { values: Partial<Record<FillIn, string>>; title: string; logos: Logos },
+  options: { values: Partial<Record<FillIn, string>>; title: string; logos: Logos; numbers: Numbers },
 ) {
   if (items.length === 0) throw new Error("noSlides");
   const packages = new Map([...sources].map(([key, bytes]) => [key, Package.open(bytes)]));
   const builder = new Builder(packages, items[0].deck, options.logos);
   for (const item of items) {
     if (!packages.has(item.deck)) throw new Error("missingSlide");
-    if (item.kind === "slide") builder.addSlide(item.deck, item.slideId);
+    if (item.kind === "slide") builder.addSlide(item.deck, item.slideId, item.title);
     else if (item.kind === "cover") builder.addCover(item.deck, item.cover);
+    else if (item.kind === "contents") builder.addContents(item.deck, item.contents);
     else builder.addText(item.deck, item.text);
   }
-  return builder.finish(options.values, options.title);
+  return builder.finish(options.values, options.title, options.numbers);
 }
