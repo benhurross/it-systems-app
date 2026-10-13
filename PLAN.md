@@ -430,6 +430,8 @@ Requested by the owner: everyday document tools for everyone, under a "Workspace
 
 Microsoft 365 / Active Directory sign-in, importing the workbook's records, and multi-server deployment of the monitoring scheduler.
 
+Presentations (sales decks made from the company's own PowerPoint slides, with a slide library, a builder, an automatic contents slide and slide numbers) was built on the branch `claude/sales-presentations` and kept there, not merged: it was found hard to use. Its migrations (decks, presentations) are on that branch only; if it is ever taken up, merge `main` into it and generate its migrations again so they follow `main`'s.
+
 Active Directory sign-in was looked at again after handover and left for later: there is no Microsoft 365, but there is an on-premises Active Directory. When it is picked up, the plan is sign-in with the domain username and password checked against a domain controller over LDAPS (no passwords kept), a local admin account kept for when the domain controller is down, and people matched by email, username or employee ID. Windows automatic sign-in (Kerberos) would come after that, if at all. Until then IT resets passwords in Settings → Users.
 
 ## MVP success criteria
