@@ -226,6 +226,7 @@ If LibreOffice is installed somewhere unusual, set `SOFFICE_PATH` in `.env.local
 | `npm run db:migrate` | Brings the database up to this version. Safe to run any time. |
 | `npm run db:seed` | Loads the standard lists (locations, departments, issue types and the other dropdowns). Run once, on a new database. |
 | `npm run admin:create -- <email> "<Full Name>"` | Makes an admin account and prints a one-time password. |
+| `npm run user:password -- <email>` | Gives an account a new password and prints it (or set one: add `"<new password>"`, 10 characters or more). Signs that account out everywhere. For when nobody who can sign in is left to reset it in Settings → Users. |
 | `npm run people:check "<file.xlsx>"` | Reports how the staff list would be loaded. Changes nothing. |
 | `npm run people:ids "<file.xlsx>"` | Fills in employee ID numbers from the staff list. |
 | `npm run tickets:import "<file.xlsx>"` | Reports what loading the ticket log would do. Add `replace` to load it in place of the current tickets. |
