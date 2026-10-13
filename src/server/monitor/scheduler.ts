@@ -1,5 +1,6 @@
 import { pruneHistory, runChecks } from "../services/monitoring";
 import { getSetting } from "../settings";
+import { failureLog } from "../loop-errors";
 
 const TICK_MS = 5000;
 const DAY_MS = 86_400_000;
@@ -16,6 +17,7 @@ export function startScheduler() {
   server.monitorScheduler = true;
   let lastRound = 0;
   let lastPrune = 0;
+  const log = failureLog("Network checks");
 
   const tick = async () => {
     try {
@@ -29,9 +31,10 @@ export function startScheduler() {
         lastPrune = now;
         await pruneHistory(settings.retentionDays);
       }
+      log.succeeded();
     } catch (error) {
       // Keep the loop alive through a database outage; the next tick tries again.
-      console.error("Network checks failed:", error);
+      log.failed(error);
     }
     setTimeout(tick, TICK_MS).unref();
   };

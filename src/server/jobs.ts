@@ -1,5 +1,6 @@
 import { deliverPending, pruneOutbox } from "./mail/outbox";
 import { autoCloseResolved } from "./services/respond";
+import { failureLog } from "./loop-errors";
 
 const TICK_MS = 60_000;
 const DAY_MS = 86_400_000;
@@ -13,6 +14,7 @@ export function startJobs() {
   if (server.jobsStarted) return;
   server.jobsStarted = true;
   let lastPrune = 0;
+  const log = failureLog("Background jobs");
   const tick = async () => {
     try {
       await autoCloseResolved();
@@ -21,9 +23,10 @@ export function startJobs() {
         lastPrune = Date.now();
         await pruneOutbox();
       }
+      log.succeeded();
     } catch (error) {
       // Keep going through a database outage; the next tick tries again.
-      console.error("Background jobs failed:", error);
+      log.failed(error);
     }
     setTimeout(tick, TICK_MS).unref();
   };
