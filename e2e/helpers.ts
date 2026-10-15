@@ -216,6 +216,11 @@ export const TOOLS_IN_USE: Record<string, (page: Page) => Promise<void>> = {
     ]);
     await expect(panel.locator("ol > li")).toHaveCount(2);
   },
+  "/tools/pdf?mode=compress": async (page) => {
+    const panel = page.getByRole("tabpanel");
+    await panel.locator('input[type="file"]').setInputFiles(await pdfFile("monthly-network-report.pdf", 2));
+    await expect(panel.getByRole("radio")).toHaveCount(2);
+  },
   "/tools/pdf?mode=stamp": async (page) => {
     const panel = page.getByRole("tabpanel");
     await panel.locator('input[type="file"]').setInputFiles(await pdfFile("policy.pdf", 3));

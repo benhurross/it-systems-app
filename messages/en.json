@@ -1604,7 +1604,8 @@
       "pdf_organize": "Organize pages",
       "images_to_pdf": "Images to PDF",
       "pdf_stamp": "Page numbers and watermark",
-      "pdf_to_word": "PDF to Word"
+      "pdf_to_word": "PDF to Word",
+      "pdf_compress": "Compress PDF"
     },
     "descriptions": {
       "pdf_merge": "Combine several PDFs into one, in the order you choose.",
@@ -1612,7 +1613,8 @@
       "pdf_organize": "Turn, move or remove pages.",
       "images_to_pdf": "Turn photos and scans into one PDF, a page each.",
       "pdf_stamp": "Number the pages, or mark them CONFIDENTIAL or COPY.",
-      "pdf_to_word": "Turn a PDF into a Word document you can edit."
+      "pdf_to_word": "Turn a PDF into a Word document you can edit.",
+      "pdf_compress": "Make a PDF smaller for email or upload, keeping its text sharp."
     },
     "open": "Open",
     "request": "Request access",
@@ -1763,6 +1765,20 @@
       "sizeInvalid": "Use a size from 6 to 36.",
       "textEmpty": "Enter the watermark text."
     },
+    "compress": {
+      "hint": "Shrinks the pictures and scans in a PDF. The text stays sharp and can still be selected.",
+      "level": "How small",
+      "recommended": "Recommended",
+      "recommendedHint": "Much smaller, with clear pictures. Good for email and uploads.",
+      "strong": "Smallest",
+      "strongHint": "As small as it gets. Pictures look softer; the text stays sharp.",
+      "action": "Compress and download",
+      "progress": "Shrinking pictures: {done} of {total}",
+      "sizes": "<size>{before}</size> → <size>{after}</size>",
+      "saved": "{percent}% smaller",
+      "alreadySmallTryStrong": "This PDF is already about as small as it can be at this level, so nothing was downloaded. Try Smallest.",
+      "alreadySmall": "This PDF is already about as small as it can be, so nothing was downloaded."
+    },
     "cards": {
       "pdf_kit": {
         "name": "PDF toolkit",
@@ -1775,6 +1791,7 @@
         "merge": "Merge",
         "split": "Split",
         "organize": "Organize",
+        "compress": "Compress",
         "word": "PDF to Word",
         "images": "Images to PDF",
         "stamp": "Numbers & watermark"
@@ -1783,6 +1800,7 @@
         "merge": "Combine PDFs into one",
         "split": "Take out pages, or split into several",
         "organize": "Turn, move or remove pages",
+        "compress": "Make a PDF smaller for email",
         "word": "Edit the text in Word",
         "images": "A page for each photo or scan",
         "stamp": "Number pages, or mark them CONFIDENTIAL"

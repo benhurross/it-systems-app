@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { expect, test, type Locator, type Page } from "@playwright/test";
 import { strFromU8, unzipSync } from "fflate";
-import { PDFDocument, StandardFonts } from "pdf-lib";
+import { PDFDict, PDFDocument, PDFName, PDFNumber, PDFRawStream, StandardFonts } from "pdf-lib";
 import { session } from "./env";
 import { pdfFile, png, watchConsole } from "./helpers";
 
@@ -35,7 +35,7 @@ test("the tools list leads into each tool of the PDF toolkit", async ({ page }) 
   await page.getByRole("link", { name: "Tools", exact: true }).click();
   await expect(page).toHaveURL(/\/en\/tools$/);
   await expect(page.getByRole("heading", { name: "PDF toolkit" })).toBeVisible();
-  const modes = [/^Merge/, /^Split/, /^Organize/, /^PDF to Word/, /^Images to PDF/, /^Numbers & watermark/];
+  const modes = [/^Merge/, /^Split/, /^Organize/, /^Compress/, /^PDF to Word/, /^Images to PDF/, /^Numbers & watermark/];
   await expect(page.getByRole("list", { name: "Choose a tool" }).getByRole("link")).toHaveText(modes);
   await expect(page.getByText("Files stay on this computer")).toBeVisible();
 
@@ -236,5 +236,72 @@ test("pages are numbered and watermarked", async ({ page }) => {
   await panel.getByRole("switch", { name: "Add a watermark" }).click();
   await expect(panel.getByText("Choose page numbers, a watermark or both.")).toBeVisible();
   await expect(panel.getByRole("button", { name: "Apply and download" })).toBeDisabled();
+  console.assertClean();
+});
+
+test("a PDF is made smaller, its pictures shrunk and its text kept", async ({ page }) => {
+  const console = watchConsole(page);
+  const panel = await toolkit(page, "Compress");
+
+  // A phone photo and a screenshot, made by the browser as a camera and a screen would make them.
+  const [photo, screenshot] = await page.evaluate(async () => {
+    const canvas = new OffscreenCanvas(2400, 3200);
+    const context = canvas.getContext("2d")!;
+    const gradient = context.createLinearGradient(0, 0, 2400, 3200);
+    gradient.addColorStop(0, "#1d4ed8");
+    gradient.addColorStop(1, "#f59e0b");
+    context.fillStyle = gradient;
+    context.fillRect(0, 0, 2400, 3200);
+    // Grain, as a camera's sensor adds.
+    const pixels = context.getImageData(0, 0, 2400, 3200);
+    for (let i = 0; i < pixels.data.length; i += 4) pixels.data[i] = (pixels.data[i] + ((i * 7919) % 31)) & 0xff;
+    context.putImageData(pixels, 0, 0);
+    const jpeg = await canvas.convertToBlob({ type: "image/jpeg", quality: 0.95 });
+    const shot = new OffscreenCanvas(1400, 900);
+    const ink = shot.getContext("2d")!;
+    ink.fillStyle = "#fff";
+    ink.fillRect(0, 0, 1400, 900);
+    ink.fillStyle = "#111";
+    ink.font = "22px sans-serif";
+    for (let line = 0; line < 30; line++) ink.fillText(`Line ${line + 1}: error 0x8004 after the update`, 30, 40 + line * 28);
+    const png = await shot.convertToBlob({ type: "image/png" });
+    const bytes = async (blob: Blob) => Array.from(new Uint8Array(await blob.arrayBuffer()));
+    return [await bytes(jpeg), await bytes(png)];
+  });
+  const original = await PDFDocument.create();
+  const font = await original.embedFont(StandardFonts.Helvetica);
+  const first = original.addPage([595, 842]);
+  first.drawText("Site survey", { x: 40, y: 800, size: 18, font });
+  first.drawImage(await original.embedJpg(new Uint8Array(photo)), { x: 40, y: 40, width: 515, height: 687 });
+  original.addPage([842, 595]).drawImage(await original.embedPng(new Uint8Array(screenshot)), { x: 40, y: 40, width: 700, height: 450 });
+  const bytes = Buffer.from(await original.save());
+
+  await panel.getByLabel("Choose a PDF").setInputFiles({ name: "survey.pdf", mimeType: "application/pdf", buffer: bytes });
+  await expect(panel.getByLabel("Recommended")).toBeChecked();
+  const compressed = await download(page, () => panel.getByRole("button", { name: "Compress and download" }).click());
+  expect(compressed.name).toBe("survey-compressed.pdf");
+  expect(compressed.bytes.length).toBeLessThan(bytes.length / 2);
+  await expect(panel.getByRole("status")).toContainText("→");
+  await expect(panel.getByRole("status")).toContainText("% smaller");
+
+  // The pages and the text are as they were; the photo is no larger than a page needs.
+  const out = await PDFDocument.load(compressed.bytes);
+  expect(out.getPages().map((p) => [p.getWidth(), p.getHeight()])).toEqual([
+    [595, 842],
+    [842, 595],
+  ]);
+  const jpegSizes = out.context
+    .enumerateIndirectObjects()
+    .flatMap(([, o]) => (o instanceof PDFRawStream && o.dict.lookup(PDFName.of("Filter")) === PDFName.of("DCTDecode") ? [o.dict] : []))
+    .map((dict) => [dict.lookup(PDFName.of("Width"), PDFNumber).asNumber(), dict.lookup(PDFName.of("Height"), PDFNumber).asNumber()]);
+  expect(jpegSizes).toContainEqual([1500, 2000]);
+  expect(out.getPage(0).node.Resources()!.lookup(PDFName.of("Font"), PDFDict).keys()).toHaveLength(1);
+
+  // A PDF with nothing to shrink is not downloaded again.
+  await panel.getByRole("button", { name: "Change file" }).click();
+  await panel.getByLabel("Choose a PDF").setInputFiles(await pdfFile("policy.pdf", 2));
+  await panel.getByLabel("Smallest").check();
+  await panel.getByRole("button", { name: "Compress and download" }).click();
+  await expect(panel.getByRole("status")).toHaveText("This PDF is already about as small as it can be, so nothing was downloaded.");
   console.assertClean();
 });
