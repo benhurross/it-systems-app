@@ -64,6 +64,13 @@
       "when": 1790856000189,
       "tag": "0008_monitor_checks_by_time",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1792050076578,
+      "tag": "0009_asset_tags",
+      "breakpoints": true
     }
   ]
 }

@@ -1,0 +1,1 @@
+ALTER TABLE "assets" ADD COLUMN "tag_printed_at" timestamp with time zone;

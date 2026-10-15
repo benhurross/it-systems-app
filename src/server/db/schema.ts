@@ -228,6 +228,8 @@ export const assets = pgTable(
     monitorLatencyMs: integer(),
     monitorFailures: smallint().notNull().default(0),
     monitorCheckedAt: timestamp({ withTimezone: true }),
+    /** When a tag for it was last printed, to see which assets are still to be tagged. */
+    tagPrintedAt: timestamp({ withTimezone: true }),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },

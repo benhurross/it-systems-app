@@ -29,6 +29,7 @@ import {
   VULN_STATUSES,
 } from "./domain";
 import { ROLES } from "./permissions";
+import { LABEL_DPIS } from "./label-sizes";
 import { TOOL_KEYS, TOOL_MODES } from "./tools";
 
 // Shared field shapes. Optional fields arrive as null (or are left out) and are stored as null.
@@ -443,6 +444,30 @@ export const idCardUpdate = z
     designationSize: z.number().min(5).max(10).nullable(),
   })
   .partial();
+
+/**
+ * The label printer for asset tags. Without an address, tags are printed from the browser through
+ * the printer's driver, or saved as a ZPL file.
+ */
+export const labelPrinterSettings = z.object({
+  host: z
+    .string()
+    .trim()
+    .max(253)
+    .regex(/^[A-Za-z0-9.:-]*$/, "Use the printer's IP address or name"),
+  port: z.number().int().min(1).max(65_535),
+  widthMm: z.number().min(20).max(120),
+  heightMm: z.number().min(10).max(120),
+  dpi: z.union(LABEL_DPIS.map((d) => z.literal(d))),
+  owner: z.string().trim().max(30),
+});
+
+/** Asset tags to print: on the label printer, or as a PDF or ZPL file to print elsewhere. */
+export const assetTagsInput = z.object({
+  ids: z.array(z.number().int().positive()).min(1).max(500),
+  copies: z.number().int().min(1).max(10),
+  output: z.enum(["printer", "pdf", "zpl", "preview"]),
+});
 
 /** Each tool's setting; a tool left out is on for everyone. */
 export const toolSettings = z.partialRecord(
