@@ -1,3 +1,5 @@
+import { promisify } from "node:util";
+import { gzip as gzipCallback } from "node:zlib";
 import { z } from "zod";
 import { can, type Area } from "@/lib/permissions";
 import type { SessionUser } from "./auth";
@@ -28,12 +30,30 @@ export async function requireUser(area: Area): Promise<SessionUser> {
 const pgCode = (error: unknown): string | undefined =>
   (error as { code?: string }).code ?? (error as { cause?: { code?: string } }).cause?.code;
 
+const gzip = promisify(gzipCallback);
+/** Smaller replies are sent as they are: compressing them would save less than it costs. */
+const COMPRESS_FROM = 8 * 1024;
+
+/**
+ * A value as JSON, compressed when it is large and the browser accepts gzip. Next.js compresses
+ * pages but not route handlers' replies, and a long list sent in full is slow over Wi-Fi.
+ */
+async function json(req: Request, value: unknown) {
+  const text = JSON.stringify(value ?? null);
+  if (text.length < COMPRESS_FROM || !/\bgzip\b/.test(req.headers.get("accept-encoding") ?? "")) {
+    return new Response(text, { headers: { "content-type": "application/json" } });
+  }
+  return new Response(new Uint8Array(await gzip(text)), {
+    headers: { "content-type": "application/json", "content-encoding": "gzip", vary: "Accept-Encoding" },
+  });
+}
+
 /** Wraps a route handler: returns plain values as JSON and maps known errors to status codes. */
 export function handler<C = unknown>(fn: (req: Request, ctx: C) => Promise<unknown>) {
   return async (req: Request, ctx: C): Promise<Response> => {
     try {
       const result = await fn(req, ctx);
-      return result instanceof Response ? result : Response.json(result ?? null);
+      return result instanceof Response ? result : json(req, result);
     } catch (error) {
       if (error instanceof HttpError) {
         return Response.json({ error: error.message }, { status: error.status });

@@ -1,3 +1,4 @@
+import { gunzipSync } from "node:zlib";
 import { eq, ne } from "drizzle-orm";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import { createTestDb } from "./helpers/db";
@@ -100,6 +101,28 @@ describe("tickets over HTTP", () => {
     const rows = (await res.json()) as { requesterId: number }[];
     expect(rows.length).toBeGreaterThan(0);
     expect(rows.every((t) => t.requesterId === employee.employeeId)).toBe(true);
+  });
+
+  it("sends IT the list without descriptions, compressed when the browser accepts it", async () => {
+    session.user = itStaff;
+    const plain = await routes.tickets.GET(request("GET"), params());
+    expect(plain.headers.get("content-encoding")).toBeNull();
+    const rows = (await plain.json()) as Record<string, unknown>[];
+    expect(rows.length).toBeGreaterThan(100);
+    expect(rows[0]).toHaveProperty("requesterName");
+    expect(rows[0]).not.toHaveProperty("description");
+    expect(rows[0]).not.toHaveProperty("resolution");
+
+    const accepting = new Request("http://localhost/api/tickets", { headers: { "accept-encoding": "gzip, deflate, br" } });
+    const packed = await routes.tickets.GET(accepting, params());
+    expect(packed.headers.get("content-encoding")).toBe("gzip");
+    const bytes = Buffer.from(await packed.arrayBuffer());
+    expect(bytes.length).toBeLessThan(JSON.stringify(rows).length / 4);
+    expect(JSON.parse(gunzipSync(bytes).toString())).toEqual(rows);
+
+    // A small reply is not worth compressing.
+    const small = await routes.ticket.GET(new Request("http://localhost/api/tickets/0", { headers: { "accept-encoding": "gzip" } }), params({ id: "abc" }));
+    expect(small.headers.get("content-encoding")).toBeNull();
   });
 
   it("reports someone else's ticket as not found", async () => {

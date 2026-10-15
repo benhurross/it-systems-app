@@ -36,8 +36,38 @@ function scope(user: SessionUser) {
   return eq(tickets.requesterId, user.employeeId ?? -1);
 }
 
+/**
+ * What the ticket lists show, filter on and export. The description and resolution are left for
+ * the ticket itself: with the imported log they made the list many megabytes.
+ */
+const listColumns = {
+  id: tickets.id,
+  type: tickets.type,
+  subject: tickets.subject,
+  status: tickets.status,
+  priority: tickets.priority,
+  issueType: tickets.issueType,
+  location: tickets.location,
+  channel: tickets.channel,
+  requesterId: tickets.requesterId,
+  assigneeId: tickets.assigneeId,
+  dueAt: tickets.dueAt,
+  createdAt: tickets.createdAt,
+  resolvedAt: tickets.resolvedAt,
+  closedAt: tickets.closedAt,
+  satisfaction: tickets.satisfaction,
+  requesterName: employees.name,
+  assigneeName: users.name,
+};
+
 export async function listTickets(user: SessionUser) {
-  return withNames().where(scope(user)).orderBy(desc(tickets.createdAt));
+  return db
+    .select(listColumns)
+    .from(tickets)
+    .innerJoin(employees, eq(employees.id, tickets.requesterId))
+    .leftJoin(users, eq(users.id, tickets.assigneeId))
+    .where(scope(user))
+    .orderBy(desc(tickets.createdAt));
 }
 
 /** One ticket with its conversation and history. Out-of-scope tickets are reported as missing. */
