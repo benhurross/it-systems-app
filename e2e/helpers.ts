@@ -224,7 +224,7 @@ export const TOOLS_IN_USE: Record<string, (page: Page) => Promise<void>> = {
   "/tools/pdf?mode=sign": async (page) => {
     const panel = page.getByRole("tabpanel");
     await panel.locator('input[type="file"]').first().setInputFiles(await pdfFile("equipment-handover.pdf", 2));
-    await expect(panel.getByRole("img", { name: "Page 1" })).not.toHaveClass(/animate-pulse/);
+    await expect(panel.getByRole("img", { name: /^(Page|الصفحة) [1١]$/ })).not.toHaveClass(/animate-pulse/);
     await panel.getByRole("tab", { name: /Type|كتابة/ }).click();
     await panel.getByRole("textbox").first().fill("Sara Ahmed");
     await panel.getByRole("button", { name: /Add signature|إضافة التوقيع/ }).click();

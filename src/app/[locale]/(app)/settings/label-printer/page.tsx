@@ -37,10 +37,12 @@ export default function LabelPrinterSettings() {
 
   const [width, height] = useWatch({ control: form.control, name: ["widthMm", "heightMm"] });
   const preset = (Object.entries(LABEL_SIZES).find(([, s]) => s.widthMm === width && s.heightMm === height)?.[0] ?? "custom") as Preset;
-  const choosePreset = (value: Preset) => {
-    if (value === "custom") return;
-    form.setValue("widthMm", LABEL_SIZES[value].widthMm, { shouldDirty: true });
-    form.setValue("heightMm", LABEL_SIZES[value].heightMm, { shouldDirty: true });
+  const choosePreset = (value: string) => {
+    // Radix reports "" while the options are still arriving; that is no choice.
+    if (!(value in LABEL_SIZES)) return;
+    const key = value as keyof typeof LABEL_SIZES;
+    form.setValue("widthMm", LABEL_SIZES[key].widthMm, { shouldDirty: true });
+    form.setValue("heightMm", LABEL_SIZES[key].heightMm, { shouldDirty: true });
   };
 
   return (
@@ -53,7 +55,7 @@ export default function LabelPrinterSettings() {
         </div>
         <div className="space-y-2">
           <Label htmlFor={sizeId}>{t("size")}</Label>
-          <Select value={preset} onValueChange={(v) => choosePreset(v as Preset)}>
+          <Select value={preset} onValueChange={choosePreset}>
             <SelectTrigger id={sizeId} className="w-full sm:w-72">
               <SelectValue />
             </SelectTrigger>
