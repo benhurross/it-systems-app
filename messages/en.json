@@ -1664,7 +1664,8 @@
       "images_to_pdf": "Images to PDF",
       "pdf_stamp": "Page numbers and watermark",
       "pdf_to_word": "PDF to Word",
-      "pdf_compress": "Compress PDF"
+      "pdf_compress": "Compress PDF",
+      "pdf_sign": "Sign PDF"
     },
     "descriptions": {
       "pdf_merge": "Combine several PDFs into one, in the order you choose.",
@@ -1673,7 +1674,8 @@
       "images_to_pdf": "Turn photos and scans into one PDF, a page each.",
       "pdf_stamp": "Number the pages, or mark them CONFIDENTIAL or COPY.",
       "pdf_to_word": "Turn a PDF into a Word document you can edit.",
-      "pdf_compress": "Make a PDF smaller for email or upload, keeping its text sharp."
+      "pdf_compress": "Make a PDF smaller for email or upload, keeping its text sharp.",
+      "pdf_sign": "Add your signature to a PDF, on one page or several."
     },
     "open": "Open",
     "request": "Request access",
@@ -1838,6 +1840,47 @@
       "alreadySmallTryStrong": "This PDF is already about as small as it can be at this level, so nothing was downloaded. Try Smallest.",
       "alreadySmall": "This PDF is already about as small as it can be, so nothing was downloaded."
     },
+    "sign": {
+      "hint": "Draw, type or upload your signature, place it on the pages, and download the signed PDF. Your signature is not saved anywhere.",
+      "yourSignature": "Your signature",
+      "draw": "Draw",
+      "type": "Type",
+      "upload": "Upload",
+      "ink": "Ink",
+      "inks": {
+        "black": "Black ink",
+        "blue": "Blue ink"
+      },
+      "padLabel": "Signature pad: sign with the mouse, a finger or a pen",
+      "padHint": "Sign in the box above.",
+      "clear": "Clear",
+      "name": "Your name",
+      "dropImage": "Drop a photo or scan of your signature",
+      "chooseImage": "Choose an image",
+      "imageHint": "Sign on white paper, then take a photo or scan it. JPG or PNG.",
+      "notImage": "That file is not an image this tool can read. Use JPG or PNG.",
+      "clearPaper": "Remove the white paper behind it",
+      "withDate": "Add the date under the signature",
+      "date": "Date",
+      "dateHint": "As it should read, for example 15 Oct 2026.",
+      "dateEmpty": "Enter the date, or turn the date off.",
+      "legal": "This puts a picture of your signature on the PDF, as signing on paper and scanning would. It is not a certified digital signature.",
+      "pages": "Pages",
+      "previous": "Previous page",
+      "next": "Next page",
+      "pageOf": "Page {page} of {pages}",
+      "goTo": "Page {page}",
+      "pageLabel": "Page {page}",
+      "makeFirst": "Make your signature first, on the left.",
+      "placeHint": "Drag a signature to move it, or its corner to resize it.",
+      "addHere": "Add signature to this page",
+      "placed": "Signature on page {page}",
+      "keys": "Arrow keys move it, Shift with the arrow keys resizes it, Delete removes it.",
+      "remove": "Remove the signature on page {page}",
+      "nothing": "Add your signature to at least one page.",
+      "signedOn": "{count, plural, one {Signed on page {pages}} other {Signed on pages {pages}}}",
+      "action": "Sign and download"
+    },
     "cards": {
       "pdf_kit": {
         "name": "PDF toolkit",
@@ -1851,6 +1894,7 @@
         "split": "Split",
         "organize": "Organize",
         "compress": "Compress",
+        "sign": "Sign",
         "word": "PDF to Word",
         "images": "Images to PDF",
         "stamp": "Numbers & watermark"
@@ -1860,6 +1904,7 @@
         "split": "Take out pages, or split into several",
         "organize": "Turn, move or remove pages",
         "compress": "Make a PDF smaller for email",
+        "sign": "Add your signature",
         "word": "Edit the text in Word",
         "images": "A page for each photo or scan",
         "stamp": "Number pages, or mark them CONFIDENTIAL"

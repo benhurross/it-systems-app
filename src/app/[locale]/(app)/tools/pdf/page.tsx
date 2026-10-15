@@ -10,6 +10,7 @@ import { CompressPanel } from "@/components/tools/pdf-kit/compress";
 import { ImagesPanel } from "@/components/tools/pdf-kit/images";
 import { MergePanel } from "@/components/tools/pdf-kit/merge";
 import { OrganizePanel } from "@/components/tools/pdf-kit/organize";
+import { SignPanel } from "@/components/tools/pdf-kit/sign";
 import { SplitPanel } from "@/components/tools/pdf-kit/split";
 import { StampPanel } from "@/components/tools/pdf-kit/stamp";
 import { WordPanel } from "@/components/tools/pdf-kit/word";
@@ -21,11 +22,11 @@ import type { MyTool } from "@/lib/api-types";
 import { PDF_MODES, type PdfMode } from "@/lib/tools";
 import { cn } from "@/lib/utils";
 
-const PANELS = { merge: MergePanel, split: SplitPanel, organize: OrganizePanel, compress: CompressPanel, word: WordPanel, images: ImagesPanel, stamp: StampPanel } as const;
+const PANELS = { merge: MergePanel, split: SplitPanel, organize: OrganizePanel, compress: CompressPanel, sign: SignPanel, word: WordPanel, images: ImagesPanel, stamp: StampPanel } as const;
 
 /**
- * Every PDF tool in one place: Merge, Split, Organize, Compress, PDF to Word, Images to PDF,
- * and Page numbers and watermark. Each mode is a tool of its own for who may
+ * Every PDF tool in one place: Merge, Split, Organize, Compress, Sign, PDF to Word, Images to
+ * PDF, and Page numbers and watermark. Each mode is a tool of its own for who may
  * use it: one that needs approval shows a lock and the way to ask; one that is off is not shown.
  * Each mode keeps its work while another is open.
  */

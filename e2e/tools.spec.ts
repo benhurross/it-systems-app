@@ -35,7 +35,7 @@ test("the tools list leads into each tool of the PDF toolkit", async ({ page }) 
   await page.getByRole("link", { name: "Tools", exact: true }).click();
   await expect(page).toHaveURL(/\/en\/tools$/);
   await expect(page.getByRole("heading", { name: "PDF toolkit" })).toBeVisible();
-  const modes = [/^Merge/, /^Split/, /^Organize/, /^Compress/, /^PDF to Word/, /^Images to PDF/, /^Numbers & watermark/];
+  const modes = [/^Merge/, /^Split/, /^Organize/, /^Compress/, /^Sign/, /^PDF to Word/, /^Images to PDF/, /^Numbers & watermark/];
   await expect(page.getByRole("list", { name: "Choose a tool" }).getByRole("link")).toHaveText(modes);
   await expect(page.getByText("Files stay on this computer")).toBeVisible();
 
@@ -303,5 +303,60 @@ test("a PDF is made smaller, its pictures shrunk and its text kept", async ({ pa
   await panel.getByLabel("Smallest").check();
   await panel.getByRole("button", { name: "Compress and download" }).click();
   await expect(panel.getByRole("status")).toHaveText("This PDF is already about as small as it can be, so nothing was downloaded.");
+  console.assertClean();
+});
+
+test("a PDF is signed: drawn, placed, moved and dated", async ({ page }) => {
+  const console = watchConsole(page);
+  const panel = await toolkit(page, "Sign");
+  await panel.getByLabel("Choose a PDF").setInputFiles(await pdfFile("handover.pdf", 2));
+  await expect(panel.getByText("Make your signature first, on the left.")).toBeVisible();
+  await expect(panel.getByRole("button", { name: "Add signature to this page" })).toBeDisabled();
+
+  // Signed on the pad, with the mouse.
+  const pad = panel.getByRole("img", { name: /^Signature pad/ });
+  await pad.scrollIntoViewIfNeeded();
+  const box = (await pad.boundingBox())!;
+  await page.mouse.move(box.x + 40, box.y + box.height / 2);
+  await page.mouse.down();
+  for (let i = 1; i <= 20; i++) await page.mouse.move(box.x + 40 + i * 15, box.y + box.height / 2 + (i % 2 ? -25 : 25));
+  await page.mouse.up();
+  await expect(panel.getByRole("img", { name: "Page 1" })).not.toHaveClass(/animate-pulse/);
+  await panel.getByRole("button", { name: "Add signature to this page" }).click();
+  const signature = panel.getByRole("group", { name: "Signature on page 1" });
+  await expect(signature).toBeVisible();
+  await expect(panel.getByText("Signed on page 1")).toBeVisible();
+
+  // Moved by keyboard; a second one on the next page, then removed.
+  const before = (await signature.boundingBox())!;
+  await signature.focus();
+  for (let i = 0; i < 5; i++) await page.keyboard.press("ArrowLeft");
+  await expect.poll(async () => (await signature.boundingBox())!.x).toBeLessThan(before.x - 10);
+  await panel.getByRole("button", { name: "Next page" }).click();
+  await panel.getByRole("button", { name: "Add signature to this page" }).click();
+  await expect(panel.getByText("Signed on pages 1, 2")).toBeVisible();
+  await panel.getByRole("button", { name: "Remove the signature on page 2" }).click();
+  await expect(panel.getByText("Signed on page 1")).toBeVisible();
+
+  // The date: only what the PDF's font can write.
+  await panel.getByRole("switch", { name: "Add the date under the signature" }).click();
+  await panel.getByLabel("Date", { exact: true }).fill("١٥ أكتوبر");
+  await expect(panel.getByText("Use Latin letters, numbers and punctuation only.")).toBeVisible();
+  await expect(panel.getByRole("button", { name: "Sign and download" })).toBeDisabled();
+  await panel.getByLabel("Date", { exact: true }).fill("15 Oct 2026");
+
+  const signed = await download(page, () => panel.getByRole("button", { name: "Sign and download" }).click());
+  expect(signed.name).toBe("handover-signed.pdf");
+  const out = await PDFDocument.load(signed.bytes);
+  const pictures = (n: number) => out.getPage(n).node.Resources()?.lookupMaybe(PDFName.of("XObject"), PDFDict)?.keys().length ?? 0;
+  expect(pictures(0)).toBe(1);
+  expect(pictures(1)).toBe(0);
+  expect(await widths(signed.bytes)).toEqual([501, 502]);
+
+  // Or typed.
+  await panel.getByRole("tab", { name: "Type" }).click();
+  await expect(panel.getByRole("button", { name: "Sign and download" })).toBeDisabled();
+  await panel.getByLabel("Your name").fill("Sara Ahmed");
+  await expect(panel.getByRole("button", { name: "Sign and download" })).toBeEnabled();
   console.assertClean();
 });
