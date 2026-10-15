@@ -1,3 +1,4 @@
+import { createServer } from "node:net";
 import { expect, test } from "@playwright/test";
 import { DEMO_PASSWORD } from "../src/server/seed/demo-data";
 import { session } from "./env";
@@ -270,4 +271,56 @@ test("a tool that needs approval is asked for, granted by IT, and then opens", a
   await page.getByRole("button", { name: "Save" }).click();
   await expect(page.getByText("Tool settings saved.").last()).toBeVisible();
   await context.close();
+});
+
+test("the label printer is set up in Settings, tested, and prints tags", async ({ page }) => {
+  // A stand-in for a networked Zebra: takes what is sent to its raw port.
+  const received: string[] = [];
+  const printer = createServer((socket) => {
+    let data = "";
+    socket.on("data", (chunk) => (data += chunk.toString("latin1")));
+    socket.on("end", () => received.push(data));
+  });
+  await new Promise<void>((resolve) => printer.listen(0, "127.0.0.1", resolve));
+  const port = (printer.address() as { port: number }).port;
+  const reset = () =>
+    page.request.put("/api/settings/labelPrinter", { data: { host: "", port: 9100, widthMm: 50, heightMm: 25, dpi: 203, owner: "AP Plus IT" } });
+  try {
+    await page.goto("/en/settings/label-printer");
+    await expect(page.getByRole("button", { name: "Print a test tag" })).toBeDisabled();
+    await page.getByLabel("Printer address").fill("printer one");
+    await page.getByRole("button", { name: "Save" }).click();
+    await expect(page.getByText("Use the printer's IP address or network name.")).toBeVisible();
+
+    await page.getByLabel("Printer address").fill("127.0.0.1");
+    await page.getByLabel("Port").fill(String(port));
+    await choose(page, "Label size", "38 × 25 mm (1.5 × 1 in)");
+    await expect(page.getByLabel("Width (mm)")).toHaveValue("38");
+    await page.getByRole("button", { name: "Save" }).click();
+    await expect(page.getByText("Settings saved.")).toBeVisible();
+    await page.getByRole("button", { name: "Print a test tag" }).click();
+    await expect(page.getByText("A test tag was sent to the printer.")).toBeVisible();
+    await expect.poll(() => received.length).toBe(1);
+    expect(received[0]).toContain("^PW304");
+    expect(received[0]).toContain("^FDAST-0000^FS");
+
+    // Tags go straight to it.
+    await page.goto("/en/assets/tags");
+    await expect(page.getByText("38 × 25 mm labels at 203 dpi")).toBeVisible();
+    await page.getByRole("switch", { name: "Not tagged yet only" }).click();
+    await page.getByRole("checkbox", { name: /^Select AST-/ }).first().check();
+    await page.getByRole("button", { name: "Print on label printer" }).click();
+    await expect(page.getByText("1 tag sent to the label printer.")).toBeVisible();
+    await expect.poll(() => received.length).toBe(2);
+    expect(received[1].match(/\^XA/g)).toHaveLength(1);
+
+    // A printer that does not answer is reported.
+    await new Promise((resolve) => printer.close(resolve));
+    await page.getByRole("checkbox", { name: /^Select AST-/ }).first().check();
+    await page.getByRole("button", { name: "Print on label printer" }).click();
+    await expect(page.getByText("The label printer did not answer.")).toBeVisible();
+  } finally {
+    await reset();
+    printer.close();
+  }
 });

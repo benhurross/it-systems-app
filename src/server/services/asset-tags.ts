@@ -87,6 +87,12 @@ export async function printTags(input: z.infer<typeof assetTagsInput>, origin: s
   return output;
 }
 
+/** Whether tags can go straight to a label printer, and the label's size, without the printer's address. */
+export async function tagSetup() {
+  const { host, widthMm, heightMm, dpi } = await getSetting("labelPrinter");
+  return { printer: host !== "", widthMm, heightMm, dpi };
+}
+
 /** A sample tag on the label printer, to check its address and the label size. */
 export async function testPrint(origin: string, actor: Actor) {
   const setting = await getSetting("labelPrinter");

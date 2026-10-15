@@ -195,3 +195,61 @@ test("documents are attached to an asset, open and download, and a disguised fil
   await expect(item).toHaveCount(0);
   console.assertClean();
 });
+
+test.describe("tags", () => {
+  test("tags are chosen, previewed, and saved for the label printer", async ({ page }, info) => {
+    const console = watchConsole(page);
+    const prefix = unique(info, "TAG-TEST");
+    const ids: number[] = [];
+    for (const n of [1, 2]) {
+      const res = await page.request.post("/api/assets", {
+        data: { name: `${prefix}-${n}`, serial: `SN-${prefix}-${n}`, category: "end_user", type: "laptop", status: "in_use", location: "jeddah", supportStatus: "supported", criticality: "low", monitorMethod: "none" },
+      });
+      expect(res.ok()).toBe(true);
+      ids.push(((await res.json()) as { id: number }).id);
+    }
+    const tags = ids.map((id) => `AST-${String(id).padStart(4, "0")}`);
+
+    await page.goto("/en/assets/inventory");
+    await page.getByRole("tab", { name: "Tags" }).or(page.getByRole("link", { name: "Tags" })).click();
+    await expect(page).toHaveURL(/\/en\/assets\/tags$/);
+    await expect(page.getByRole("switch", { name: "Not tagged yet only" })).toBeChecked();
+    await page.getByLabel("Search by tag, name, serial or location").fill(prefix);
+    const rows = page.getByRole("row").filter({ has: page.getByRole("cell") });
+    await expect(rows).toHaveCount(2);
+    await expect(page.getByText("Select assets to see their tag here.")).toBeVisible();
+    await page.getByRole("checkbox", { name: "Select all shown" }).check();
+    await expect(page.getByText("2 assets selected")).toBeVisible();
+    await expect(page.getByRole("img", { name: `Tag for ${tags[0]}, as it will print` })).not.toHaveClass(/animate-pulse/);
+    await expect(page.getByText("No label printer is set up.")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Print on label printer" })).toHaveCount(0);
+
+    await page.getByLabel("Copies of each tag").fill("2");
+    const [file] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "Download ZPL file" }).click()]);
+    expect(file.suggestedFilename()).toBe("asset-tags.zpl");
+    const zpl = await readFile((await file.path())!, "utf8");
+    for (const tag of tags) expect(zpl).toContain(`^FD${tag}^FS`);
+    expect(zpl.match(/\^PQ2/g)).toHaveLength(2);
+
+    // Tagged now: they leave the list of assets still to tag, and show when.
+    await expect(page.getByText("No assets match.")).toBeVisible();
+    await expect(page.getByText("No assets selected")).toBeVisible();
+    await page.getByRole("switch", { name: "Not tagged yet only" }).click();
+    await expect(rows).toHaveCount(2);
+    await expect(rows.filter({ hasText: "Not yet" })).toHaveCount(0);
+
+    // The PDF opens in a tab of its own, for the printer's driver.
+    await page.getByRole("checkbox", { name: `Select ${tags[1]}` }).check();
+    const [tab] = await Promise.all([page.waitForEvent("popup"), page.getByRole("button", { name: "Open PDF to print" }).click()]);
+    await expect.poll(() => tab.url()).toMatch(/^blob:/);
+    await tab.close();
+
+    // From the asset's own page, its tag is chosen already.
+    await page.goto(`/en/assets/${ids[0]}`);
+    await page.getByRole("link", { name: "Print tag" }).click();
+    await expect(page).toHaveURL(new RegExp(`/en/assets/tags\\?ids=${ids[0]}$`));
+    await expect(page.getByRole("checkbox", { name: `Select ${tags[0]}` })).toBeChecked();
+    await expect(page.getByText("1 asset selected")).toBeVisible();
+    console.assertClean();
+  });
+});

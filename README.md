@@ -1,6 +1,6 @@
 # AP Plus IT Systems
 
-The IT team's web app: helpdesk tickets, assets and the CMDB, software licences, purchases and contracts, network monitoring, dashboards and KPIs, ID cards, and PDF tools. One Windows computer runs it, and everyone else opens it in a browser on the office network.
+The IT team's web app: helpdesk tickets, assets with printed asset tags, and the CMDB, software licences, purchases and contracts, network monitoring, dashboards and KPIs, ID cards, and PDF tools. One Windows computer runs it, and everyone else opens it in a browser on the office network.
 
 The design and the full feature list are in [PLAN.md](PLAN.md).
 
@@ -190,6 +190,19 @@ The data moves with a backup: the database, the uploaded files and the settings.
 - Tell people the new address.
 
 Once everything works on the new computer for a few days, you can remove the app from the old one.
+
+## Asset tags
+
+Assets → **Tags** prints a tag for each asset, to stick on the device: a QR code that opens the asset in the app on a phone, a barcode of the asset number for a handheld scanner, the number, and the asset's name and serial. The list shows the assets still to tag; tick them, then print.
+
+Set up the label printer once, in **Settings → Label printer**:
+
+| Printer | Set it up like this | Print with |
+| --- | --- | --- |
+| Zebra on the network (its own IP address) | Give the printer a fixed IP address, enter it under **Printer address** (port 9100), Save, then **Print a test tag**. | **Print on label printer** sends the tags straight to it. |
+| Zebra on a computer, by USB | Leave **Printer address** empty. On that computer, install the Zebra driver and set its label size to match. | **Open PDF to print**, then print to the Zebra. In the print dialog, choose the Zebra, actual size (100%), no margins. |
+
+Either way, set the **label size** and the printer's **resolution** (203 or 300 dpi, shown on the label under the printer) to match. **Download ZPL file** saves the tags in the printer's own language, for Zebra's utilities.
 
 ## Commands
 

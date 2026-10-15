@@ -99,6 +99,7 @@ Employees get a reduced shell with three items: My requests, New request and Kno
 - **Service desk**: SLA target hours per priority, and optionally per issue type (an issue type with its own target uses it whatever the priority). The due time is stored on each ticket when it opens or changes priority, so changing a target never rewrites past SLA results.
 - **Monitoring**: checks on or off, interval, timeout, degraded-latency threshold and history retention. The scheduler picks up changes without a restart.
 - **KPIs**: baseline and target per KPI per year, for the workbook's five KPIs.
+- **Label printer**: the Zebra printer for asset tags (address and port, or none for a printer on a computer), the label size and resolution, the name printed on the tags, and a test print.
 - **Organisation**: the name shown in the app and on exports, and the fiscal year start month.
 - **Audit log**: every create, update and delete, with who, when and what. It is read only; no endpoint changes or deletes entries.
 
@@ -410,6 +411,13 @@ Requested by the owner: everyday document tools for everyone, under a "Workspace
 - [x] Every tool is on for everyone. Settings → Tools sets each one to on, "Needs approval" or off, and can keep it from whole departments. One person can be allowed or blocked whatever the setting
 - [x] When a tool needs approval, an employee's "Request access" opens a ticket for IT; IT grants or declines it in Settings → Tools, which resolves the ticket with the answer (the person gets the usual email)
 - [x] Each file a tool makes is counted (never the file itself), shown in Settings → Tools for the last 30 days and in all
+
+### Asset tags (added after Phase 10)
+Requested by the owner, to start tagging every asset with a Zebra label printer (model, connection and resolution not chosen yet, so all are settings).
+- [x] A tag (50 × 25 mm by default; 38 × 25, 76 × 51 or any size) has a QR code that opens the asset in the app, through the short /a/142 so the code stays small; a Code 128 barcode of the asset number (AST-0142) for a handheld scanner, with the quiet space a scanner needs; the number large; the name and serial (cut short to fit, the number made smaller to fit, never cut); and the name on the tags (AP Plus IT). Text is printable ASCII, which the printer's font holds
+- [x] A tag is laid out once, in printer dots for 203 or 300 dpi, as boxes and lines of text, and written two ways from that one layout: ZPL (the printer's language) and a PDF the size of the label. Both QR code and barcode were checked by decoding them with a barcode reader at each size and resolution, and the ZPL is checked against the PDF's layout box for box
+- [x] Assets → Tags lists the assets still to tag (or all), with search; tick them (or all shown, up to 500), set copies, see the first tag as it will print, then: Print on label printer (ZPL straight to a networked Zebra on its raw port, 9100), Open PDF to print (for a printer on a computer, through its driver), or Download ZPL file. Each asset records when its tag was printed, so the list of those still to tag shrinks as the tagging goes; each print is in the audit log. An asset's page has Print tag, which opens Tags with it chosen
+- [x] Settings → Label printer: the name on the tags, the printer's address and port (empty for a printer on a computer), the label size (with presets) and resolution, and Print a test tag. A printer that does not answer is reported; the address is checked before it is saved
 
 ### Look, feel and speed (added after Phase 10)
 - [x] The dashboard and KPIs load at once: dates were worked out with a new formatter each time (thousands per page), now each formatter is made once; the dashboard's monthly chart counts each ticket once; monitoring checks are indexed by time, so the last day is read without scanning the month kept

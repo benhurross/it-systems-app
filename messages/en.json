@@ -473,7 +473,8 @@
     "required": "Required",
     "ipRequired": "Add an IP address to monitor this device.",
     "portRequired": "Add the TCP port to check.",
-    "employeeNumber": "Use letters, digits and dashes only."
+    "employeeNumber": "Use letters, digits and dashes only.",
+    "printerAddress": "Use the printer's IP address or network name."
   },
   "settings": {
     "title": "Settings",
@@ -488,6 +489,7 @@
       "audit": "Audit log",
       "email": "Email",
       "idCard": "ID card",
+      "labelPrinter": "Label printer",
       "tools": "Tools"
     },
     "users": {
@@ -696,6 +698,33 @@
       "removed": "Exception removed.",
       "exceptionSaved": "Exception saved.",
       "by": "by {name}"
+    },
+    "labelPrinter": {
+      "title": "Label printer",
+      "intro": "The Zebra printer for asset tags, and the labels it takes.",
+      "owner": "Name on the tags",
+      "ownerHint": "Printed above the asset number, for example AP Plus IT.",
+      "host": "Printer address",
+      "hostHint": "The printer's IP address, for example 192.168.0.50. Leave it empty for a printer connected to a computer by USB: tags are then printed from the browser.",
+      "port": "Port",
+      "portHint": "9100 for Zebra printers.",
+      "size": "Label size",
+      "sizes": {
+        "50x25": "50 × 25 mm (2 × 1 in)",
+        "38x25": "38 × 25 mm (1.5 × 1 in)",
+        "76x51": "76 × 51 mm (3 × 2 in)",
+        "custom": "Another size"
+      },
+      "width": "Width (mm)",
+      "height": "Height (mm)",
+      "dpi": "Printer resolution",
+      "dpiHint": "On the label under the printer: 203 dpi for most desktop Zebras, 300 dpi for high-resolution models.",
+      "testTitle": "Test print",
+      "testDescription": "Prints a sample tag, to check the printer's address and that the tag fits the label. Save the settings first.",
+      "test": "Print a test tag",
+      "testSent": "A test tag was sent to the printer.",
+      "testNeedsAddress": "Save the printer's address first.",
+      "unreachable": "The printer did not answer. Check its address, and that it is on and connected to the network."
     }
   },
   "kpi": {
@@ -861,7 +890,8 @@
     "intro": "Every device, server and system the company owns, where it is and who has it.",
     "tabs": {
       "inventory": "Inventory",
-      "discovery": "Discovery"
+      "discovery": "Discovery",
+      "tags": "Tags"
     },
     "add": "Add asset",
     "edit": "Edit asset",
@@ -920,7 +950,36 @@
     "back": "All assets",
     "purchase": "Bought through",
     "openCmdb": "Open in CMDB",
-    "networkStatus": "Network status"
+    "networkStatus": "Network status",
+    "tags": {
+      "printTag": "Print tag",
+      "list": "Assets to tag",
+      "search": "Search by tag, name, serial or location",
+      "untaggedOnly": "Not tagged yet only",
+      "selectAll": "Select all shown",
+      "select": "Select {tag}",
+      "tag": "Tag",
+      "name": "Name",
+      "location": "Location",
+      "printed": "Tag printed",
+      "notPrinted": "Not yet",
+      "empty": "No assets match.",
+      "allTagged": "Every asset has a tag. Turn off “Not tagged yet only” to print one again.",
+      "limited": "Showing {shown} of {total}. Search to narrow the list.",
+      "selected": "{count, plural, =0 {No assets selected} one {# asset selected} other {# assets selected}}",
+      "size": "{width} × {height} mm labels at {dpi} dpi",
+      "previewEmpty": "Select assets to see their tag here.",
+      "preview": "Tag for {tag}, as it will print",
+      "copies": "Copies of each tag",
+      "tooMany": "Up to {most} tags at a time.",
+      "print": "Print on label printer",
+      "pdf": "Open PDF to print",
+      "zpl": "Download ZPL file",
+      "noPrinter": "No label printer is set up. Open the PDF and print it through the printer's driver, or ask an admin to add the printer in Settings → Label printer.",
+      "sent": "{count, plural, one {# tag sent} other {# tags sent}} to the label printer.",
+      "unreachable": "The label printer did not answer. Check it is on and connected to the network, then try again.",
+      "failed": "The tags could not be made. Please try again."
+    }
   },
   "discovery": {
     "intro": "Sweep a subnet from the server to find devices on the network and compare them with the inventory.",

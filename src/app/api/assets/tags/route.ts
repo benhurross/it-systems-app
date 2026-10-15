@@ -1,6 +1,12 @@
 import { assetTagsInput } from "@/lib/schemas";
 import { body, handler, requireUser } from "@/server/http";
-import { printTags } from "@/server/services/asset-tags";
+import { printTags, tagSetup } from "@/server/services/asset-tags";
+
+/** What the Tags page needs to know: whether there is a label printer, and the label's size. */
+export const GET = handler(async () => {
+  await requireUser("it");
+  return tagSetup();
+});
 
 /** Asset tags: sent to the label printer, or a PDF or ZPL file of them. */
 export const POST = handler(async (req) => {

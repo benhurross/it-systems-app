@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, ArrowRightLeft, Archive, Network, Pencil } from "lucide-react";
+import { Archive, ArrowLeft, ArrowRightLeft, Network, Pencil, Tag } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { use, useState, type ReactNode } from "react";
 import { AttachmentList, AttachmentsCard } from "@/components/attachments";
@@ -71,6 +71,12 @@ export default function AssetPage({ params }: PageProps<"/[locale]/assets/[id]">
             <Link href={`/cmdb?item=${asset.id}`}>
               <Network />
               {t("assets.openCmdb")}
+            </Link>
+          </Button>
+          <Button variant="outline" asChild>
+            <Link href={`/assets/tags?ids=${asset.id}`}>
+              <Tag />
+              {t("assets.tags.printTag")}
             </Link>
           </Button>
           <Button variant="outline" onClick={() => setDialog("edit")}>

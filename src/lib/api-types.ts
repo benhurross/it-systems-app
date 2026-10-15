@@ -2,6 +2,7 @@
  * Response shapes, derived from the services so the client can never drift from the server.
  * JSON turns dates into strings, which `Json` reflects. Type-only imports: nothing server-side is bundled.
  */
+import type * as assetTags from "@/server/services/asset-tags";
 import type * as assets from "@/server/services/assets";
 import type * as attachments from "@/server/services/attachments";
 import type * as auditLog from "@/server/services/audit-log";
@@ -51,6 +52,7 @@ export type TicketDetail = Result<typeof tickets.getTicket>;
 export type Article = Item<typeof kb.listArticles>;
 export type Change = Item<typeof changes.listChanges>;
 export type Asset = Item<typeof assets.listAssets>;
+export type TagSetup = Result<typeof assetTags.tagSetup>;
 export type AssetDetail = Result<typeof assets.getAsset>;
 export type Relationship = Item<typeof assets.listRelationships>;
 export type License = Item<typeof licenses.listLicenses>;

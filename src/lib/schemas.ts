@@ -454,7 +454,7 @@ export const labelPrinterSettings = z.object({
     .string()
     .trim()
     .max(253)
-    .regex(/^[A-Za-z0-9.:-]*$/, "Use the printer's IP address or name"),
+    .regex(/^[A-Za-z0-9.:-]*$/, "validation.printerAddress"),
   port: z.number().int().min(1).max(65_535),
   widthMm: z.number().min(20).max(120),
   heightMm: z.number().min(10).max(120),
