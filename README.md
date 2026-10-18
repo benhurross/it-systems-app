@@ -221,12 +221,27 @@ Either way, set the **label size** and the printer's **resolution** (203 or 300 
 | `npm run user:password -- <email>` | Gives an account a new password and prints it (or set one: add `"<new password>"`, 10 characters or more). Signs that account out everywhere. For when nobody who can sign in is left to reset it in Settings → Users. |
 | `npm run people:check "<file.xlsx>"` | Reports how the staff list would be loaded. Changes nothing. |
 | `npm run people:ids "<file.xlsx>"` | Fills in employee ID numbers from the staff list. |
-| `npm run tickets:import "<file.xlsx>"` | Reports what loading the ticket log would do. Add `replace` to load it in place of the current tickets. |
-| `npm run demo:clear` | Reports which made-up demo records (assets, software, vendors, finance, projects, risks, changes) it would remove. Add `confirm` to back up and remove them. People, accounts and tickets stay. |
+| `npm run tickets:import "<file.xlsx>"` | Reports what loading the ticket log would do. Add `add` to add its tickets to those in the app (a newer part of the log, say), or `replace` to load it in place of every ticket. |
+| `npm run demo:clear` | Reports which made-up demo records (assets, software, vendors, finance, projects, risks, changes, knowledge articles) it would remove. Add `confirm` to back up and remove them. People, accounts and tickets stay. |
 | `npm run backup` | Makes a backup. |
 | `npm run restore -- latest` | Restores the newest backup (or give a backup folder). |
 
 The staff list and the ticket log contain real people's details. They stay on this computer, and are never added to Git: `*.xlsx` is ignored.
+
+### Adding a newer part of the ticket log
+
+When the log in Excel has gone on since it was loaded, load just its new rows with `add`; the tickets made in the app stay:
+
+```bash
+npm run tickets:import "<file.xlsx>"        # reports what it would do; changes nothing
+npm run tickets:import "<file.xlsx>" add
+```
+
+- A ticket the log has not loaded before is added under the log's number.
+- A ticket the log loaded before is brought up to date from it (its comments in the app stay).
+- A ticket made in the app whose number the log also uses moves to a new number after the last one, with its comments, emails and history. The report lists each move (for example `IT001560 is now IT001634`), so anyone who has the old number can be told.
+
+Make a backup first (`npm run backup`); `npm run restore -- latest` undoes it.
 
 ## Trying it out with demo data
 
@@ -240,7 +255,7 @@ npm run db:seed:demo
 
 ### From demo data to your own inventory
 
-If the database was loaded with the demo data and your staff list (`npm run db:seed:demo "<file.xlsx>"`), the people are real but the assets, software, vendors, contracts, purchases and budget, projects, risks and changes are made up. To replace them with your own:
+If the database was loaded with the demo data and your staff list (`npm run db:seed:demo "<file.xlsx>"`), the people are real but the assets, software, vendors, contracts, purchases and budget, projects, risks, changes and knowledge articles are made up. To replace them with your own:
 
 1. See what would go, without changing anything:
    ```bash
@@ -250,7 +265,7 @@ If the database was loaded with the demo data and your staff list (`npm run db:s
    ```bash
    npm run demo:clear confirm
    ```
-   People, accounts, tickets, ID cards, the knowledge base, the dropdown lists and settings stay. Tickets that named a made-up device keep everything else. To undo it, `npm run restore -- latest`.
+   People, accounts, tickets, ID cards, the dropdown lists and settings stay. Tickets that named a made-up device keep everything else. To undo it, `npm run restore -- latest`.
 3. Add your devices:
    - **Assets → Discovery** scans your network (for example `192.168.0.0/24`) and lists what answers, to add with a click. It only finds devices that are switched on.
    - **Assets → Import** loads an Excel or CSV sheet (Download template gives the columns). It shows what each row will do before anything changes. Later, to fill in a column for many assets at once (AnyDesk IDs, say), export the inventory, fill it in, and import it back: rows with a tag or a known serial number update that asset.

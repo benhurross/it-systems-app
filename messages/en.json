@@ -35,7 +35,11 @@
     "confirm": "Confirm",
     "loadFailed": "This could not be loaded.",
     "select": "Select",
-    "view": "View"
+    "view": "View",
+    "confirmDelete": "Delete {name}?",
+    "deleteForGood": "It is removed for good; only restoring a backup brings it back.",
+    "deleted": "{name} deleted.",
+    "keep": "Keep it"
   },
   "nav": {
     "groups": {
@@ -857,7 +861,8 @@
     "saved": "Article saved.",
     "empty": "No articles match.",
     "back": "All articles",
-    "articleTitle": "Title"
+    "articleTitle": "Title",
+    "deleteDetail": "Tickets that pointed to it stay."
   },
   "changes": {
     "title": "Changes",
@@ -885,7 +890,8 @@
     "saved": "Change saved.",
     "decided": "Change updated.",
     "back": "All changes",
-    "closedNote": "This change is closed and can no longer be edited."
+    "closedNote": "This change is closed and can no longer be edited.",
+    "deleteDetail": "The ticket and asset it names stay."
   },
   "assets": {
     "title": "Assets",
@@ -1213,7 +1219,8 @@
     "taskSaved": "Task saved.",
     "taskDeleted": "Task deleted.",
     "empty": "No tasks",
-    "noProjects": "No projects yet."
+    "noProjects": "No projects yet.",
+    "deleteDetail": "Its tasks go with it."
   },
   "finance": {
     "title": "Finance",

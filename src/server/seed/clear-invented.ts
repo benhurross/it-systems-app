@@ -9,6 +9,7 @@ import {
   changes,
   contracts,
   discoveryRuns,
+  kbArticles,
   licenses,
   projects,
   purchases,
@@ -21,7 +22,7 @@ import { removeStoredFile } from "../files";
 /**
  * Taking out what the demo data made up, for a database that was loaded with it and the real staff
  * list, and is now to hold the real inventory. People, accounts, tickets (and their comments and
- * emails), ID cards, joiners and leavers, the knowledge base and the dropdown lists stay.
+ * emails), ID cards, joiners and leavers and the dropdown lists stay.
  *
  * A record someone added in the app is kept: the audit log has who created it. What hangs off a
  * record goes with it (an asset's movements, CMDB links, installs and monitoring; a project's tasks;
@@ -41,6 +42,7 @@ export const INVENTED: Invented[] = [
   { name: "risks", table: risks, entity: "risk" },
   { name: "vulnerabilities", table: vulnerabilities, entity: "vulnerability" },
   { name: "changes", table: changes, entity: "change" },
+  { name: "knowledge articles", table: kbArticles, entity: "article" },
   { name: "network scans", table: discoveryRuns, entity: "discovery" },
 ];
 

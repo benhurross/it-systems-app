@@ -335,6 +335,7 @@ export function FormDialog<TIn extends FieldValues, TOut extends FieldValues = T
   submitLabel,
   pending,
   wide,
+  extra,
   children,
 }: {
   open: boolean;
@@ -346,6 +347,8 @@ export function FormDialog<TIn extends FieldValues, TOut extends FieldValues = T
   submitLabel?: string;
   pending?: boolean;
   wide?: boolean;
+  /** A further action, at the start of the buttons: Delete, say. */
+  extra?: ReactNode;
   children: ReactNode;
 }) {
   const t = useTranslations("common");
@@ -365,6 +368,7 @@ export function FormDialog<TIn extends FieldValues, TOut extends FieldValues = T
           <FieldGroup>{children}</FieldGroup>
         </Form>
         <DialogFooter>
+          {extra && <div className="flex sm:me-auto">{extra}</div>}
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             {t("cancel")}
           </Button>

@@ -10,12 +10,13 @@ import { EnumBadge } from "@/components/badges";
 import { ChangeDialog } from "@/components/changes/change-dialog";
 import { FormDialog, SelectField } from "@/components/form";
 import { StatusPage } from "@/components/status-page";
+import { DeleteRecord } from "@/components/delete-record";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useApi, useApiMutation } from "@/hooks/use-api";
 import { useFormat } from "@/hooks/use-format";
-import { Link } from "@/i18n/navigation";
+import { Link, useRouter } from "@/i18n/navigation";
 import { api } from "@/lib/api";
 import type { Change } from "@/lib/api-types";
 import { CHANGE_RESULTS, ref, type ChangeStatus } from "@/lib/domain";
@@ -24,6 +25,7 @@ import { nextChangeStatuses } from "@/lib/workflows";
 export default function ChangePage({ params }: PageProps<"/[locale]/changes/[id]">) {
   const { id } = use(params);
   const t = useTranslations();
+  const router = useRouter();
   const format = useFormat();
   const [editing, setEditing] = useState(false);
   const [implementing, setImplementing] = useState(false);
@@ -73,6 +75,7 @@ export default function ChangePage({ params }: PageProps<"/[locale]/changes/[id]
               {t("changes.reject")}
             </Button>
           )}
+          <DeleteRecord path={`/changes/${change.id}`} name={`${ref("change", change.id)} ${change.title}`} detail={t("changes.deleteDetail")} onDeleted={() => router.push("/changes")} />
         </div>
       </div>
       {closed && <p className="text-sm text-muted-foreground">{t("changes.closedNote")}</p>}

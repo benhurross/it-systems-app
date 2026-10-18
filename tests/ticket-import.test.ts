@@ -241,4 +241,54 @@ describe("loading the log", () => {
     expect(again.accounts).toEqual([]);
     expect(again.added).toEqual([]);
   });
+
+  it("adds a newer part of the log, moving tickets made in the app off the numbers it uses", async () => {
+    // The log as loaded so far: 1, 2, 4, 5 and 6. Then IT opens a ticket in the app, number 7.
+    const it_ = await asUser("it@applus.test");
+    const [requester] = await db.select().from(s.employees).limit(1);
+    const made = await tickets.createTicket(it_, {
+      type: "request", subject: "Made in the app", description: "New.", issueType: "other", location: "jeddah", priority: "medium", requesterId: requester.id, assigneeId: null, assetId: null,
+    });
+    expect(made.id).toBe(7);
+    await tickets.addComment(it_, made.id, { body: "On it." });
+
+    // The log has since gone on: 6 is now closed, and it numbered its own tickets 7 and 8.
+    const newer = cleanTickets(
+      [
+        HEADER,
+        ["IT000006", "02/05/2024 12:00:00", "Jeddah", null, "Hardware Issues", "Test Person", "Screen", "Closed", "03/05/2024 09:00:00", "Helpdesk", null, null],
+        ["IT000007", "04/05/2024 08:00:00", "Jeddah", null, "Email Issues", "Test Person", "From the log", "Closed", "04/05/2024 09:00:00", "Helpdesk", null, null],
+        ["IT000008", "05/05/2024 08:00:00", "Riyadh", null, "Printer Issues", "Test Person", "Toner", "Closed", "05/05/2024 09:00:00", "Helpdesk", null, null],
+      ],
+      lists,
+    ).tickets;
+    const before = await db.$count(s.tickets);
+    const dry = await importTickets(newer, { replace: false, plan: true });
+    expect(dry).toMatchObject({ updated: [6], moved: [{ from: 7, to: 9 }] });
+    expect(await db.$count(s.tickets)).toBe(before);
+
+    const report = await importTickets(newer, { replace: false, add: true });
+    expect(report).toMatchObject({ updated: [6], moved: [{ from: 7, to: 9 }] });
+    const rows = await db.select().from(s.tickets).orderBy(s.tickets.id);
+    expect(rows.map((t) => [t.id, t.subject])).toEqual([
+      [1, "Outlook archive"], [2, "New mouse"], [4, "Clean printers"], [5, "Paper jam"], [6, "Screen"], [7, "From the log"], [8, "Toner"], [9, "Made in the app"],
+    ]);
+    expect(rows.find((t) => t.id === 6)).toMatchObject({ status: "closed" });
+    // The app's ticket keeps its comment and its history, under its new number.
+    expect((await db.select().from(s.ticketComments).where(eq(s.ticketComments.ticketId, 9))).map((c) => c.body)).toEqual(["On it."]);
+    expect(await db.$count(s.ticketComments, eq(s.ticketComments.ticketId, 7))).toBe(0);
+    const history = await db.select().from(s.auditLog).where(and(eq(s.auditLog.entity, "ticket"), eq(s.auditLog.entityId, "9"))).orderBy(s.auditLog.at);
+    expect(history.map((h) => h.summary)).toEqual(expect.arrayContaining([expect.stringMatching(/^Opened IT000007/), "Renumbered IT000007 to IT000009: the ticket log uses IT000007"]));
+    const logged = await db.select().from(s.auditLog).where(and(eq(s.auditLog.entity, "ticket"), eq(s.auditLog.entityId, "6"))).orderBy(s.auditLog.at);
+    expect(logged.map((h) => h.summary)).toEqual(["Opened IT000006: Screen (from the ticket log)", "Updated IT000006: status closed"]);
+
+    // New tickets carry on after the moved one; loading the same part again changes nothing more.
+    const after = await tickets.createTicket(it_, {
+      type: "request", subject: "Next", description: "New.", issueType: "other", location: "jeddah", priority: "medium", requesterId: requester.id, assigneeId: null, assetId: null,
+    });
+    expect(after.id).toBe(10);
+    const again = await importTickets(newer, { replace: false, add: true });
+    expect(again).toMatchObject({ updated: [6, 7, 8], moved: [] });
+    expect(await db.$count(s.tickets)).toBe(9);
+  });
 });

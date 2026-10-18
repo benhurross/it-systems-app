@@ -45,6 +45,13 @@ export async function updateProject(id: number, input: z.infer<typeof projectInp
   return row;
 }
 
+/** Removes a project and its tasks for good. */
+export async function deleteProject(id: number, actor: Actor) {
+  const row = one(await db.delete(projects).where(eq(projects.id, id)).returning());
+  await audit(actor, "delete", "project", id, `Deleted ${ref("project", id)}: ${row.name}`);
+  return { id };
+}
+
 export async function createTask(projectId: number, input: z.infer<typeof taskInput>, actor: Actor) {
   const row = one(await db.insert(projectTasks).values({ ...input, projectId }).returning());
   await audit(actor, "create", "project", projectId, `Added task "${row.title}" to ${ref("project", projectId)}`);

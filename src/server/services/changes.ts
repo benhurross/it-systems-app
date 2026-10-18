@@ -50,6 +50,13 @@ export async function updateChange(id: number, input: z.infer<typeof changeInput
   return row;
 }
 
+/** Removes a change for good; the ticket and asset it named stay. */
+export async function deleteChange(id: number, actor: Actor) {
+  const row = one(await db.delete(changes).where(eq(changes.id, id)).returning());
+  await audit(actor, "delete", "change", id, `Deleted ${ref("change", id)}: ${row.title}`);
+  return { id };
+}
+
 export async function decideChange(id: number, input: z.infer<typeof changeDecision>, actor: Actor) {
   const current = await getChange(id);
   if (!nextChangeStatuses(current.status).includes(input.status)) {

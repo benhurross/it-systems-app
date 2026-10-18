@@ -29,6 +29,12 @@ export async function updateRisk(id: number, input: z.infer<typeof riskInput>, a
   return row;
 }
 
+export async function deleteRisk(id: number, actor: Actor) {
+  const row = one(await db.delete(risks).where(eq(risks.id, id)).returning());
+  await audit(actor, "delete", "risk", id, `Deleted ${ref("risk", id)}: ${row.title}`);
+  return { id };
+}
+
 export async function listVulnerabilities() {
   return db
     .select({ ...getTableColumns(vulnerabilities), ownerName: users.name, assetName: assets.name })
@@ -59,4 +65,10 @@ export async function updateVulnerability(id: number, input: z.infer<typeof vuln
   );
   await audit(actor, "update", "vulnerability", id, `Updated ${ref("vulnerability", id)} (${row.status})`);
   return row;
+}
+
+export async function deleteVulnerability(id: number, actor: Actor) {
+  const row = one(await db.delete(vulnerabilities).where(eq(vulnerabilities.id, id)).returning());
+  await audit(actor, "delete", "vulnerability", id, `Deleted ${ref("vulnerability", id)}: ${row.title}`);
+  return { id };
 }

@@ -37,3 +37,9 @@ export async function updateArticle(user: SessionUser, id: number, input: z.infe
   await audit(user, "update", "article", id, `Updated ${ref("article", id)} (${row.status})`);
   return row;
 }
+
+export async function deleteArticle(user: SessionUser, id: number) {
+  const row = one(await db.delete(kbArticles).where(eq(kbArticles.id, id)).returning());
+  await audit(user, "delete", "article", id, `Deleted ${ref("article", id)}: ${row.title}`);
+  return { id };
+}

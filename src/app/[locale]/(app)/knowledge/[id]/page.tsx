@@ -7,13 +7,14 @@ import { useCurrentUser } from "@/components/app-shell/current-user";
 import { EnumBadge } from "@/components/badges";
 import { StatusBadge } from "@/components/status-badge";
 import { StatusPage } from "@/components/status-page";
+import { DeleteRecord } from "@/components/delete-record";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useApi } from "@/hooks/use-api";
 import { useFormat } from "@/hooks/use-format";
 import { useLookups } from "@/hooks/use-lookups";
-import { Link } from "@/i18n/navigation";
+import { Link, useRouter } from "@/i18n/navigation";
 import type { Article } from "@/lib/api-types";
 import { ref } from "@/lib/domain";
 import { can } from "@/lib/permissions";
@@ -21,6 +22,7 @@ import { can } from "@/lib/permissions";
 export default function ArticlePage({ params }: PageProps<"/[locale]/knowledge/[id]">) {
   const { id } = use(params);
   const t = useTranslations();
+  const router = useRouter();
   const format = useFormat();
   const lookups = useLookups();
   const user = useCurrentUser();
@@ -51,12 +53,15 @@ export default function ArticlePage({ params }: PageProps<"/[locale]/knowledge/[
         <div className="flex flex-wrap items-start justify-between gap-4">
           <h1 className="text-2xl font-semibold tracking-tight">{article.title}</h1>
           {it && (
-            <Button asChild variant="outline">
-              <Link href={`/knowledge/${article.id}/edit`}>
-                <Pencil />
-                {t("kb.edit")}
-              </Link>
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button asChild variant="outline">
+                <Link href={`/knowledge/${article.id}/edit`}>
+                  <Pencil />
+                  {t("kb.edit")}
+                </Link>
+              </Button>
+              <DeleteRecord path={`/kb/${article.id}`} name={article.title} detail={t("kb.deleteDetail")} onDeleted={() => router.push("/knowledge")} />
+            </div>
           )}
         </div>
         <p className="text-sm text-muted-foreground">

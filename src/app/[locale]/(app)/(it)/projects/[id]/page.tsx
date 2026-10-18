@@ -8,12 +8,13 @@ import { TaskProgress } from "@/components/projects/progress-cell";
 import { ProjectDialog, TaskDialog, toTaskInput } from "@/components/projects/project-dialogs";
 import { StatusBadge } from "@/components/status-badge";
 import { StatusPage } from "@/components/status-page";
+import { DeleteRecord } from "@/components/delete-record";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useApi, useApiMutation } from "@/hooks/use-api";
 import { useFormat } from "@/hooks/use-format";
-import { Link } from "@/i18n/navigation";
+import { Link, useRouter } from "@/i18n/navigation";
 import { api } from "@/lib/api";
 import type { ProjectDetail } from "@/lib/api-types";
 import { isoDate } from "@/lib/dates";
@@ -26,6 +27,7 @@ type Task = ProjectDetail["tasks"][number];
 export default function ProjectPage({ params }: PageProps<"/[locale]/projects/[id]">) {
   const { id } = use(params);
   const t = useTranslations();
+  const router = useRouter();
   const format = useFormat();
   const [dialog, setDialog] = useState<"edit" | "task" | Task | null>(null);
   const [dropTarget, setDropTarget] = useState<TaskStatus | null>(null);
@@ -62,10 +64,13 @@ export default function ProjectPage({ params }: PageProps<"/[locale]/projects/[i
           <h1 className="text-2xl font-semibold tracking-tight">{project.name}</h1>
           {project.description && <p className="max-w-2xl text-muted-foreground">{project.description}</p>}
         </div>
-        <Button variant="outline" onClick={() => setDialog("edit")}>
-          <Pencil />
-          {t("common.edit")}
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" onClick={() => setDialog("edit")}>
+            <Pencil />
+            {t("common.edit")}
+          </Button>
+          <DeleteRecord path={`/projects/${project.id}`} name={project.name} detail={t("projects.deleteDetail")} onDeleted={() => router.push("/projects")} />
+        </div>
       </div>
 
       <Card>

@@ -6,8 +6,8 @@ import { clearInvented, inventedReport } from "@/server/seed/clear-invented";
 //   npm run demo:clear            reports what it would remove, changing nothing
 //   npm run demo:clear confirm    makes a backup (npm run backup), then removes them
 // ("confirm" may also be given as --confirm; PowerShell drops the `--` npm needs to pass that on.)
-// People, accounts, tickets, ID cards, joiners and leavers, the knowledge base and the dropdown
-// lists stay, and so does every record someone added in the app.
+// People, accounts, tickets, ID cards, joiners and leavers and the dropdown lists stay, and so does
+// every record someone added in the app.
 const args = process.argv.slice(2);
 const confirm = args.includes("confirm") || args.includes("--confirm");
 
@@ -17,7 +17,7 @@ for (const r of report) {
   const kept = r.kept ? `, keeping ${r.kept} added in the app` : "";
   console.log(`  ${r.name.padEnd(18)} ${String(r.total - r.kept).padStart(5)} of ${r.total}${kept}`);
 }
-console.log("Kept: people, accounts, tickets, ID cards, joiners and leavers, the knowledge base, the dropdown lists and settings.");
+console.log("Kept: people, accounts, tickets, ID cards, joiners and leavers, the dropdown lists and settings.");
 
 if (!confirm) {
   await db.$client.end();

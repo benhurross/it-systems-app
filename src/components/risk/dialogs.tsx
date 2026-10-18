@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslations } from "next-intl";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
+import { DeleteRecord } from "@/components/delete-record";
 import { ComboboxField, DateField, FormDialog, SelectField, TextareaField, TextField } from "@/components/form";
 import { useApi, useApiMutation } from "@/hooks/use-api";
 import { useLookups } from "@/hooks/use-lookups";
@@ -49,6 +50,7 @@ export function RiskDialog({ risk, onClose }: { risk?: Risk; onClose: () => void
       onSubmit={(values) => save.mutate(values)}
       pending={save.isPending}
       wide
+      extra={risk && <DeleteRecord path={`/risks/${risk.id}`} name={risk.title} onDeleted={onClose} />}
     >
       <TextField name="title" label={t("risk.name")} />
       <div className="grid gap-4 sm:grid-cols-2">
@@ -97,6 +99,7 @@ export function VulnerabilityDialog({ vulnerability, onClose }: { vulnerability?
       onSubmit={(values) => save.mutate(values)}
       pending={save.isPending}
       wide
+      extra={vulnerability && <DeleteRecord path={`/vulnerabilities/${vulnerability.id}`} name={vulnerability.title} onDeleted={onClose} />}
     >
       <TextField name="title" label={t("vulns.name")} />
       <div className="grid gap-4 sm:grid-cols-2">

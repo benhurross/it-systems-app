@@ -55,7 +55,7 @@ describe("clearing what the demo made up", () => {
     expect(files).toBe(1);
 
     expect((await db.select({ id: s.assets.id, name: s.assets.name }).from(s.assets))).toEqual([{ id: realId, name: "LT-REAL-01" }]);
-    for (const table of [s.vendors, s.licenses, s.contracts, s.purchases, s.budgets, s.projects, s.projectTasks, s.risks, s.vulnerabilities, s.changes, s.discoveryRuns, s.assetMovements, s.relationships, s.licenseInstalls]) {
+    for (const table of [s.vendors, s.licenses, s.contracts, s.purchases, s.budgets, s.projects, s.projectTasks, s.risks, s.vulnerabilities, s.changes, s.kbArticles, s.discoveryRuns, s.assetMovements, s.relationships, s.licenseInstalls]) {
       expect(await rows(table)).toBe(0);
     }
     // Only the real laptop's monitoring and its invoice are left.

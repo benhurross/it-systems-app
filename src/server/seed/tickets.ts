@@ -388,7 +388,38 @@ const findPerson = (fix: PersonFix, people: Person[]) =>
  * Without it, only reports what would happen. The People sheet, when given, decides who names in
  * the log are before any guessing.
  */
-export async function importTickets(tickets: LoggedTicket[], { replace, people: fixes = [] }: { replace: boolean; people?: PersonFix[] }) {
+/** Who wrote a ticket's history when it came from the log. */
+const FROM_LOG = "Ticket log";
+
+/**
+ * With `add`, the log's tickets are added to those in the app instead of replacing them: a ticket
+ * the log has already loaded is brought up to date, and a ticket made in the app whose number the
+ * log uses moves to a new number after the last, with its comments, emails and history.
+ */
+async function addPlan(tickets: LoggedTicket[]) {
+  const numbers = tickets.map((t) => t.number);
+  const taken = numbers.length ? await db.select({ id: s.tickets.id }).from(s.tickets).where(inArray(s.tickets.id, numbers)) : [];
+  const ids = taken.map((t) => t.id);
+  const logged = ids.length
+    ? await db
+        .selectDistinct({ id: s.auditLog.entityId })
+        .from(s.auditLog)
+        .where(sql`${s.auditLog.entity} = 'ticket' AND ${s.auditLog.action} = 'create' AND ${s.auditLog.userName} = ${FROM_LOG} AND ${inArray(s.auditLog.entityId, ids.map(String))}`)
+    : [];
+  const fromLog = new Set(logged.map((l) => Number(l.id)));
+  const [{ last }] = await db.select({ last: sql<number>`coalesce(max(${s.tickets.id}), 0)::int` }).from(s.tickets);
+  let next = Math.max(last, ...numbers, 0);
+  const moves = ids
+    .filter((id) => !fromLog.has(id))
+    .sort((a, b) => a - b)
+    .map((from) => ({ from, to: ++next }));
+  return { updated: ids.filter((id) => fromLog.has(id)), moves };
+}
+
+export async function importTickets(
+  tickets: LoggedTicket[],
+  { replace, add = false, plan: planAdd = add, people: fixes = [] }: { replace: boolean; add?: boolean; plan?: boolean; people?: PersonFix[] },
+) {
   const [people, staffUsers, [{ n: existing }], sla] = await Promise.all([
     db.select({ id: s.employees.id, name: s.employees.name, email: s.employees.email }).from(s.employees),
     db.select({ id: s.users.id, name: s.users.name, email: s.users.email }).from(s.users).where(inArray(s.users.role, ["admin", "it_staff"])),
@@ -438,6 +469,9 @@ export async function importTickets(tickets: LoggedTicket[], { replace, people: 
     })),
     accounts: [] as { name: string; email: string; role: string; password: string }[],
     reopened: count((t) => t.reopened),
+    /** With `add`: the log's tickets already loaded, brought up to date, and tickets made in the app that move. */
+    updated: [] as number[],
+    moved: [] as { from: number; to: number }[],
     channels: Object.entries(Object.groupBy(tickets, (t) => t.channel ?? "")).map(([channel, list]) => ({ channel: channel || null, tickets: list!.length })),
   };
   const added = new Map<string, (typeof report.added)[number] & { fix?: PersonFix }>();
@@ -461,7 +495,13 @@ export async function importTickets(tickets: LoggedTicket[], { replace, people: 
     if (!added.has(fix.name) && !findPerson(fix, people)) added.set(fix.name, { name: fix.name, kind: "listed", status: fix.status, fix, from: [], tickets: 0 });
   }
   report.added = [...added.values()].sort((a, b) => b.tickets - a.tickets).map(({ name, kind, status, from, tickets: n }) => ({ name, kind, status, from, tickets: n }));
-  if (!replace) return report;
+  // Worked out for a report too, to say what adding would do.
+  const plan = add || planAdd ? await addPlan(tickets) : null;
+  if (plan) {
+    report.updated = plan.updated;
+    report.moved = plan.moves;
+  }
+  if (!replace && !add) return report;
 
   // People first, then accounts (made through sign-in, outside the database transaction).
   const emails = new Set(people.map((p) => p.email.toLowerCase()));
@@ -506,39 +546,76 @@ export async function importTickets(tickets: LoggedTicket[], { replace, people: 
     return ids.get(r.kind === "new" ? r.fix.name : r.name)!;
   };
 
-  await db.transaction(async (tx) => {
-    // Old tickets' history would otherwise show on the log's tickets that take their numbers.
-    await tx.delete(s.auditLog).where(sql`${s.auditLog.entity} = 'ticket'`);
-    await tx.delete(s.tickets);
-
-    for (let i = 0; i < tickets.length; i += CHUNK) {
-      const chunk = tickets.slice(i, i + CHUNK);
-      const rows = chunk.map((t) => {
-        const assignee = t.closedBy ? (closers.get(t.closedBy)?.id ?? null) : null;
-        const resolved = t.status === "closed" || t.status === "resolved" ? (t.closedAt?.toISOString() ?? null) : null;
-        return sql`(${t.number}, ${t.type}, ${t.status}, 'medium', ${t.issueType}, ${t.location}, ${t.channel}, ${t.subject}, ${t.subject}, ${requesterId(t)}, ${assignee}, ${dueAt(t.openedAt, "medium", sla, t.issueType).toISOString()}, ${resolved}, ${t.status === "closed" ? resolved : null}, ${t.reopened ? 1 : 0}, ${t.openedAt.toISOString()}, ${(t.closedAt ?? t.openedAt).toISOString()})`;
-      });
-      await tx.execute(sql`
-        INSERT INTO tickets (id, type, status, priority, issue_type, location, channel, subject, description, requester_id, assignee_id, due_at, resolved_at, closed_at, reopen_count, created_at, updated_at)
-        OVERRIDING SYSTEM VALUE VALUES ${sql.join(rows, sql`, `)}`);
-
-      // Each ticket's history: opened, reopened if it was, then closed by whoever closed it.
-      const history = chunk.flatMap((t) => {
-        const closer = t.closedBy ? closers.get(t.closedBy) : null;
-        const entries: (typeof s.auditLog.$inferInsert)[] = [
-          { at: t.openedAt, userName: "Ticket log", action: "create", entity: "ticket", entityId: String(t.number), summary: `Opened ${ref("ticket", t.number)}: ${t.subject} (from the ticket log)` },
-        ];
-        if (t.reopened && t.reopenedAt) {
-          entries.push({ at: t.reopenedAt, userName: "Ticket log", action: "update", entity: "ticket", entityId: String(t.number), summary: `Updated ${ref("ticket", t.number)}: status open (reopened)` });
-        }
-        if (t.closedAt && t.status === "closed") {
-          entries.push({ at: t.closedAt, userId: closer?.id ?? null, userName: closer?.name ?? t.closedBy ?? "Ticket log", action: "update", entity: "ticket", entityId: String(t.number), summary: `Updated ${ref("ticket", t.number)}: status closed` });
-        }
-        return entries;
-      });
-      await tx.insert(s.auditLog).values(history);
+  const values = (t: LoggedTicket) => {
+    const resolved = t.status === "closed" || t.status === "resolved" ? (t.closedAt ?? null) : null;
+    return {
+      type: t.type,
+      status: t.status,
+      priority: "medium" as const,
+      issueType: t.issueType,
+      location: t.location,
+      channel: t.channel,
+      subject: t.subject,
+      description: t.subject,
+      requesterId: requesterId(t),
+      assigneeId: t.closedBy ? (closers.get(t.closedBy)?.id ?? null) : null,
+      dueAt: dueAt(t.openedAt, "medium", sla, t.issueType),
+      resolvedAt: resolved,
+      closedAt: t.status === "closed" ? resolved : null,
+      reopenCount: t.reopened ? 1 : 0,
+      createdAt: t.openedAt,
+      updatedAt: t.closedAt ?? t.openedAt,
+    };
+  };
+  // Each ticket's history: opened, reopened if it was, then closed by whoever closed it.
+  const historyOf = (t: LoggedTicket): (typeof s.auditLog.$inferInsert)[] => {
+    const closer = t.closedBy ? closers.get(t.closedBy) : null;
+    const entries: (typeof s.auditLog.$inferInsert)[] = [
+      { at: t.openedAt, userName: FROM_LOG, action: "create", entity: "ticket", entityId: String(t.number), summary: `Opened ${ref("ticket", t.number)}: ${t.subject} (from the ticket log)` },
+    ];
+    if (t.reopened && t.reopenedAt) {
+      entries.push({ at: t.reopenedAt, userName: FROM_LOG, action: "update", entity: "ticket", entityId: String(t.number), summary: `Updated ${ref("ticket", t.number)}: status open (reopened)` });
     }
-    // New tickets carry on from the log's last number.
+    if (t.closedAt && t.status === "closed") {
+      entries.push({ at: t.closedAt, userId: closer?.id ?? null, userName: closer?.name ?? t.closedBy ?? FROM_LOG, action: "update", entity: "ticket", entityId: String(t.number), summary: `Updated ${ref("ticket", t.number)}: status closed` });
+    }
+    return entries;
+  };
+
+  await db.transaction(async (tx) => {
+    let fresh = tickets;
+    if (replace) {
+      // Old tickets' history would otherwise show on the log's tickets that take their numbers.
+      await tx.delete(s.auditLog).where(sql`${s.auditLog.entity} = 'ticket'`);
+      await tx.delete(s.tickets);
+    } else if (add && plan) {
+      // Tickets made in the app give up the log's numbers: each moves, with all that points to it.
+      for (const { from, to } of plan.moves) {
+        const [row] = await tx.select().from(s.tickets).where(eq(s.tickets.id, from));
+        await tx.insert(s.tickets).overridingSystemValue().values({ ...row, id: to });
+        for (const table of [s.ticketComments, s.changes, s.alerts, s.emails, s.emailLinks, s.idCards, s.toolAccess]) {
+          await tx.update(table).set({ ticketId: to }).where(eq(table.ticketId, from));
+        }
+        await tx.update(s.auditLog).set({ entityId: String(to) }).where(sql`${s.auditLog.entity} = 'ticket' AND ${s.auditLog.entityId} = ${String(from)}`);
+        await tx.delete(s.tickets).where(eq(s.tickets.id, from));
+        await tx.insert(s.auditLog).values({ userName: FROM_LOG, action: "update", entity: "ticket", entityId: String(to), summary: `Renumbered ${ref("ticket", from)} to ${ref("ticket", to)}: the ticket log uses ${ref("ticket", from)}` });
+      }
+      // The log's tickets already loaded are brought up to date, their comments kept.
+      const updated = new Set(plan.updated);
+      for (const t of tickets.filter((t) => updated.has(t.number))) {
+        await tx.update(s.tickets).set(values(t)).where(eq(s.tickets.id, t.number));
+        await tx.delete(s.auditLog).where(sql`${s.auditLog.entity} = 'ticket' AND ${s.auditLog.entityId} = ${String(t.number)} AND ${s.auditLog.userName} = ${FROM_LOG}`);
+        await tx.insert(s.auditLog).values(historyOf(t));
+      }
+      fresh = tickets.filter((t) => !updated.has(t.number));
+    }
+
+    for (let i = 0; i < fresh.length; i += CHUNK) {
+      const chunk = fresh.slice(i, i + CHUNK);
+      await tx.insert(s.tickets).overridingSystemValue().values(chunk.map((t) => ({ id: t.number, ...values(t) })));
+      await tx.insert(s.auditLog).values(chunk.flatMap(historyOf));
+    }
+    // New tickets carry on from the last number.
     await tx.execute(sql`SELECT setval(pg_get_serial_sequence('tickets', 'id'), GREATEST((SELECT max(id) FROM tickets), 1))`);
   });
   return report;
