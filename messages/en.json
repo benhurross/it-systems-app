@@ -1666,7 +1666,7 @@
       "pdf_to_word": "PDF to Word",
       "pdf_compress": "Compress PDF",
       "pdf_sign": "Sign PDF",
-      "pdf_fill": "Fill in PDF form"
+      "pdf_fill": "Fill in a PDF"
     },
     "descriptions": {
       "pdf_merge": "Combine several PDFs into one, in the order you choose.",
@@ -1677,7 +1677,7 @@
       "pdf_to_word": "Turn a PDF into a Word document you can edit.",
       "pdf_compress": "Make a PDF smaller for email or upload, keeping its text sharp.",
       "pdf_sign": "Add your signature to a PDF, on one page or several.",
-      "pdf_fill": "Fill in a PDF form's fields and download the filled form."
+      "pdf_fill": "Write text and ticks anywhere on a PDF, or fill in its form, and download it."
     },
     "open": "Open",
     "request": "Request access",
@@ -1843,13 +1843,10 @@
       "alreadySmall": "This PDF is already about as small as it can be, so nothing was downloaded."
     },
     "fill": {
-      "hint": "Fill in a PDF form's fields, see the answers on the page as you type, and download the filled form.",
+      "hint": "Write on any PDF as on paper: pick Text, a tick, a cross or a dot, click where it goes, and type. Fields the PDF has of its own are listed to fill in too.",
       "reading": "Reading the form…",
-      "noFields": "This PDF has no form fields to fill in. Its maker did not add any; to write on it, print it, or ask for a fillable copy.",
-      "xfa": "This form was made with Adobe LiveCycle (an XFA form), which only Adobe's own programs can fill in. Open it in Adobe Acrobat Reader instead.",
+      "xfa": "This form was made with Adobe LiveCycle (an XFA form): its own fields fill in only in Adobe's programs, such as Adobe Acrobat Reader. You can still write on its pages here.",
       "fields": "Form fields",
-      "preview": "The form as filled in",
-      "page": "Page {page}",
       "pageLabel": "Page {page}, as filled in",
       "required": "required",
       "readOnly": "The form fills this in itself.",
@@ -1862,9 +1859,32 @@
       "lock": "Lock the answers",
       "lockHint": "Locked answers become part of the page: they print and show as typed, but nobody can change them, you included. Keep the form unlocked if it may need changes.",
       "lockNeedsLatin": "Answers in Arabic or other scripts beyond Latin letters cannot be locked: the PDF reader draws them, which a locked form does not allow. Turn off Lock the answers to download it.",
-      "count": "{count, plural, one {# field} other {# fields}}",
       "missing": "{count, plural, one {# required field is empty} other {# required fields are empty}}",
-      "action": "Fill in and download"
+      "action": "Fill in and download",
+      "fieldsHint": "{count, plural, one {This PDF has # field of its own. Fill it in here, or write anywhere on the page.} other {This PDF has # fields of its own. Fill them in here, or write anywhere on the page.}}",
+      "pages": "The pages",
+      "tool": "What to put on the page",
+      "tools": {
+        "text": "Text",
+        "tick": "Tick",
+        "cross": "Cross",
+        "dot": "Dot"
+      },
+      "size": "Size",
+      "smaller": "Smaller",
+      "larger": "Larger",
+      "points": "{size} pt",
+      "placeLabel": "Page {page}. Click to put {tool} there, or press Enter to put it in the middle.",
+      "textHint": "Click the page where the text goes, and type. Drag it by its handle to move it; empty text is left out.",
+      "markHint": "Click the box or spot to mark. Drag a mark to move it, or select it and use the arrow keys; Delete removes it.",
+      "remove": "Remove",
+      "markLabel": "{mark} on the page",
+      "textLabel": "Text on the page",
+      "keys": "Arrow keys move it, Delete removes it.",
+      "textKeys": "Type the text. Escape finishes; Delete on empty text removes it.",
+      "asFields": "Save as fillable fields",
+      "asFieldsHint": "What you add becomes fields others can fill in or change, instead of being written into the page.",
+      "added": "{count, plural, =0 {Nothing added yet} one {# thing added} other {# things added}}"
     },
     "sign": {
       "hint": "Draw, type or upload your signature, place it on the pages, and download the signed PDF. Your signature is not saved anywhere.",
@@ -1931,7 +1951,7 @@
         "split": "Take out pages, or split into several",
         "organize": "Turn, move or remove pages",
         "compress": "Make a PDF smaller for email",
-        "fill": "Fill in a PDF form",
+        "fill": "Write on it, or fill in its form",
         "sign": "Add your signature",
         "word": "Edit the text in Word",
         "images": "A page for each photo or scan",

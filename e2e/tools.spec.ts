@@ -379,19 +379,91 @@ async function requestForm() {
   return { name: "equipment-request.pdf", mimeType: "application/pdf", buffer: Buffer.from(await pdf.save()) };
 }
 
-test("a PDF form is filled in, seen on the page, and downloaded locked or not", async ({ page }) => {
+/** The text on a PDF's first page as pdf.js reads it, with where each piece starts. */
+async function textOn(bytes: Uint8Array) {
+  const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
+  const doc = await pdfjs.getDocument({ data: new Uint8Array(bytes) }).promise;
+  const content = await (await doc.getPage(1)).getTextContent();
+  return content.items.flatMap((item) => ("str" in item && item.str.trim() ? [{ text: item.str, x: item.transform[4], y: item.transform[5] }] : []));
+}
+
+test("text and marks are put anywhere on any PDF, written in or as fields to fill", async ({ page }) => {
   const console = watchConsole(page);
   const panel = await toolkit(page, "Fill in");
+  await panel.getByLabel("Choose a PDF").setInputFiles(await pdfFile("letter.pdf", 1, 600));
+  await expect(panel.getByText("Nothing added yet")).toBeVisible();
+  await expect(panel.getByRole("button", { name: "Fill in and download" })).toBeDisabled();
+  const sheet = panel.getByRole("group", { name: /^Page 1\. Click to put/ });
+  await expect(panel.getByRole("group", { name: /Click to put Text there/ })).toBeVisible();
+  await expect(sheet).toBeVisible();
+  const at = async (x: number, y: number) => {
+    const box = (await sheet.boundingBox())!;
+    await sheet.click({ position: { x: box.width * x, y: box.height * y } });
+  };
 
-  // A PDF without fields says so.
-  await panel.getByLabel("Choose a PDF").setInputFiles(await pdfFile("letter.pdf", 1));
-  await expect(panel.getByText("This PDF has no form fields to fill in.")).toBeVisible();
-  await panel.getByRole("button", { name: "Change file" }).click();
+  // Text is typed on the page where it was clicked.
+  await at(0.1, 0.11);
+  await expect(panel.getByRole("textbox", { name: "Text on the page" })).toBeFocused();
+  await page.keyboard.type("Sara Ahmed");
+  await expect(panel.getByText("1 thing added")).toBeVisible();
+  // Clicking away from text left empty lets it go.
+  await at(0.6, 0.8);
+  await at(0.1, 0.3);
+  await expect(panel.getByRole("textbox", { name: "Text on the page" })).toHaveCount(2);
 
+  // A tick, and a cross that is removed again.
+  await panel.getByRole("radio", { name: "Tick" }).click();
+  await expect(panel.getByRole("group", { name: /Click to put Tick there/ })).toBeVisible();
+  await at(0.5, 0.5);
+  await panel.getByRole("radio", { name: "Cross" }).click();
+  await at(0.7, 0.5);
+  await expect(panel.getByText("3 things added")).toBeVisible();
+  await panel.getByRole("button", { name: "Remove" }).click();
+  await expect(panel.getByRole("button", { name: "Cross on the page" })).toHaveCount(0);
+  // A mark moves with the arrow keys and goes with Delete.
+  const tick = panel.getByRole("button", { name: "Tick on the page" });
+  await tick.focus();
+  await page.keyboard.press("ArrowDown");
+  await expect(panel.getByText("2 things added")).toBeVisible();
+
+  const written = await download(page, () => panel.getByRole("button", { name: "Fill in and download" }).click());
+  expect(written.name).toBe("letter-filled.pdf");
+  const [name] = (await textOn(written.bytes)).filter((t) => t.text === "Sara Ahmed");
+  // Where it was clicked, a tenth across the 600-point page.
+  expect(Math.abs(name.x - 60)).toBeLessThan(3);
+  expect((await PDFDocument.load(written.bytes)).getForm().getFields()).toHaveLength(0);
+
+  // Arabic is written as the browser joins it, so it reads as typed.
+  await panel.getByRole("radio", { name: "Text" }).click();
+  await at(0.1, 0.4);
+  await page.keyboard.type("سارة أحمد");
+  const arabic = await download(page, () => panel.getByRole("button", { name: "Fill in and download" }).click());
+  const resources = (await PDFDocument.load(arabic.bytes)).getPage(0).node.Resources()!;
+  expect(resources.lookup(PDFName.of("XObject"))).toBeDefined();
+
+  // Or saved as fields for others to fill in.
+  await panel.getByRole("switch", { name: "Save as fillable fields" }).click();
+  await expect(panel.getByText("What you add becomes fields others can fill in")).toBeVisible();
+  const fields = await download(page, () => panel.getByRole("button", { name: "Fill in and download" }).click());
+  const made = (await PDFDocument.load(fields.bytes)).getForm();
+  expect(made.getTextField("text_1").getText()).toBe("Sara Ahmed");
+  expect(made.getTextField("text_2").getText()).toBe("سارة أحمد");
+  expect(made.getCheckBox("check_1").isChecked()).toBe(true);
+
+  await tick.focus();
+  await page.keyboard.press("Delete");
+  await expect(tick).toHaveCount(0);
+  console.assertClean();
+});
+
+test("a PDF form's own fields are filled in, seen on the page, and downloaded locked or not", async ({ page }) => {
+  const console = watchConsole(page);
+  const panel = await toolkit(page, "Fill in");
   await panel.getByLabel("Choose a PDF").setInputFiles(await requestForm());
   await expect(panel.getByText("1 required field is empty")).toBeVisible();
+  await expect(panel.getByText("This PDF has 4 fields of its own.")).toBeVisible();
   await panel.getByLabel(/^Employee name/).fill("Sara Ahmed");
-  await expect(panel.getByText("4 fields")).toBeVisible();
+  await expect(panel.getByText("Nothing added yet")).toBeVisible();
   await panel.getByRole("checkbox", { name: "Urgent" }).check();
   await panel.getByRole("radio", { name: "Desktop" }).check();
   await panel.getByRole("combobox", { name: "Office" }).click();

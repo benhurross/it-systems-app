@@ -5,7 +5,6 @@ import {
   type PDFDocument,
   PDFDropdown,
   type PDFField,
-  type PDFFont,
   PDFHexString,
   PDFName,
   PDFOptionList,
@@ -16,6 +15,7 @@ import {
   StandardFonts,
 } from "pdf-lib";
 import { shownBox } from "./pdf-geometry";
+import { writable } from "./pdf-write";
 import { loadPdf } from "./pdf-tools";
 
 /**
@@ -110,17 +110,6 @@ export async function readForm(bytes: Uint8Array): Promise<ReadForm> {
   const at = (f: FormField) => f.spots[0] ?? { page: Number.MAX_SAFE_INTEGER, x: 0, y: 0 };
   fields.sort((a, b) => at(a).page - at(b).page || Math.round((at(a).y - at(b).y) * 200) || at(a).x - at(b).x);
   return { fields, problem: fields.length === 0 ? "none" : null };
-}
-
-/** Whether the standard font can write the text, so it can be drawn into the form here. */
-function writable(font: PDFFont, text: string) {
-  try {
-    // Line breaks are not drawn as letters: a field with several lines is drawn line by line.
-    font.encodeText(text.replace(/[\r\n\t]/g, ""));
-    return true;
-  } catch {
-    return false;
-  }
 }
 
 /** Raised when locking is asked for but some answers are in a script only the PDF reader can draw. */

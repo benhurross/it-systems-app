@@ -137,8 +137,8 @@ export function PdfPage({
   doc: PDFDocumentProxy | null;
   page: number;
   label: string;
-  /** Called with the page's width over its height, as shown, once it is drawn. */
-  onDrawn?: (aspect: number) => void;
+  /** Called once it is drawn with the page's width over its height, and its size in points, as shown. */
+  onDrawn?: (aspect: number, size: { width: number; height: number }) => void;
   children?: ReactNode;
 }) {
   const canvas = useRef<HTMLCanvasElement>(null);
@@ -167,7 +167,7 @@ export function PdfPage({
         el.height = drawing.height;
         el.getContext("2d")!.drawImage(drawing, 0, 0);
         setAspect(viewport.width / viewport.height);
-        onDrawn?.(viewport.width / viewport.height);
+        onDrawn?.(viewport.width / viewport.height, { width: base.width, height: base.height });
       } catch {}
     })();
     return () => {

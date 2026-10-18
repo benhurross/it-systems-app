@@ -233,6 +233,12 @@ export const TOOLS_IN_USE: Record<string, (page: Page) => Promise<void>> = {
     const panel = page.getByRole("tabpanel");
     await panel.locator('input[type="file"]').setInputFiles({ name: "equipment-request-form.pdf", mimeType: "application/pdf", buffer: Buffer.from(await pdf.save()) });
     await expect(panel.getByRole("checkbox")).toHaveCount(1);
+    // Text and a tick put on the page, beside the form's own fields.
+    const sheet = panel.getByRole("group", { name: /^(Page|الصفحة) [1١]\./ });
+    await sheet.click({ position: { x: 40, y: 40 } });
+    await page.keyboard.type("Sara Ahmed");
+    await panel.getByRole("radio").nth(1).click();
+    await sheet.click({ position: { x: 80, y: 120 } });
     await panel.getByRole("textbox").first().focus();
   },
   "/tools/pdf?mode=sign": async (page) => {
