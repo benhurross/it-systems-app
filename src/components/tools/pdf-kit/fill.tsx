@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, ChevronLeft, ChevronRight, Circle, FormInput, GripVertical, Minus, Plus, Type, X } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Circle, FormInput, GripVertical, Minus, Plus, Type, X, ZoomIn, ZoomOut } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { type KeyboardEvent, type PointerEvent, type ReactNode, useCallback, useEffect, useEffectEvent, useId, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -33,6 +33,8 @@ const SANS = "Helvetica, Arial, 'Liberation Sans', sans-serif";
 /** Text the PDF's standard font writes as text; anything else is placed as the browser draws it. */
 const LATIN = /^[\x20-\x7E -ÿ\r\n\t]*$/;
 const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
+/** How much larger than fitting the space the page may be shown. */
+const ZOOMS = [1, 1.25, 1.5, 2, 2.5, 3, 4];
 
 export function FillPanel() {
   const t = useTranslations("tools");
@@ -85,6 +87,8 @@ function FillFile({ pdf, onClear }: { pdf: OnePdf; onClear: () => void }) {
   const [values, setValues] = useState<FormValues>({});
   const [focus, setFocus] = useState<string | null>(null);
   const [page, setPage] = useState(1);
+  const [zoom, setZoom] = useState(1);
+  const zoomBy = useCallback((step: 1 | -1) => setZoom((z) => ZOOMS[clamp(ZOOMS.indexOf(z) + step, 0, ZOOMS.length - 1)]), []);
   const [tool, setTool] = useState<Tool>("text");
   const [placed, setPlaced] = useState<Placed[]>([]);
   const [selected, setSelected] = useState<number | null>(null);
@@ -287,6 +291,17 @@ function FillFile({ pdf, onClear }: { pdf: OnePdf; onClear: () => void }) {
                   </Button>
                 </div>
               )}
+              <div role="group" aria-label={t("fill.zoom")} className="flex items-center gap-1">
+                <Button type="button" variant="outline" size="icon" disabled={zoom === ZOOMS[0]} onClick={() => zoomBy(-1)} aria-label={t("fill.zoomOut")}>
+                  <ZoomOut />
+                </Button>
+                <Button type="button" variant="ghost" size="sm" className="w-16 tabular-nums" disabled={zoom === 1} onClick={() => setZoom(1)} title={t("fill.zoomFit")} aria-label={t("fill.zoomLevel", { percent: format.number(zoom * 100) })}>
+                  {format.number(zoom * 100)}%
+                </Button>
+                <Button type="button" variant="outline" size="icon" disabled={zoom === ZOOMS.at(-1)} onClick={() => zoomBy(1)} aria-label={t("fill.zoomIn")}>
+                  <ZoomIn />
+                </Button>
+              </div>
               <div className="flex items-center gap-1">
                 <Button variant="outline" size="icon" disabled={page <= 1} onClick={() => setPage(page - 1)} aria-label={t("sign.previous")}>
                   <ChevronLeft className="rtl:rotate-180" />
@@ -299,7 +314,7 @@ function FillFile({ pdf, onClear }: { pdf: OnePdf; onClear: () => void }) {
                 </Button>
               </div>
             </div>
-            <PdfPage doc={doc} page={page} label={t("fill.pageLabel", { page: format.number(page) })} onDrawn={drawn}>
+            <PdfPage doc={doc} page={page} label={t("fill.pageLabel", { page: format.number(page) })} onDrawn={drawn} zoom={zoom} onZoom={zoomBy}>
               {scale && (
                 <PageLayer
                   tool={tool}
@@ -331,7 +346,7 @@ function FillFile({ pdf, onClear }: { pdf: OnePdf; onClear: () => void }) {
                 </PageLayer>
               )}
             </PdfPage>
-            <p className="text-sm text-muted-foreground">{t(tool === "text" ? "fill.textHint" : "fill.markHint")}</p>
+            <p className="text-sm text-muted-foreground">{t(tool === "text" ? "fill.textHint" : "fill.markHint")} {t("fill.zoomHint")}</p>
           </section>
         </div>
       )}

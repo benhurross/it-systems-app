@@ -406,6 +406,28 @@ test("text and marks are put anywhere on any PDF, written in or as fields to fil
   await expect(panel.getByRole("textbox", { name: "Text on the page" })).toBeFocused();
   await page.keyboard.type("Sara Ahmed");
   await expect(panel.getByText("1 thing added")).toBeVisible();
+
+  // Zoomed in, the page and what is on it grow together.
+  const drawnPage = panel.getByRole("img", { name: "Page 1, as filled in" });
+  const text = panel.getByRole("textbox", { name: "Text on the page" });
+  const fitWidth = (await drawnPage.boundingBox())!.width;
+  const fontSize = () => text.evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
+  const fitFont = await fontSize();
+  await expect(panel.getByRole("button", { name: /^100%/ })).toBeDisabled();
+  await panel.getByRole("button", { name: "Zoom in" }).click();
+  await panel.getByRole("button", { name: "Zoom in" }).click();
+  await expect(panel.getByRole("button", { name: /^150%/ })).toBeEnabled();
+  await expect.poll(async () => (await drawnPage.boundingBox())!.width / fitWidth).toBeCloseTo(1.5, 1);
+  await expect.poll(fontSize).toBeCloseTo(fitFont * 1.5, 0);
+  // Ctrl and the mouse wheel over the page zoom too, and the percentage puts it back to fit.
+  await sheet.hover({ position: { x: 20, y: 20 } });
+  await page.keyboard.down("Control");
+  await page.mouse.wheel(0, -100);
+  await page.keyboard.up("Control");
+  await expect(panel.getByRole("button", { name: /^200%/ })).toBeEnabled();
+  await panel.getByRole("button", { name: /^200%/ }).click();
+  await expect(panel.getByRole("button", { name: /^100%/ })).toBeDisabled();
+  await expect.poll(async () => (await drawnPage.boundingBox())!.width / fitWidth).toBeCloseTo(1, 1);
   // Clicking away from text left empty lets it go.
   await at(0.6, 0.8);
   await at(0.1, 0.3);

@@ -1950,7 +1950,13 @@
       "textKeys": "Type the text. Escape finishes; Delete on empty text removes it.",
       "asFields": "Save as fillable fields",
       "asFieldsHint": "What you add becomes fields others can fill in or change, instead of being written into the page.",
-      "added": "{count, plural, =0 {Nothing added yet} one {# thing added} other {# things added}}"
+      "added": "{count, plural, =0 {Nothing added yet} one {# thing added} other {# things added}}",
+      "zoom": "Zoom",
+      "zoomIn": "Zoom in",
+      "zoomOut": "Zoom out",
+      "zoomFit": "Fit the page to the space",
+      "zoomLevel": "{percent}%, fit the page to the space",
+      "zoomHint": "To zoom, use the + and − buttons, or hold Ctrl and turn the mouse wheel over the page."
     },
     "sign": {
       "hint": "Draw, type or upload your signature, place it on the pages, and download the signed PDF. Your signature is not saved anywhere.",
