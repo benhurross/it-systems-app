@@ -1,6 +1,6 @@
 # AP Plus IT Systems
 
-The IT team's web app: helpdesk tickets, assets with printed asset tags, and the CMDB, software licences, purchases and contracts, network monitoring, dashboards and KPIs, ID cards, and PDF tools. One Windows computer runs it, and everyone else opens it in a browser on the office network.
+The IT team's web app: helpdesk tickets, assets with printed asset tags, and the CMDB, software licences, purchases and contracts, network monitoring, dashboards and KPIs, ID cards, and PDF tools. One computer runs it (Windows, or a Linux server such as RHEL), and everyone else opens it in a browser on the office network.
 
 The design and the full feature list are in [PLAN.md](PLAN.md).
 
@@ -54,6 +54,8 @@ To load the staff list or the ticket log from Excel, see [Commands](#commands).
 
 ## Keep it running
 
+**On RHEL or another Linux server**, see [docs/RHEL-SETUP.md](docs/RHEL-SETUP.md): one script sets it up to start at every boot with nobody logged in, with daily backups. The rest of this section is for Windows.
+
 This setup is done once, in **PowerShell opened as administrator**. You must be signed in to Windows as the person whose account will run the app.
 
 ```powershell
@@ -84,6 +86,8 @@ The tasks are named "AP IT System" and "AP IT System backup". You can see them i
 ```bat
 scripts\windows\update.cmd
 ```
+
+On Linux: `bash scripts/linux/update.sh`.
 
 The update script does the following, in order:
 1. Makes a backup.
