@@ -7,6 +7,7 @@ import { useState, type ReactNode } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useCurrentUser } from "@/components/app-shell/current-user";
+import { AnydeskConnect } from "@/components/assets/anydesk-connect";
 import { EnumBadge, SlaIndicator } from "@/components/badges";
 import { FormDialog, TextareaField } from "@/components/form";
 import { StatusPage } from "@/components/status-page";
@@ -317,6 +318,9 @@ function Details({ ticket, mode }: { ticket: TicketDetail; mode: Mode }) {
   const update = useApiMutation((body: Record<string, unknown>) => api(`/tickets/${ticket.id}`, { method: "PATCH", body }), {
     success: t("tickets.updated"),
   });
+  // The device to reach with AnyDesk: the one the ticket is about, or else what the requester holds.
+  const linked = assets.find((a) => a.id === ticket.assetId);
+  const reachable = (linked ? [linked] : assets.filter((a) => a.assignedTo === ticket.requesterId && a.status !== "retired")).filter((a) => a.anydeskId);
 
   const edit = (label: string, value: string, options: { value: string; label: string }[], onChange: (v: string) => void) => (
     <Select value={value} onValueChange={onChange} disabled={update.isPending}>
@@ -395,6 +399,18 @@ function Details({ ticket, mode }: { ticket: TicketDetail; mode: Mode }) {
                 [{ value: NONE, label: t("common.none") }, ...assets.map((a) => ({ value: String(a.id), label: `${a.name}${a.assignedName ? ` (${a.assignedName})` : ""}` }))],
                 (v) => update.mutate({ assetId: v === NONE ? null : Number(v) }),
               )}
+            </Row>
+          )}
+          {reachable.length > 0 && (
+            <Row label={t("tickets.remote")}>
+              <span className="flex flex-wrap gap-2">
+                {reachable.map((a) => (
+                  <span key={a.id} className="flex items-center gap-2">
+                    <AnydeskConnect id={a.anydeskId!} device={a.name} size="sm" />
+                    {reachable.length > 1 && <span className="text-muted-foreground">{a.name}</span>}
+                  </span>
+                ))}
+              </span>
             </Row>
           )}
           <Row label={t("tickets.created")}>{format.dateTime(ticket.createdAt)}</Row>

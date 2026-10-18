@@ -396,6 +396,8 @@ export async function seedDemo(now = new Date(), options: { people?: Person[] } 
       supportStatus: ageDays > 6 * 365 ? "end_of_life" : "supported",
       criticality: "low",
       macAddress: kind === "monitor" ? null : mac(),
+      // Made-up AnyDesk IDs on the computers in use, worked out without the random numbers so the rest stays as it was.
+      anydeskId: kind !== "monitor" && status === "in_use" ? String((kind === "laptop" ? 412_000_000 : 587_000_000) + number * 7_919) : null,
       os: kind === "monitor" ? null : ageDays > 5 * 365 ? "Windows 10 Pro" : "Windows 11 Pro",
     });
   };

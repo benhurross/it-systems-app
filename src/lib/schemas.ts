@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isAnydeskId, normalizeAnydeskId } from "./anydesk";
 import {
   ASSET_STATUSES,
   ATTACHMENT_ENTITIES,
@@ -123,6 +124,11 @@ export const assetInput = z.object({
   criticality: z.enum(CRITICALITIES),
   ipAddress: z.ipv4().nullish().transform((v) => v ?? null),
   macAddress: optionalText,
+  anydeskId: z
+    .string()
+    .nullish()
+    .transform((v) => (v?.trim() ? normalizeAnydeskId(v) : null))
+    .refine((v) => v === null || isAnydeskId(v), "validation.anydeskId"),
   os: optionalText,
   notes: optionalText,
   monitorMethod: z.enum(MONITOR_METHODS),

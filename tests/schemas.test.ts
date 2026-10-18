@@ -48,6 +48,22 @@ describe("input schemas", () => {
     expect(parsed).toMatchObject({ ipAddress: "10.0.0.3", notes: null, model: null, monitorPort: null });
   });
 
+  it("keeps an AnyDesk ID as digits or an alias, however it was written", () => {
+    const base = {
+      name: "X", category: "end_user", type: "laptop", status: "in_use", location: "jeddah",
+      supportStatus: "supported", criticality: "low", monitorMethod: "none",
+    };
+    expect(assetInput.parse({ ...base, anydeskId: " 123 456 789 " }).anydeskId).toBe("123456789");
+    expect(assetInput.parse({ ...base, anydeskId: "1 234 567 890" }).anydeskId).toBe("1234567890");
+    expect(assetInput.parse({ ...base, anydeskId: "LT-Sara@ad" }).anydeskId).toBe("lt-sara@ad");
+    expect(assetInput.parse({ ...base, anydeskId: "  " }).anydeskId).toBeNull();
+    expect(assetInput.parse(base).anydeskId).toBeNull();
+    for (const wrong of ["12345", "123 456 789 012", "not an id"]) {
+      const result = assetInput.safeParse({ ...base, anydeskId: wrong });
+      expect(result.error?.issues).toEqual([expect.objectContaining({ path: ["anydeskId"], message: "validation.anydeskId" })]);
+    }
+  });
+
   it("needs an address to monitor a device, and a port to check it over TCP", () => {
     const base = {
       name: "X", category: "network", type: "switch", status: "in_use", location: "jeddah",

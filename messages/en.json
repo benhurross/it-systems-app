@@ -474,7 +474,8 @@
     "ipRequired": "Add an IP address to monitor this device.",
     "portRequired": "Add the TCP port to check.",
     "employeeNumber": "Use letters, digits and dashes only.",
-    "printerAddress": "Use the printer's IP address or network name."
+    "printerAddress": "Use the printer's IP address or network name.",
+    "anydeskId": "Use the 9- or 10-digit ID AnyDesk shows, or its alias (name@namespace)."
   },
   "settings": {
     "title": "Settings",
@@ -804,7 +805,8 @@
     "backToList": "All tickets",
     "notFound": "This ticket does not exist or you cannot see it.",
     "channel": "Received by",
-    "channelNone": "Not recorded"
+    "channelNone": "Not recorded",
+    "remote": "Remote support"
   },
   "requests": {
     "title": "My Requests",
@@ -979,7 +981,11 @@
       "sent": "{count, plural, one {# tag sent} other {# tags sent}} to the label printer.",
       "unreachable": "The label printer did not answer. Check it is on and connected to the network, then try again.",
       "failed": "The tags could not be made. Please try again."
-    }
+    },
+    "anydeskId": "AnyDesk ID",
+    "anydeskHint": "The ID AnyDesk shows on this computer, such as 123 456 789, or its alias.",
+    "connect": "Connect with AnyDesk",
+    "connectTo": "Connect to {device} with AnyDesk"
   },
   "discovery": {
     "intro": "Sweep a subnet from the server to find devices on the network and compare them with the inventory.",

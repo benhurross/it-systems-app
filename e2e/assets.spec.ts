@@ -51,6 +51,16 @@ test.describe("inventory", () => {
     await expect(page.getByText("Latitude 5550")).toBeVisible();
     await expect(page.getByText("TCP port 3389")).toBeVisible();
 
+    // Its AnyDesk ID, however it is written, opens AnyDesk to it.
+    await page.getByRole("button", { name: "Edit" }).click();
+    await dialog.getByLabel("AnyDesk ID").fill("12 34");
+    await dialog.getByRole("button", { name: "Save" }).click();
+    await expect(dialog.getByText("Use the 9- or 10-digit ID AnyDesk shows")).toBeVisible();
+    await dialog.getByLabel("AnyDesk ID").fill("1 234 567 890");
+    await dialog.getByRole("button", { name: "Save" }).click();
+    await expect(page.getByText("1 234 567 890")).toBeVisible();
+    await expect(page.getByRole("link", { name: "Connect with AnyDesk" })).toHaveAttribute("href", "anydesk:1234567890");
+
     await page.getByRole("button", { name: "Move or reassign" }).click();
     await choose(page, "New location", "Riyadh Branch");
     await page.getByRole("combobox", { name: "Assign to" }).click();
@@ -161,6 +171,28 @@ test("software tracks seats against installs and exports an audit report", async
   await expect(page.getByText("Over-deployed", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Remove: LT-001" }).click();
   await expect(page.getByText("Compliant", { exact: true })).toBeVisible();
+  console.assertClean();
+});
+
+test("a ticket offers AnyDesk to the requester's computer", async ({ page }) => {
+  const console = watchConsole(page);
+  type Ticket = { id: number; requesterId: number; assetId?: number | null };
+  type Asset = { id: number; name: string; assignedTo: number | null; anydeskId: string | null; status: string };
+  const tickets = (await (await page.request.get("/api/tickets")).json()) as Ticket[];
+  const assets = (await (await page.request.get("/api/assets")).json()) as Asset[];
+  const held = (t: Ticket) => assets.filter((a) => a.assignedTo === t.requesterId && a.anydeskId && a.status !== "retired");
+  // A ticket about no device in particular, from someone with one computer.
+  let ticket: Ticket | undefined;
+  for (const candidate of tickets.filter((t) => held(t).length === 1)) {
+    const detail = (await (await page.request.get(`/api/tickets/${candidate.id}`)).json()) as Ticket;
+    if (detail.assetId === null) {
+      ticket = detail;
+      break;
+    }
+  }
+  const [laptop] = held(ticket!);
+  await page.goto(`/en/tickets/${ticket!.id}`);
+  await expect(page.getByRole("link", { name: `Connect to ${laptop.name} with AnyDesk` })).toHaveAttribute("href", `anydesk:${laptop.anydeskId}`);
   console.assertClean();
 });
 

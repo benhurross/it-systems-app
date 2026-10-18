@@ -42,6 +42,7 @@ describe("create, read and update for every register", () => {
       criticality: "low" as const,
       ipAddress: null,
       macAddress: null,
+      anydeskId: "123456789",
       os: "Windows 11 Pro",
       notes: null,
       monitorMethod: "none" as const,
@@ -50,6 +51,7 @@ describe("create, read and update for every register", () => {
     const created = await assets.createAsset(input, user);
     const updated = await assets.updateAsset(created.id, { ...input, notes: "Spare" }, user);
     expect(updated.notes).toBe("Spare");
+    expect(updated.anydeskId).toBe("123456789");
     expect((await assets.listAssets()).some((a) => a.name === "LT-TEST")).toBe(true);
     const rel = await assets.createRelationship({ sourceId: created.id, targetId: 1, type: "depends_on" }, user);
     expect((await assets.listRelationships(created.id)).map((r) => r.id)).toEqual([rel.id]);

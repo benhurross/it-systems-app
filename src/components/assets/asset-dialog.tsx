@@ -110,6 +110,7 @@ export function AssetDialog({
       <div className="grid gap-4 sm:grid-cols-2">
         <TextField name="ipAddress" label={t("assets.ipAddress")} dir="ltr" optional />
         <TextField name="macAddress" label={t("assets.macAddress")} dir="ltr" optional />
+        <TextField name="anydeskId" label={t("assets.anydeskId")} description={t("assets.anydeskHint")} dir="ltr" optional />
         <SelectField name="monitorMethod" label={t("assets.monitorMethod")} options={options("monitorMethod", MONITOR_METHODS)} />
         {method === "tcp" && <NumberField name="monitorPort" label={t("assets.monitorPort")} min={1} step={1} />}
         <TextField name="os" label={t("assets.os")} optional />

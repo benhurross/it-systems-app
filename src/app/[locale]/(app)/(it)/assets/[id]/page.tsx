@@ -4,6 +4,7 @@ import { Archive, ArrowLeft, ArrowRightLeft, Network, Pencil, Tag } from "lucide
 import { useTranslations } from "next-intl";
 import { use, useState, type ReactNode } from "react";
 import { AttachmentList, AttachmentsCard } from "@/components/attachments";
+import { AnydeskConnect } from "@/components/assets/anydesk-connect";
 import { AssetDialog, toAssetInput } from "@/components/assets/asset-dialog";
 import { MoveDialog } from "@/components/assets/move-dialog";
 import { EnumBadge } from "@/components/badges";
@@ -17,6 +18,7 @@ import { useApi, useApiMutation } from "@/hooks/use-api";
 import { useFormat } from "@/hooks/use-format";
 import { useLookups } from "@/hooks/use-lookups";
 import { Link } from "@/i18n/navigation";
+import { formatAnydeskId } from "@/lib/anydesk";
 import { api } from "@/lib/api";
 import type { AssetDetail } from "@/lib/api-types";
 import { isoDate } from "@/lib/dates";
@@ -67,6 +69,7 @@ export default function AssetPage({ params }: PageProps<"/[locale]/assets/[id]">
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          {asset.anydeskId && <AnydeskConnect id={asset.anydeskId} />}
           <Button variant="outline" asChild>
             <Link href={`/cmdb?item=${asset.id}`}>
               <Network />
@@ -115,6 +118,7 @@ export default function AssetPage({ params }: PageProps<"/[locale]/assets/[id]">
                   <Row label={t("assets.os")}>{asset.os ?? dash}</Row>
                   <Row label={t("assets.ipAddress")}>{asset.ipAddress ? <span dir="ltr" className="font-mono">{asset.ipAddress}</span> : dash}</Row>
                   <Row label={t("assets.macAddress")}>{asset.macAddress ? <span dir="ltr" className="font-mono">{asset.macAddress}</span> : dash}</Row>
+                  <Row label={t("assets.anydeskId")}>{asset.anydeskId ? <span dir="ltr" className="font-mono">{formatAnydeskId(asset.anydeskId)}</span> : dash}</Row>
                   <Row label={t("assets.assignedTo")}>{asset.assignedName ?? t("assets.unassigned")}</Row>
                   <Row label={t("assets.monitorMethod")}>
                     {t(`enums.monitorMethod.${asset.monitorMethod}`)}

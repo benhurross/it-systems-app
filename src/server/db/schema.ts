@@ -220,6 +220,8 @@ export const assets = pgTable(
     criticality: text().$type<Criticality>().notNull().default("medium"),
     ipAddress: text(),
     macAddress: text(),
+    /** For remote support with the AnyDesk app. */
+    anydeskId: text(),
     os: text(),
     notes: text(),
     monitorMethod: text().$type<MonitorMethod>().notNull().default("none"),

@@ -123,6 +123,7 @@ export default function InventoryPage() {
             { header: "Support", value: (a) => a.supportStatus },
             { header: "IP address", value: (a) => a.ipAddress },
             { header: "MAC address", value: (a) => a.macAddress },
+            { header: "AnyDesk ID", value: (a) => a.anydeskId },
           ],
         }}
       />
