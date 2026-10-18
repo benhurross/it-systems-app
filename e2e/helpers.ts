@@ -221,6 +221,20 @@ export const TOOLS_IN_USE: Record<string, (page: Page) => Promise<void>> = {
     await panel.locator('input[type="file"]').setInputFiles(await pdfFile("monthly-network-report.pdf", 2));
     await expect(panel.getByRole("radio")).toHaveCount(2);
   },
+  "/tools/pdf?mode=fill": async (page) => {
+    const pdf = await PDFDocument.create();
+    const form = pdf.getForm();
+    const onPage = pdf.addPage([600, 800]);
+    form.createTextField("employee_name").addToPage(onPage, { x: 50, y: 700, width: 300, height: 24 });
+    form.createCheckBox("urgent").addToPage(onPage, { x: 50, y: 650, width: 16, height: 16 });
+    const office = form.createDropdown("office");
+    office.addOptions(["Jeddah", "Riyadh"]);
+    office.addToPage(onPage, { x: 50, y: 600, width: 200, height: 24 });
+    const panel = page.getByRole("tabpanel");
+    await panel.locator('input[type="file"]').setInputFiles({ name: "equipment-request-form.pdf", mimeType: "application/pdf", buffer: Buffer.from(await pdf.save()) });
+    await expect(panel.getByRole("checkbox")).toHaveCount(1);
+    await panel.getByRole("textbox").first().focus();
+  },
   "/tools/pdf?mode=sign": async (page) => {
     const panel = page.getByRole("tabpanel");
     await panel.locator('input[type="file"]').first().setInputFiles(await pdfFile("equipment-handover.pdf", 2));

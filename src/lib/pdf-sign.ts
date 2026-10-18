@@ -1,4 +1,5 @@
-import { degrees, type PDFPage, rgb, StandardFonts } from "pdf-lib";
+import { degrees, rgb, StandardFonts } from "pdf-lib";
+import { asShown } from "./pdf-geometry";
 import { isStampText, loadPdf } from "./pdf-tools";
 
 /**
@@ -12,23 +13,6 @@ export type SignPlacement = { page: number; x: number; y: number; width: number;
 
 /** The share of the box the date takes, under the signature, when there is one. */
 export const DATE_SHARE = 0.24;
-
-/**
- * The page as it is shown: its size, turned as it is shown, and where a point as shown lands in
- * the page's own coordinates. Pages are shown by their crop box, so points are placed on it.
- */
-function asShown(page: PDFPage) {
-  const rotation = ((page.getRotation().angle % 360) + 360) % 360;
-  const box = page.getCropBox();
-  const { width: W, height: H } = box;
-  const turned = rotation === 90 || rotation === 270;
-  const size = turned ? { width: H, height: W } : { width: W, height: H };
-  const point = (dx: number, dy: number) => {
-    const p = rotation === 90 ? { x: W - dy, y: dx } : rotation === 180 ? { x: W - dx, y: H - dy } : rotation === 270 ? { x: dy, y: H - dx } : { x: dx, y: dy };
-    return { x: box.x + p.x, y: box.y + p.y };
-  };
-  return { size, point, rotation };
-}
 
 export async function signPdf(bytes: Uint8Array, signature: Uint8Array, placements: SignPlacement[], date: string | null): Promise<Uint8Array> {
   if (date !== null && (!date.trim() || !isStampText(date))) throw new Error("date");

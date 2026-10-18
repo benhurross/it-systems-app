@@ -3,7 +3,7 @@
  * runs in the person's own browser: files are not uploaded. Each is switched on, off or put
  * behind approval on its own, though all are shown together in the PDF toolkit.
  */
-export const TOOL_KEYS = ["pdf_merge", "pdf_split", "pdf_organize", "pdf_to_word", "images_to_pdf", "pdf_stamp", "pdf_compress", "pdf_sign"] as const;
+export const TOOL_KEYS = ["pdf_merge", "pdf_split", "pdf_organize", "pdf_to_word", "images_to_pdf", "pdf_stamp", "pdf_compress", "pdf_sign", "pdf_fill"] as const;
 export type ToolKey = (typeof TOOL_KEYS)[number];
 
 /** The PDF toolkit's modes, each one of the tools. */
@@ -12,6 +12,7 @@ export const PDF_MODES = [
   { mode: "split", tool: "pdf_split" },
   { mode: "organize", tool: "pdf_organize" },
   { mode: "compress", tool: "pdf_compress" },
+  { mode: "fill", tool: "pdf_fill" },
   { mode: "sign", tool: "pdf_sign" },
   { mode: "word", tool: "pdf_to_word" },
   { mode: "images", tool: "images_to_pdf" },

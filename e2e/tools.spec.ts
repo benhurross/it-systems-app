@@ -35,7 +35,7 @@ test("the tools list leads into each tool of the PDF toolkit", async ({ page }) 
   await page.getByRole("link", { name: "Tools", exact: true }).click();
   await expect(page).toHaveURL(/\/en\/tools$/);
   await expect(page.getByRole("heading", { name: "PDF toolkit" })).toBeVisible();
-  const modes = [/^Merge/, /^Split/, /^Organize/, /^Compress/, /^Sign/, /^PDF to Word/, /^Images to PDF/, /^Numbers & watermark/];
+  const modes = [/^Merge/, /^Split/, /^Organize/, /^Compress/, /^Fill in/, /^Sign/, /^PDF to Word/, /^Images to PDF/, /^Numbers & watermark/];
   await expect(page.getByRole("list", { name: "Choose a tool" }).getByRole("link")).toHaveText(modes);
   await expect(page.getByText("Files stay on this computer")).toBeVisible();
 
@@ -358,5 +358,66 @@ test("a PDF is signed: drawn, placed, moved and dated", async ({ page }) => {
   await expect(panel.getByRole("button", { name: "Sign and download" })).toBeDisabled();
   await panel.getByLabel("Your name").fill("Sara Ahmed");
   await expect(panel.getByRole("button", { name: "Sign and download" })).toBeEnabled();
+  console.assertClean();
+});
+
+/** A small equipment request form, with each kind of field. */
+async function requestForm() {
+  const pdf = await PDFDocument.create();
+  const page = pdf.addPage([600, 800]);
+  const form = pdf.getForm();
+  const name = form.createTextField("employee_name");
+  name.enableRequired();
+  name.addToPage(page, { x: 50, y: 700, width: 300, height: 24 });
+  form.createCheckBox("urgent").addToPage(page, { x: 50, y: 650, width: 16, height: 16 });
+  const kind = form.createRadioGroup("deviceType");
+  kind.addOptionToPage("Laptop", page, { x: 50, y: 600, width: 16, height: 16 });
+  kind.addOptionToPage("Desktop", page, { x: 150, y: 600, width: 16, height: 16 });
+  const office = form.createDropdown("office");
+  office.addOptions(["Jeddah", "Riyadh"]);
+  office.addToPage(page, { x: 50, y: 550, width: 200, height: 24 });
+  return { name: "equipment-request.pdf", mimeType: "application/pdf", buffer: Buffer.from(await pdf.save()) };
+}
+
+test("a PDF form is filled in, seen on the page, and downloaded locked or not", async ({ page }) => {
+  const console = watchConsole(page);
+  const panel = await toolkit(page, "Fill in");
+
+  // A PDF without fields says so.
+  await panel.getByLabel("Choose a PDF").setInputFiles(await pdfFile("letter.pdf", 1));
+  await expect(panel.getByText("This PDF has no form fields to fill in.")).toBeVisible();
+  await panel.getByRole("button", { name: "Change file" }).click();
+
+  await panel.getByLabel("Choose a PDF").setInputFiles(await requestForm());
+  await expect(panel.getByText("1 required field is empty")).toBeVisible();
+  await panel.getByLabel(/^Employee name/).fill("Sara Ahmed");
+  await expect(panel.getByText("4 fields")).toBeVisible();
+  await panel.getByRole("checkbox", { name: "Urgent" }).check();
+  await panel.getByRole("radio", { name: "Desktop" }).check();
+  await panel.getByRole("combobox", { name: "Office" }).click();
+  await page.getByRole("option", { name: "Riyadh" }).click();
+  await expect(panel.getByRole("img", { name: "Page 1, as filled in" })).not.toHaveClass(/animate-pulse/);
+
+  const filled = await download(page, () => panel.getByRole("button", { name: "Fill in and download" }).click());
+  expect(filled.name).toBe("equipment-request-filled.pdf");
+  const form = (await PDFDocument.load(filled.bytes)).getForm();
+  expect(form.getTextField("employee_name").getText()).toBe("Sara Ahmed");
+  expect(form.getCheckBox("urgent").isChecked()).toBe(true);
+  expect(form.getRadioGroup("deviceType").getSelected()).toBe("Desktop");
+  expect(form.getDropdown("office").getSelected()).toEqual(["Riyadh"]);
+
+  // Locked, the answers become part of the page.
+  await panel.getByRole("switch", { name: "Lock the answers" }).click();
+  await expect(panel.getByText("Locked answers become part of the page")).toBeVisible();
+  const locked = await download(page, () => panel.getByRole("button", { name: "Fill in and download" }).click());
+  expect((await PDFDocument.load(locked.bytes)).getForm().getFields()).toHaveLength(0);
+
+  // Arabic answers are left to the PDF reader, so they cannot be locked.
+  await panel.getByLabel(/^Employee name/).fill("سارة أحمد");
+  await panel.getByRole("button", { name: "Fill in and download" }).click();
+  await expect(panel.getByText(/Answers in Arabic or other scripts beyond Latin letters cannot be locked/)).toBeVisible();
+  await panel.getByRole("switch", { name: "Lock the answers" }).click();
+  const arabic = await download(page, () => panel.getByRole("button", { name: "Fill in and download" }).click());
+  expect((await PDFDocument.load(arabic.bytes)).getForm().getTextField("employee_name").getText()).toBe("سارة أحمد");
   console.assertClean();
 });

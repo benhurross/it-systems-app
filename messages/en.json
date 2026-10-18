@@ -1665,7 +1665,8 @@
       "pdf_stamp": "Page numbers and watermark",
       "pdf_to_word": "PDF to Word",
       "pdf_compress": "Compress PDF",
-      "pdf_sign": "Sign PDF"
+      "pdf_sign": "Sign PDF",
+      "pdf_fill": "Fill in PDF form"
     },
     "descriptions": {
       "pdf_merge": "Combine several PDFs into one, in the order you choose.",
@@ -1675,7 +1676,8 @@
       "pdf_stamp": "Number the pages, or mark them CONFIDENTIAL or COPY.",
       "pdf_to_word": "Turn a PDF into a Word document you can edit.",
       "pdf_compress": "Make a PDF smaller for email or upload, keeping its text sharp.",
-      "pdf_sign": "Add your signature to a PDF, on one page or several."
+      "pdf_sign": "Add your signature to a PDF, on one page or several.",
+      "pdf_fill": "Fill in a PDF form's fields and download the filled form."
     },
     "open": "Open",
     "request": "Request access",
@@ -1840,6 +1842,30 @@
       "alreadySmallTryStrong": "This PDF is already about as small as it can be at this level, so nothing was downloaded. Try Smallest.",
       "alreadySmall": "This PDF is already about as small as it can be, so nothing was downloaded."
     },
+    "fill": {
+      "hint": "Fill in a PDF form's fields, see the answers on the page as you type, and download the filled form.",
+      "reading": "Reading the form…",
+      "noFields": "This PDF has no form fields to fill in. Its maker did not add any; to write on it, print it, or ask for a fillable copy.",
+      "xfa": "This form was made with Adobe LiveCycle (an XFA form), which only Adobe's own programs can fill in. Open it in Adobe Acrobat Reader instead.",
+      "fields": "Form fields",
+      "preview": "The form as filled in",
+      "page": "Page {page}",
+      "pageLabel": "Page {page}, as filled in",
+      "required": "required",
+      "readOnly": "The form fills this in itself.",
+      "maxLength": "Up to {count} characters.",
+      "clear": "Clear the choice",
+      "noChoice": "No choice",
+      "several": "Choose as many as apply.",
+      "oneOnly": "Choose one.",
+      "signatureField": "A signature goes here. Download the filled form, then sign it with Sign.",
+      "lock": "Lock the answers",
+      "lockHint": "Locked answers become part of the page: they print and show as typed, but nobody can change them, you included. Keep the form unlocked if it may need changes.",
+      "lockNeedsLatin": "Answers in Arabic or other scripts beyond Latin letters cannot be locked: the PDF reader draws them, which a locked form does not allow. Turn off Lock the answers to download it.",
+      "count": "{count, plural, one {# field} other {# fields}}",
+      "missing": "{count, plural, one {# required field is empty} other {# required fields are empty}}",
+      "action": "Fill in and download"
+    },
     "sign": {
       "hint": "Draw, type or upload your signature, place it on the pages, and download the signed PDF. Your signature is not saved anywhere.",
       "yourSignature": "Your signature",
@@ -1894,6 +1920,7 @@
         "split": "Split",
         "organize": "Organize",
         "compress": "Compress",
+        "fill": "Fill in",
         "sign": "Sign",
         "word": "PDF to Word",
         "images": "Images to PDF",
@@ -1904,6 +1931,7 @@
         "split": "Take out pages, or split into several",
         "organize": "Turn, move or remove pages",
         "compress": "Make a PDF smaller for email",
+        "fill": "Fill in a PDF form",
         "sign": "Add your signature",
         "word": "Edit the text in Word",
         "images": "A page for each photo or scan",

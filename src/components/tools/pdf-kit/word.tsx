@@ -7,7 +7,7 @@ import { useState } from "react";
 import { FileChip, Opening, SwitchRow, ToolPanel } from "@/components/tools/controls";
 import { FileProblems } from "@/components/tools/file-list";
 import { baseName, downloadBytes, FileDrop, type OnePdf, recordUse, useFileProblem, useOnePdf, useSizeLimit } from "@/components/tools/files";
-import { loadPdfJs, PdfThumb, usePdfDocument } from "@/components/tools/pdf-preview";
+import { loadPdfJs, openPdf, PdfThumb, usePdfDocument } from "@/components/tools/pdf-preview";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { type Box, type PictureBit, pagesToDocx, readPdf, scannedPages } from "@/lib/pdf-to-word";
@@ -103,8 +103,7 @@ function ConvertPdf({ pdf, onClear }: { pdf: OnePdf; onClear: () => void }) {
     setStage({ step: "reading", page: 0, total: pdf.pages });
     try {
       const pdfjs = await loadPdfJs();
-      // pdf.js takes the buffer it is given, so it gets a copy.
-      const source = await pdfjs.getDocument({ data: pdf.bytes.slice() }).promise;
+      const source = await openPdf(pdf.bytes);
       try {
         const pages = await readPdf(source, pdfjs as never, {
           // Scans are only pictures, so they are kept even when pictures are not.

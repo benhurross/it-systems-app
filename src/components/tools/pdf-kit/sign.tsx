@@ -1,15 +1,15 @@
 "use client";
 
 import { ChevronLeft, ChevronRight, Plus, Signature as SignatureIcon, X } from "lucide-react";
-import type { PDFDocumentProxy, RenderTask } from "pdfjs-dist";
+import type { PDFDocumentProxy } from "pdfjs-dist";
 import { useTranslations } from "next-intl";
-import { type KeyboardEvent, type PointerEvent, type ReactNode, useEffect, useId, useRef, useState } from "react";
+import { type KeyboardEvent, type PointerEvent, type ReactNode, useCallback, useEffect, useId, useRef, useState } from "react";
 import { toast } from "sonner";
 import { FileChip, Opening, ToolPanel } from "@/components/tools/controls";
 import { FileProblems } from "@/components/tools/file-list";
 import { baseName, downloadBytes, FileDrop, type OnePdf, recordUse, useFileProblem, useOnePdf, useSizeLimit } from "@/components/tools/files";
 import { type Signature, SignatureMaker } from "@/components/tools/pdf-kit/signature-maker";
-import { usePdfDocument } from "@/components/tools/pdf-preview";
+import { PdfPage, usePdfDocument } from "@/components/tools/pdf-preview";
 import { Button } from "@/components/ui/button";
 import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -18,7 +18,6 @@ import { Switch } from "@/components/ui/switch";
 import { useFormat } from "@/hooks/use-format";
 import { DATE_SHARE, type SignPlacement, signPdf } from "@/lib/pdf-sign";
 import { isStampText } from "@/lib/pdf-tools";
-import { cn } from "@/lib/utils";
 
 /**
  * A signature placed on a page: where its box starts and how wide it is, as fractions of the page
@@ -225,51 +224,26 @@ function PageView({
   children: ReactNode;
 }) {
   const t = useTranslations("tools.sign");
-  const canvas = useRef<HTMLCanvasElement>(null);
   const [aspect, setAspect] = useState<number | null>(null);
-
-  useEffect(() => {
-    if (!doc) return;
-    let cancelled = false;
-    let task: RenderTask | null = null;
-    void (async () => {
-      try {
-        const p = await doc.getPage(page);
-        const base = p.getViewport({ scale: 1 });
-        const viewport = p.getViewport({ scale: (1100 * (window.devicePixelRatio > 1 ? 1.5 : 1)) / Math.max(base.width, base.height) });
-        const el = canvas.current;
-        if (!el || cancelled) return;
-        el.width = Math.floor(viewport.width);
-        el.height = Math.floor(viewport.height);
-        task = p.render({ canvas: el, viewport });
-        await task.promise;
-        if (!cancelled) setAspect(viewport.width / viewport.height);
-      } catch {}
-    })();
-    return () => {
-      cancelled = true;
-      task?.cancel();
-    };
-  }, [doc, page]);
+  // A new page is not ready to sign on until it is drawn.
+  const [drawnPage, setDrawnPage] = useState<number | null>(null);
+  const drawn = useCallback(
+    (a: number) => {
+      setAspect(a);
+      setDrawnPage(page);
+    },
+    [page],
+  );
+  const ready = aspect !== null && drawnPage === page;
 
   return (
     <div className="space-y-3">
-      <div className="flex justify-center rounded-xl border bg-muted/40 p-3 sm:p-4">
-        {/* The page reads left to right whatever the app's language, and its signatures sit on it by fractions of its size. */}
-        <div dir="ltr" className={cn("relative max-w-full", aspect === null ? "w-full max-w-md" : "w-fit")}>
-          {/* As large as fits across, and no taller than most of the window, so the whole page shows. */}
-          <canvas
-            ref={canvas}
-            role="img"
-            aria-label={label}
-            className={cn("block h-auto max-h-[70vh] w-auto max-w-full bg-white shadow-sm ring-1 ring-border", aspect === null && "aspect-[3/4] w-full animate-pulse bg-muted")}
-          />
-          {aspect !== null && children}
-        </div>
-      </div>
+      <PdfPage doc={doc} page={page} label={label} onDrawn={drawn}>
+        {children}
+      </PdfPage>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="text-sm text-muted-foreground">{hint ?? t("placeHint")}</span>
-        <Button variant="outline" disabled={!canAdd || aspect === null} onClick={() => aspect !== null && onAdd(aspect)}>
+        <Button variant="outline" disabled={!canAdd || !ready} onClick={() => ready && onAdd(aspect)}>
           <Plus />
           {t("addHere")}
         </Button>
