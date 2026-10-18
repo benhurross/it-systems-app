@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 import { PageHeader } from "@/components/page-header";
 import { SectionTabs } from "@/components/section-tabs";
 
-/** Title and the Inventory / Discovery / Tags tabs shared by the asset pages. */
+/** Title and the Inventory / Discovery / Tags / Import tabs shared by the asset pages. */
 export function AssetsHeader({ actions }: { actions?: ReactNode }) {
   const t = useTranslations("assets");
   return (
@@ -16,6 +16,7 @@ export function AssetsHeader({ actions }: { actions?: ReactNode }) {
           { href: "/assets/inventory", label: t("tabs.inventory") },
           { href: "/assets/discovery", label: t("tabs.discovery") },
           { href: "/assets/tags", label: t("tabs.tags") },
+          { href: "/assets/import", label: t("tabs.import") },
         ]}
       />
     </>

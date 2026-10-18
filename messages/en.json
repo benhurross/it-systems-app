@@ -893,7 +893,8 @@
     "tabs": {
       "inventory": "Inventory",
       "discovery": "Discovery",
-      "tags": "Tags"
+      "tags": "Tags",
+      "import": "Import"
     },
     "add": "Add asset",
     "edit": "Edit asset",
@@ -985,7 +986,66 @@
     "anydeskId": "AnyDesk ID",
     "anydeskHint": "The ID AnyDesk shows on this computer, such as 123 456 789, or its alias.",
     "connect": "Connect with AnyDesk",
-    "connectTo": "Connect to {device} with AnyDesk"
+    "connectTo": "Connect to {device} with AnyDesk",
+    "import": {
+      "tab": "Import",
+      "title": "Load assets from a spreadsheet",
+      "intro": "Add your devices from an Excel (.xlsx) or CSV file, or update the ones listed: export the inventory, fill in a column such as AnyDesk ID, and load it back.",
+      "template": "Download template",
+      "file": "Excel or CSV file",
+      "fileHint": "Up to 10 MB. The file is checked first; nothing changes until you load it.",
+      "checking": "Checking the file…",
+      "columnsTitle": "The columns",
+      "columns": "Name, Type and Location are needed; everything else may be left empty. Category follows from the type when it is left out. Values may be written as the app shows them (Laptop, Jeddah Head Office) or as in the dropdown lists.",
+      "columnTag": "Tag (AST-0042) or Serial: a row naming an asset already registered updates it, and its empty cells leave what is there. Any other row adds an asset.",
+      "columnPerson": "Assigned to: the person's employee number, email or full name. A change of place or holder goes in the movement history.",
+      "columnDates": "Dates: 2026-03-31 or 31/03/2026 (day first).",
+      "resultTitle": "What loading {file} will do",
+      "loadedTitle": "{file} is loaded",
+      "counts": {
+        "add": "{count, plural, one {# to add} other {# to add}}",
+        "update": "{count, plural, one {# to update} other {# to update}}",
+        "unchanged": "{count, plural, one {# unchanged} other {# unchanged}}",
+        "skip": "{count, plural, one {# with problems, left out} other {# with problems, left out}}"
+      },
+      "unused": "Columns not used: {columns}",
+      "row": "Row",
+      "name": "Name",
+      "result": "Result",
+      "details": "Details",
+      "actions": {
+        "add": "Add",
+        "update": "Update",
+        "unchanged": "No change",
+        "skip": "Left out"
+      },
+      "changes": "Changes: {fields}",
+      "load": "{count, plural, one {Load # asset} other {Load # assets}}",
+      "loading": "Loading…",
+      "loaded": "{added} added and {updated} updated.",
+      "openInventory": "Open the inventory",
+      "another": "Load another file",
+      "tag": "Tag",
+      "problems": {
+        "noHeader": "No row names a Name column. The first row should hold the column names, as in the template.",
+        "required": "{field} is missing.",
+        "unknown": "{field} \"{value}\" is not in the list.",
+        "noTag": "There is no asset {value}.",
+        "person": "Nobody called \"{value}\" is in the directory.",
+        "personAmbiguous": "More than one person is \"{value}\": use their employee number or email.",
+        "date": "{field} \"{value}\" is not a date.",
+        "number": "{field} \"{value}\" is not a number.",
+        "repeated": "This asset is already on row {line}.",
+        "invalid": "{field}: {message}"
+      },
+      "errors": {
+        "fileType": "Choose an Excel (.xlsx) or CSV file.",
+        "fileSize": "This file is larger than 10 MB.",
+        "fileEmpty": "Choose a file first.",
+        "tooManyRows": "The file has more than 5,000 rows. Load it in parts.",
+        "generic": "The file could not be read. Try again."
+      }
+    }
   },
   "discovery": {
     "intro": "Sweep a subnet from the server to find devices on the network and compare them with the inventory.",

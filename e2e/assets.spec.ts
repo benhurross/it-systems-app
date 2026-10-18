@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { expect, test, type TestInfo } from "@playwright/test";
 import { session } from "./env";
-import { choose, unique, watchConsole } from "./helpers";
+import { choose, unique, watchConsole, xlsxFile } from "./helpers";
 
 /** Browsers run side by side on one database, so each takes its own record where two would clash. */
 const slot = (info: TestInfo) => ["chromium", "firefox", "webkit"].indexOf(info.project.name);
@@ -193,6 +193,54 @@ test("a ticket offers AnyDesk to the requester's computer", async ({ page }) => 
   const [laptop] = held(ticket!);
   await page.goto(`/en/tickets/${ticket!.id}`);
   await expect(page.getByRole("link", { name: `Connect to ${laptop.name} with AnyDesk` })).toHaveAttribute("href", `anydesk:${laptop.anydeskId}`);
+  console.assertClean();
+});
+
+test("assets are loaded from a spreadsheet: checked first, then added and updated", async ({ page }, info) => {
+  const console = watchConsole(page);
+  type Asset = { id: number; name: string; type: string; serial: string | null; notes: string | null; anydeskId: string | null };
+  const before = (await (await page.request.get("/api/assets")).json()) as Asset[];
+  const monitor = before.find((a) => a.type === "monitor")!;
+  const name = unique(info, "LT-IMPORT");
+  const serial = name.replace(/\W+/g, "");
+  const tag = `AST-${String(monitor.id).padStart(4, "0")}`;
+  const file = xlsxFile("inventory.xlsx", [
+    ["Tag", "Name", "Type", "Location", "Serial", "AnyDesk ID", "Cost (SAR)", "Notes", "Colour"],
+    ["", name, "Laptop", "Jeddah Head Office", serial, "1 357 913 579", 4300, "", "Black"],
+    [tag, "", "", "", "", "", "", "Checked in the import", ""],
+    ["", "PLT-01", "Plotter", "Jeddah", "", "", "", "", ""],
+  ]);
+
+  await page.goto("/en/assets/import");
+  await expect(page.getByRole("link", { name: "Import" })).toHaveAttribute("aria-current", "page");
+  const [template] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "Download template" }).click()]);
+  expect(template.suggestedFilename()).toBe("assets-template.csv");
+
+  // A file that is not a spreadsheet is refused.
+  await page.getByLabel("Excel or CSV file").setInputFiles({ name: "notes.xlsx", mimeType: "application/octet-stream", buffer: Buffer.from("not a workbook") });
+  await expect(page.getByRole("alert").filter({ hasText: "Choose an Excel (.xlsx) or CSV file." })).toBeVisible();
+
+  // Checked first: nothing changes yet.
+  await page.getByLabel("Excel or CSV file").setInputFiles(file);
+  await expect(page.getByRole("heading", { name: "What loading inventory.xlsx will do" })).toBeVisible();
+  for (const count of ["1 to add", "1 to update", "0 unchanged", "1 with problems, left out"]) await expect(page.getByText(count, { exact: true })).toBeVisible();
+  await expect(page.getByText("Columns not used: Colour")).toBeVisible();
+  await expect(page.getByRole("row", { name: /PLT-01/ })).toContainText('Type "Plotter" is not in the list.');
+  await expect(page.getByRole("row", { name: new RegExp(monitor.name) })).toContainText("Changes: Notes");
+  expect(((await (await page.request.get("/api/assets")).json()) as Asset[]).some((a) => a.name === name)).toBe(false);
+
+  await page.getByRole("button", { name: "Load 2 assets" }).click();
+  await expect(page.getByText("1 added and 1 updated.")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "inventory.xlsx is loaded" })).toBeVisible();
+  const after = (await (await page.request.get("/api/assets")).json()) as Asset[];
+  expect(after.find((a) => a.name === name)).toMatchObject({ serial, anydeskId: "1357913579" });
+  expect(after.find((a) => a.id === monitor.id)).toMatchObject({ notes: "Checked in the import", name: monitor.name });
+
+  // Loaded again, the file changes nothing: the laptop is found by its serial now.
+  await page.getByRole("button", { name: "Load another file" }).click();
+  await page.getByLabel("Excel or CSV file").setInputFiles(file);
+  await expect(page.getByText("2 unchanged", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Load 0 assets" })).toBeDisabled();
   console.assertClean();
 });
 

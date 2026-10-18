@@ -29,6 +29,7 @@ export const IT = [
   "/assets/inventory",
   "/assets/discovery",
   "/assets/tags",
+  "/assets/import",
   "/cmdb",
   "/software",
   "/software/:license",

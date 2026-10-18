@@ -1,6 +1,7 @@
 import { createServer, type AddressInfo } from "node:net";
 import { crc32, deflateSync } from "node:zlib";
 import { expect, type Browser, type Page, type TestInfo } from "@playwright/test";
+import { strToU8, zipSync } from "fflate";
 import { PDFDocument, StandardFonts } from "pdf-lib";
 
 /** Fails the test if the page logs an error to the console. */
@@ -258,3 +259,37 @@ export const TOOLS_IN_USE: Record<string, (page: Page) => Promise<void>> = {
     await expect(panel.getByRole("switch").last()).toHaveAttribute("aria-checked", "true");
   },
 };
+
+/** An Excel workbook of one sheet, as Excel saves it: text and numbers, cell by cell. */
+export function xlsxFile(name: string, rows: (string | number)[][]) {
+  const escape = (v: string) => v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const column = (i: number) => String.fromCharCode(65 + i);
+  const cells = rows
+    .map((row, r) =>
+      `<row r="${r + 1}">${row
+        .map((v, c) =>
+          typeof v === "number"
+            ? `<c r="${column(c)}${r + 1}"><v>${v}</v></c>`
+            : `<c r="${column(c)}${r + 1}" t="inlineStr"><is><t>${escape(v)}</t></is></c>`,
+        )
+        .join("")}</row>`,
+    )
+    .join("");
+  const ns = "http://schemas.openxmlformats.org";
+  const zip = zipSync({
+    "[Content_Types].xml": strToU8(
+      `<?xml version="1.0" encoding="UTF-8"?><Types xmlns="${ns}/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>`,
+    ),
+    "_rels/.rels": strToU8(
+      `<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="${ns}/package/2006/relationships"><Relationship Id="rId1" Type="${ns}/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`,
+    ),
+    "xl/workbook.xml": strToU8(
+      `<?xml version="1.0" encoding="UTF-8"?><workbook xmlns="${ns}/spreadsheetml/2006/main" xmlns:r="${ns}/officeDocument/2006/relationships"><sheets><sheet name="Assets" sheetId="1" r:id="rId1"/></sheets></workbook>`,
+    ),
+    "xl/_rels/workbook.xml.rels": strToU8(
+      `<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="${ns}/package/2006/relationships"><Relationship Id="rId1" Type="${ns}/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/></Relationships>`,
+    ),
+    "xl/worksheets/sheet1.xml": strToU8(`<?xml version="1.0" encoding="UTF-8"?><worksheet xmlns="${ns}/spreadsheetml/2006/main"><sheetData>${cells}</sheetData></worksheet>`),
+  });
+  return { name, mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", buffer: Buffer.from(zip) };
+}

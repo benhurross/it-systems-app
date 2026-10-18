@@ -23,6 +23,7 @@
     "people:check": "tsx --env-file-if-exists=.env.local scripts/people-check.ts",
     "people:ids": "tsx --env-file-if-exists=.env.local scripts/people-ids.ts",
     "tickets:import": "tsx --env-file-if-exists=.env.local scripts/tickets-import.ts",
+    "demo:clear": "tsx --env-file-if-exists=.env.local scripts/demo-clear.ts",
     "backup": "tsx --env-file-if-exists=.env.local scripts/backup.ts",
     "restore": "tsx --env-file-if-exists=.env.local scripts/restore.ts"
   },

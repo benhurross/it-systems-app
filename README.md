@@ -222,6 +222,7 @@ Either way, set the **label size** and the printer's **resolution** (203 or 300 
 | `npm run people:check "<file.xlsx>"` | Reports how the staff list would be loaded. Changes nothing. |
 | `npm run people:ids "<file.xlsx>"` | Fills in employee ID numbers from the staff list. |
 | `npm run tickets:import "<file.xlsx>"` | Reports what loading the ticket log would do. Add `replace` to load it in place of the current tickets. |
+| `npm run demo:clear` | Reports which made-up demo records (assets, software, vendors, finance, projects, risks, changes) it would remove. Add `confirm` to back up and remove them. People, accounts and tickets stay. |
 | `npm run backup` | Makes a backup. |
 | `npm run restore -- latest` | Restores the newest backup (or give a backup folder). |
 
@@ -236,6 +237,23 @@ npm run db:seed:demo
 ```
 
 **This replaces everything in the database** with invented people, assets and tickets. The demo accounts (`admin@applus.test`, `it@applus.test`, `employee@applus.test` and others) and their password are in `src/server/seed/demo-data.ts`.
+
+### From demo data to your own inventory
+
+If the database was loaded with the demo data and your staff list (`npm run db:seed:demo "<file.xlsx>"`), the people are real but the assets, software, vendors, contracts, purchases and budget, projects, risks and changes are made up. To replace them with your own:
+
+1. See what would go, without changing anything:
+   ```bash
+   npm run demo:clear
+   ```
+2. Remove them. A backup is made first, and anything someone added in the app is kept:
+   ```bash
+   npm run demo:clear confirm
+   ```
+   People, accounts, tickets, ID cards, the knowledge base, the dropdown lists and settings stay. Tickets that named a made-up device keep everything else. To undo it, `npm run restore -- latest`.
+3. Add your devices:
+   - **Assets → Discovery** scans your network (for example `192.168.0.0/24`) and lists what answers, to add with a click. It only finds devices that are switched on.
+   - **Assets → Import** loads an Excel or CSV sheet (Download template gives the columns). It shows what each row will do before anything changes. Later, to fill in a column for many assets at once (AnyDesk IDs, say), export the inventory, fill it in, and import it back: rows with a tag or a known serial number update that asset.
 
 ## For developers
 
