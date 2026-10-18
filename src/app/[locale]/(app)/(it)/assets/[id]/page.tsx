@@ -10,6 +10,7 @@ import { MoveDialog } from "@/components/assets/move-dialog";
 import { EnumBadge } from "@/components/badges";
 import { StatusBadge } from "@/components/status-badge";
 import { StatusPage } from "@/components/status-page";
+import { DeleteRecord } from "@/components/delete-record";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -17,7 +18,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useApi, useApiMutation } from "@/hooks/use-api";
 import { useFormat } from "@/hooks/use-format";
 import { useLookups } from "@/hooks/use-lookups";
-import { Link } from "@/i18n/navigation";
+import { Link, useRouter } from "@/i18n/navigation";
 import { formatAnydeskId } from "@/lib/anydesk";
 import { api } from "@/lib/api";
 import type { AssetDetail } from "@/lib/api-types";
@@ -28,6 +29,7 @@ import { assetFlags, type AssetFlags } from "@/lib/lifecycle";
 export default function AssetPage({ params }: PageProps<"/[locale]/assets/[id]">) {
   const { id } = use(params);
   const t = useTranslations();
+  const router = useRouter();
   const format = useFormat();
   const lookups = useLookups();
   const [dialog, setDialog] = useState<"edit" | "move" | null>(null);
@@ -98,6 +100,7 @@ export default function AssetPage({ params }: PageProps<"/[locale]/assets/[id]">
               </Button>
             </>
           )}
+          <DeleteRecord path={`/assets/${asset.id}`} name={asset.name} detail={t("assets.deleteDetail")} onDeleted={() => router.push("/assets/inventory")} />
         </div>
       </div>
 

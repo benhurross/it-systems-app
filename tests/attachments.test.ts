@@ -84,6 +84,20 @@ describe("attachments", () => {
     await expect(files.getAttachment(row.id)).rejects.toMatchObject({ status: 404 });
   });
 
+  it("takes an asset's documents, files and all, when the asset is deleted", async () => {
+    const { createAsset, deleteAsset } = await import("@/server/services/assets");
+    const { assetInput } = await import("@/lib/schemas");
+    const asset = await createAsset(
+      assetInput.parse({ name: "LT-WRONG", category: "end_user", type: "laptop", status: "in_stock", location: "jeddah", supportStatus: "supported", criticality: "low", monitorMethod: "none" }),
+      it_,
+    );
+    await files.addAttachment({ entity: "asset", entityId: asset.id, kind: "invoice", name: "invoice.pdf", bytes: PDF }, it_);
+    const [{ storageKey }] = await db.select().from(s.attachments).where(eq(s.attachments.entityId, asset.id));
+    await deleteAsset(asset.id, it_);
+    expect(await files.listAttachments("asset", asset.id)).toEqual([]);
+    expect(existsSync(path.join(process.env.UPLOADS_DIR!, storageKey))).toBe(false);
+  });
+
   it("never leaves half-written files behind", async () => {
     const months = await readdir(process.env.UPLOADS_DIR!);
     const all = (await Promise.all(months.map((m) => readdir(path.join(process.env.UPLOADS_DIR!, m))))).flat();

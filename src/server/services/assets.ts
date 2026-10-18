@@ -1,4 +1,4 @@
-import { asc, desc, eq, getTableColumns, or } from "drizzle-orm";
+import { and, asc, desc, eq, getTableColumns, or } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import type { z } from "zod";
 import { ref } from "@/lib/domain";
@@ -6,6 +6,7 @@ import type { assetInput, assetMove, relationshipInput } from "@/lib/schemas";
 import { audit, type Actor } from "../audit";
 import { db } from "../db";
 import {
+  attachments,
   assetMovements,
   assets,
   employees,
@@ -14,6 +15,7 @@ import {
   relationships,
   tickets,
 } from "../db/schema";
+import { removeStoredFile } from "../files";
 import { one } from "../http";
 
 const withHolder = () =>
@@ -71,6 +73,24 @@ export async function updateAsset(id: number, input: z.infer<typeof assetInput>,
   const row = one(await db.update(assets).set(input).where(eq(assets.id, id)).returning());
   await audit(actor, "update", "asset", id, `Updated ${ref("asset", id)}: ${row.name}`);
   return row;
+}
+
+/**
+ * Removes an asset for good, with its movements, CMDB links, installs, monitoring and documents
+ * (files and all). Tickets, changes and risks that named it stay, without it. Retire keeps all that.
+ */
+export async function deleteAsset(id: number, actor: Actor) {
+  const { row, files } = await db.transaction(async (tx) => {
+    // Documents are attached by kind and number, not by a link the database follows.
+    const detached = await tx
+      .delete(attachments)
+      .where(and(eq(attachments.entity, "asset"), eq(attachments.entityId, id)))
+      .returning({ key: attachments.storageKey });
+    return { row: one(await tx.delete(assets).where(eq(assets.id, id)).returning()), files: detached.map((d) => d.key) };
+  });
+  for (const key of files) await removeStoredFile(key);
+  await audit(actor, "delete", "asset", id, `Deleted ${ref("asset", id)}: ${row.name}`);
+  return { id };
 }
 
 /**

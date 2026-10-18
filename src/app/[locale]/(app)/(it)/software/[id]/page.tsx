@@ -8,13 +8,14 @@ import { EnumBadge } from "@/components/badges";
 import { ComboboxField, FormDialog } from "@/components/form";
 import { LicenseDialog } from "@/components/software/license-dialog";
 import { StatusPage } from "@/components/status-page";
+import { DeleteRecord } from "@/components/delete-record";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useApi, useApiMutation } from "@/hooks/use-api";
 import { useFormat } from "@/hooks/use-format";
 import { useLookups } from "@/hooks/use-lookups";
-import { Link } from "@/i18n/navigation";
+import { Link, useRouter } from "@/i18n/navigation";
 import { api } from "@/lib/api";
 import type { Asset, LicenseDetail } from "@/lib/api-types";
 import { isoDate } from "@/lib/dates";
@@ -24,6 +25,7 @@ import { licenseState } from "@/lib/licenses";
 export default function LicensePage({ params }: PageProps<"/[locale]/software/[id]">) {
   const { id } = use(params);
   const t = useTranslations();
+  const router = useRouter();
   const format = useFormat();
   const lookups = useLookups();
   const [dialog, setDialog] = useState<"edit" | "install" | null>(null);
@@ -49,10 +51,13 @@ export default function LicensePage({ params }: PageProps<"/[locale]/software/[i
           </div>
           <h1 className="text-2xl font-semibold tracking-tight">{license.product}</h1>
         </div>
-        <Button variant="outline" onClick={() => setDialog("edit")}>
-          <Pencil />
-          {t("common.edit")}
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" onClick={() => setDialog("edit")}>
+            <Pencil />
+            {t("common.edit")}
+          </Button>
+          <DeleteRecord path={`/licenses/${license.id}`} name={license.product} detail={t("software.deleteDetail")} onDeleted={() => router.push("/software")} />
+        </div>
       </div>
       <div className="grid gap-6 lg:grid-cols-3">
         <Card>

@@ -1051,7 +1051,8 @@
         "tooManyRows": "The file has more than 5,000 rows. Load it in parts.",
         "generic": "The file could not be read. Try again."
       }
-    }
+    },
+    "deleteDetail": "Its movement history, CMDB links, installed software, monitoring and documents go with it, and tickets that named it lose the link. To keep its history, retire it instead."
   },
   "discovery": {
     "intro": "Sweep a subnet from the server to find devices on the network and compare them with the inventory.",
@@ -1135,7 +1136,8 @@
     "uninstall": "Remove",
     "saved": "Licence saved.",
     "installed": "Installation recorded.",
-    "back": "All licences"
+    "back": "All licences",
+    "deleteDetail": "The record of where it is installed goes with it."
   },
   "network": {
     "title": "Network",

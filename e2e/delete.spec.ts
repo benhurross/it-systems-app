@@ -76,6 +76,39 @@ test("a risk and a vulnerability are deleted from their edit dialogs", async ({ 
   console.assertClean();
 });
 
+test("an asset is deleted with its documents and installs, and a licence too", async ({ page }, info) => {
+  const console = watchConsole(page);
+  const name = unique(info, "LT-WRONG");
+  const asset = await make(page, "/assets", {
+    name, category: "end_user", type: "laptop", status: "in_stock", location: "jeddah", supportStatus: "supported", criticality: "low", monitorMethod: "none",
+  });
+  const upload = await page.request.post("/api/attachments", {
+    multipart: { entity: "asset", entityId: String(asset), kind: "invoice", file: { name: "invoice.pdf", mimeType: "application/pdf", buffer: Buffer.from("%PDF-1.4\n%%EOF\n") } },
+  });
+  expect(upload.ok(), await upload.text()).toBe(true);
+  const product = unique(info, "Old demo software");
+  const license = await make(page, "/licenses", { product, type: "subscription", seats: 5 });
+  expect((await page.request.post(`/api/licenses/${license}/installs`, { data: { assetId: asset } })).ok()).toBe(true);
+
+  // Retire stays for real devices; Delete says what goes with it.
+  await page.goto(`/en/assets/${asset}`);
+  await expect(page.getByRole("button", { name: "Retire" })).toBeVisible();
+  await page.getByRole("button", { name: "Delete", exact: true }).click();
+  await expect(page.getByRole("alertdialog")).toContainText("To keep its history, retire it instead.");
+  await page.getByRole("alertdialog").getByRole("button", { name: "Delete", exact: true }).click();
+  await expect(page.getByText(`${name} deleted.`)).toBeVisible();
+  await expect(page).toHaveURL(/\/en\/assets\/inventory$/);
+  expect((await page.request.get(`/api/assets/${asset}`)).status()).toBe(404);
+  const documents = (await (await page.request.get(`/api/attachments?entity=asset&id=${asset}`)).json()) as unknown[];
+  expect(documents).toEqual([]);
+
+  await page.goto(`/en/software/${license}`);
+  await deleteIt(page, product);
+  await expect(page).toHaveURL(/\/en\/software$/);
+  expect((await page.request.get(`/api/licenses/${license}`)).status()).toBe(404);
+  console.assertClean();
+});
+
 test("employees cannot delete what IT keep", async ({ browser }) => {
   const context = await browser.newContext({ storageState: session("employee") });
   const res = await context.request.delete("/api/projects/1");

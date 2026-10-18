@@ -52,6 +52,13 @@ export async function updateLicense(id: number, input: z.infer<typeof licenseInp
   return row;
 }
 
+/** Removes a licence and the record of where it is installed, for good. */
+export async function deleteLicense(id: number, actor: Actor) {
+  const row = one(await db.delete(licenses).where(eq(licenses.id, id)).returning());
+  await audit(actor, "delete", "license", id, `Deleted ${ref("license", id)}: ${row.product}`);
+  return { id };
+}
+
 export async function addInstall(id: number, input: z.infer<typeof licenseInstall>, actor: Actor) {
   const row = one(await db.insert(licenseInstalls).values({ licenseId: id, assetId: input.assetId }).returning());
   await audit(actor, "install", "license", id, `Installed ${ref("license", id)} on ${ref("asset", input.assetId)}`);
