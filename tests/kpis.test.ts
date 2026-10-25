@@ -32,8 +32,38 @@ describe("a KPI's year", () => {
     // October has not begun.
     expect(r.cells[9]).toMatchObject({ started: false, value: null });
     expect(r.year).toBeCloseTo(2 / 3);
-    // Judged on the latest month with a figure: February's 100%.
-    expect(r).toMatchObject({ judged: 1, status: "green", achievement: 1 });
+    // A share is judged on the year so far, the figure beside it, not on its latest month.
+    expect(r.judged).toBeCloseTo(2 / 3);
+    expect(r.status).toBe("red");
+    // Each month stands on its own too: January short, February on target.
+    expect(r.cells.slice(0, 2).map((c) => c.status)).toEqual(["red", "green"]);
+    expect(r.cells[8]).toMatchObject({ started: true, ended: false });
+    expect(r.cells[7]).toMatchObject({ ended: true });
+  });
+
+  it("keeps a share on target over the year when the month under way is behind", () => {
+    const entered = [7, 8].map((period) => ({ period, numerator: null, denominator: null, value: 0.9865, note: "" }));
+    // September, under way: three of four tickets so far within SLA.
+    const september = [
+      ...[1, 2, 3].map(() => ticket({ dueAt: at("2026-09-10"), resolvedAt: at("2026-09-09") })),
+      ticket({ dueAt: at("2026-09-10"), resolvedAt: at("2026-09-12") }),
+    ];
+    const r = kpiResult(kpi({ source: "ticket_sla" }), { ...settings, target: 0.9 }, entered, september, 2026, NOW);
+    expect(r.cells[8]).toMatchObject({ value: 0.75, status: "red" });
+    expect(r.year).toBeCloseTo((0.9865 * 2 + 0.75) / 3);
+    expect(r.status).toBe("green");
+  });
+
+  it("judges a count with a target for each quarter on the latest quarter that is over", () => {
+    const complaints = kpi({ unit: "number", period: "quarter", higherIsBetter: false });
+    const figures = [
+      { period: 1, numerator: null, denominator: null, value: 12, note: "" },
+      { period: 2, numerator: null, denominator: null, value: 6, note: "" },
+      { period: 3, numerator: null, denominator: null, value: 20, note: "" },
+    ];
+    // The third quarter is still under way on 29 September: the second, 6 against 8, is judged.
+    const r = kpiResult(complaints, { baseline: 16, baselineNote: "", target: 8, weight: null }, figures, [], 2026, NOW);
+    expect(r).toMatchObject({ year: 38, judged: 6, status: "green" });
   });
 
   it("counts only the tickets a KPI names, and asks for a resolution note when it says so", () => {
@@ -77,6 +107,38 @@ describe("a KPI's year", () => {
     const rating = kpiResult(kpi({ source: "satisfaction", unit: "score", period: "quarter" }), { baseline: 3.5, baselineNote: "", target: 4.5, weight: null }, [], tickets, 2026, NOW);
     expect(rating.cells[0].value).toBe(4);
     expect(rating.status).toBe("amber");
+  });
+});
+
+describe("a KPI's quarters", () => {
+  it("puts each quarter's months together and judges the quarter on its own", () => {
+    const entered = [
+      { period: 1, numerator: 48, denominator: 50, value: null, note: "" },
+      { period: 2, numerator: 45, denominator: 50, value: null, note: "" },
+      { period: 3, numerator: 50, denominator: 50, value: null, note: "" },
+      { period: 4, numerator: 40, denominator: 50, value: null, note: "" },
+    ];
+    const r = kpiResult(kpi({}), settings, entered, [], 2026, NOW);
+    expect(r.quarters).toHaveLength(4);
+    expect(r.quarters[0]).toMatchObject({ quarter: 1, numerator: 143, denominator: 150, status: "green", ended: true });
+    expect(r.quarters[0].value).toBeCloseTo(143 / 150);
+    expect(r.quarters[1]).toMatchObject({ numerator: 40, denominator: 50, value: 0.8, status: "red", ended: true });
+    // The third quarter is under way, the fourth has not begun.
+    expect(r.quarters[2]).toMatchObject({ value: null, started: true, ended: false, status: "none" });
+    expect(r.quarters[3]).toMatchObject({ started: false });
+  });
+
+  it("shares a yearly total's target out over the quarters, and keeps a quarterly KPI's figure", () => {
+    const training = kpiResult(kpi({ unit: "hours", period: "quarter", targetFor: "year" }), { baseline: 0, baselineNote: "", target: 150, weight: null }, [
+      { period: 1, numerator: null, denominator: null, value: 42, note: "" },
+      { period: 2, numerator: null, denominator: null, value: 30, note: "" },
+    ], [], 2026, NOW);
+    expect(training.quarters[0]).toMatchObject({ value: 42, target: 37.5, baseline: 0, status: "green" });
+    // Each quarter's own mark is against its share too.
+    expect(training.cells.map((c) => c.status)).toEqual(["green", "amber", "none", "none"]);
+    expect(training.quarters[1]).toMatchObject({ value: 30, status: "amber" });
+    // The year is still judged on the year's total against 150.
+    expect(training).toMatchObject({ year: 72, status: "amber" });
   });
 });
 

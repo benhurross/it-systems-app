@@ -117,7 +117,10 @@ describe("the register in Excel", () => {
     expect([training[march], training[march + 3], training[march + 6]]).toEqual([42, 38, 45]);
     expect(training).toContain("Improving");
     const scores = (await readSheet(workbook, "Scores")) as unknown[][];
-    expect(scores[0]).toEqual(["Role", "Level", "Weighted score", "Weight with figures", "Weight set"]);
+    expect(scores[0]).toEqual(["Role", "Level", "Weighted score", "Weight with figures", "Weight set", "Q1 score", "Q2 score", "Q3 score", "Q4 score"]);
+    // The quarters, beside the months: training hours by quarter.
+    const q1 = sheet[2].indexOf("Q1");
+    expect(training.slice(q1, q1 + 3)).toEqual([42, 38, 45]);
     expect(scores.some((r) => r[0] === "IT Manager")).toBe(true);
   });
 });
@@ -137,6 +140,15 @@ describe("the KPIs for other systems", () => {
     expect(body.year).toBe(2026);
     expect(body.kpis.find((k) => k.code === "IT-TRAINING")).toMatchObject({ status: "amber", figures: [{ period: 1, value: 42 }, { period: 2, value: 38 }, { period: 3, value: 45 }] });
     expect(body.roles.map((r) => r.role)).toContain("IT Manager");
+    // One quarter, when asked.
+    const third = (await (await publicKpis.GET(new Request("http://localhost/api/public/kpis?year=2026&quarter=3", { headers: { authorization: `Bearer ${made.token}` } }), undefined)).json()) as {
+      quarter: number;
+      kpis: { code: string; quarters: { quarter: number; value: number }[]; figures: { period: number }[] }[];
+    };
+    expect(third.quarter).toBe(3);
+    const training = third.kpis.find((k) => k.code === "IT-TRAINING")!;
+    expect(training.quarters).toEqual([expect.objectContaining({ quarter: 3, value: 45 })]);
+    expect(training.figures.map((f) => f.period)).toEqual([3]);
     // Only the hash is kept; the list shows the start of the key and when it was last used.
     const [listed] = await tokens.listApiTokens();
     expect(listed).toMatchObject({ name: "Board dashboard", prefix: made.prefix, revokedAt: null });

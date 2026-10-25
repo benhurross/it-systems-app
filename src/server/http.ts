@@ -93,3 +93,12 @@ export function yearParam(req: Request) {
   if (!Number.isInteger(n) || n < 2000 || n > 2100) throw badRequest("year");
   return n;
 }
+
+/** The quarter (1 to 4) a request asks for with `?quarter=`; null for the whole year. */
+export function quarterParam(req: Request) {
+  const q = new URL(req.url).searchParams.get("quarter");
+  if (!q) return null;
+  const n = Number(q);
+  if (!Number.isInteger(n) || n < 1 || n > 4) throw badRequest("quarter");
+  return n;
+}

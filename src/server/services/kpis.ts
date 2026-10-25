@@ -53,7 +53,13 @@ export async function kpiRegister(year: number, now = new Date()) {
   // Each role's score: the active KPIs that apply to it, by their weights.
   const roles = [...new Set(rows.filter((r) => r.active).map((r) => r.role))].map((role) => {
     const theirs = rows.filter((r) => r.active && r.role === role);
-    return { role, level: theirs[0].level, ...weightedScore(theirs.map((r) => ({ weight: r.settings.weight, achievement: r.achievement }))) };
+    return {
+      role,
+      level: theirs[0].level,
+      ...weightedScore(theirs.map((r) => ({ weight: r.settings.weight, achievement: r.achievement }))),
+      // And each quarter's, from the KPIs' quarter figures.
+      quarters: [1, 2, 3, 4].map((q) => ({ quarter: q, ...weightedScore(theirs.map((r) => ({ weight: r.settings.weight, achievement: r.quarters[q - 1].achievement }))) })),
+    };
   });
   return { year, rows, roles };
 }

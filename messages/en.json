@@ -1600,7 +1600,11 @@
         "generic": "The file could not be read. Try again."
       }
     },
-    "statusNote": "Status compares the latest month or quarter with the target, or the year so far for KPIs whose target is for the year. Green is on target; amber is short of it but past the baseline; red is at or behind the baseline. Figures in italics are worked out from the tickets; a figure entered stands in their place. A dot marks a note."
+    "statusNote": "Status compares the year so far with the target for shares and scores, and for KPIs whose target is for the year; counts judged month by month or quarter by quarter (complaints) use the latest one that is over. With a quarter chosen, it is that quarter's figure, a yearly total's target shared out over the four. The line under each month shows how that month stands on its own. Green is on target; amber is short of it but past the baseline; red is at or behind the baseline. Figures in italics are worked out from the tickets; a figure entered stands in their place. A dot marks a note.",
+    "period": "Period",
+    "wholeYear": "Whole year",
+    "quarterScore": "{quarter} score {score} ({weighted} of the weight has figures)",
+    "shareOfYear": "a quarter of the year's"
   },
   "home": {
     "title": "My dashboard",

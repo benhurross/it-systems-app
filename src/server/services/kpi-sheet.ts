@@ -107,7 +107,7 @@ export async function exportKpiRegister(year: number, now = new Date()) {
 
   const header = [
     "KPI ID", "Level", "Department", "Role / Applies To", "KPI Name", "Definition", "Calculation / Formula", "Measurement Direction", "Frequency",
-    "Primary Data Source", "Reviewer", "Baseline", "Target", "Weight %", ...MONTH_NAMES, "Year so far", "Status", "Notes", "Red Flag / Escalation Trigger",
+    "Primary Data Source", "Reviewer", "Baseline", "Target", "Weight %", ...MONTH_NAMES, "Q1", "Q2", "Q3", "Q4", "Year so far", "Status", "Notes", "Red Flag / Escalation Trigger",
   ];
   const register: Row[] = [
     [{ value: `Master KPI Register — ${organisation.name}`, ...bold, fontSize: 14 }],
@@ -128,22 +128,24 @@ export async function exportKpiRegister(year: number, now = new Date()) {
           figure(r.settings.target, r.unit),
           r.settings.weight === null ? null : { value: r.settings.weight / 100, type: Number, format: "0%" },
           ...months,
+          ...r.quarters.map((q) => figure(q.value, r.unit)),
           figure(r.year, r.unit), STATUS[r.status], wrapped(r.notes), wrapped(r.redFlag),
         ];
       }),
   ];
   const scores: Row[] = [
-    ["Role", "Level", "Weighted score", "Weight with figures", "Weight set"].map(head),
+    ["Role", "Level", "Weighted score", "Weight with figures", "Weight set", "Q1 score", "Q2 score", "Q3 score", "Q4 score"].map(head),
     ...roles.map((r): Row => [
       r.role || "—", LEVELS[r.level],
       r.score === null ? null : { value: r.score, type: Number, format: "0.0%" },
       { value: r.weighted / 100, type: Number, format: "0%" },
       { value: r.total / 100, type: Number, format: "0%" },
+      ...r.quarters.map((q): Cell => (q.score === null ? null : { value: q.score, type: Number, format: "0.0%" })),
     ]),
   ];
-  const widths = [14, 18, 12, 20, 28, 40, 36, 16, 16, 24, 18, 12, 10, 10, ...MONTH_NAMES.map(() => 10), 12, 12, 40, 30].map((width) => ({ width }));
+  const widths = [14, 18, 12, 20, 28, 40, 36, 16, 16, 24, 18, 12, 10, 10, ...MONTH_NAMES.map(() => 10), 10, 10, 10, 10, 12, 12, 40, 30].map((width) => ({ width }));
   return writeXlsxFile([
     { data: register, sheet: "KPI Register", columns: widths, stickyRowsCount: 3 },
-    { data: scores, sheet: "Scores", columns: [24, 20, 16, 18, 12].map((width) => ({ width })) },
+    { data: scores, sheet: "Scores", columns: [24, 20, 16, 18, 12, 10, 10, 10, 10].map((width) => ({ width })) },
   ]).toBuffer();
 }

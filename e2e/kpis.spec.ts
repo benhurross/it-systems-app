@@ -35,6 +35,25 @@ test.describe("as IT staff", () => {
     console.assertClean();
   });
 
+  test("a quarter is shown on its own: its months, figure, target and status", async ({ page }) => {
+    const console = watchConsole(page);
+    await page.goto("/en/kpis");
+    await chooseYear(page, thisYear - 1);
+    await page.getByRole("combobox", { name: "Period" }).click();
+    await page.getByRole("option", { name: `Q2 ${thisYear - 1}` }).click();
+    // Only the quarter's months, and the quarter in place of the year so far.
+    await expect(page.getByRole("columnheader", { name: "Apr" }).first()).toBeVisible();
+    await expect(page.getByRole("columnheader", { name: "Jan" })).toHaveCount(0);
+    await expect(page.getByRole("columnheader", { name: `Q2 ${thisYear - 1}` }).first()).toBeVisible();
+    // Last year's second quarter: 35 training hours against a quarter of the year's 150.
+    const training = page.getByRole("row").filter({ has: page.getByRole("rowheader", { name: /IT training hours/ }) });
+    await expect(training).toContainText("37.5 h");
+    await expect(training).toContainText("a quarter of the year's");
+    await expect(training.getByRole("cell").filter({ hasText: /^35 h$/ }).first()).toBeVisible();
+    await expect(training).toContainText("Improving");
+    console.assertClean();
+  });
+
   test("IT staff record a quarter's figure with a note, and the year and status follow", async ({ page }, info) => {
     const console = watchConsole(page);
     const year = thisYear - 2 - slot(info);
@@ -51,7 +70,7 @@ test.describe("as IT staff", () => {
     }
     await expect(training).toContainText("160 h");
     await expect(training).toContainText("On target");
-    await expect(training.getByRole("button", { name: new RegExp(`Q1 ${year}: 100 h. Udemy Business courses`) })).toBeVisible();
+    await expect(training.getByRole("button", { name: new RegExp(`Q1 ${year}: 100 h, On target. Udemy Business courses`) })).toBeVisible();
     // Cleared again.
     await training.getByRole("button", { name: new RegExp(`^IT training hours, Q2 ${year}:`) }).click();
     await page.getByRole("dialog").getByRole("button", { name: "Clear" }).click();

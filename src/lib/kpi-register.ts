@@ -44,14 +44,38 @@ export type KpiCell = {
   /** Where the figure came from; null when there is none. */
   from: "tickets" | "entered" | null;
   note: string;
-  /** Whether the month or quarter has begun. */
+  /** Whether the month or quarter has begun, and whether it is over. */
   started: boolean;
+  ended: boolean;
+  /** How the month's or quarter's own figure stands against the target. */
+  status: Rag;
 };
+/** A quarter of a KPI's year: its figure, and how it stands against the quarter's target. */
+export type KpiQuarter = {
+  quarter: number;
+  value: number | null;
+  numerator: number | null;
+  denominator: number | null;
+  judged: number | null;
+  /** The quarter's target and baseline: the year's, or a quarter of it for a yearly total. */
+  target: number;
+  baseline: number | null;
+  status: Rag;
+  achievement: number | null;
+  started: boolean;
+  ended: boolean;
+};
+
 export type KpiResult = {
   cells: KpiCell[];
+  quarters: KpiQuarter[];
   /** The year so far: the share over it, the mean score, or the total. */
   year: number | null;
-  /** The figure judged against the target: the latest month or quarter's, or the year's. */
+  /**
+   * The figure judged against the target: the year so far for shares and scores, and for
+   * totals with a yearly target; the latest month or quarter that is over for counts judged
+   * period by period (complaints a quarter).
+   */
   judged: number | null;
   status: Rag;
   /** How far toward its target, from 0 to 1, for the weighted score. */
@@ -79,7 +103,7 @@ function matches(t: KpiTicket, f: KpiFilter) {
 }
 
 /** A month or quarter's figure worked out from the tickets. */
-function fromTickets(kpi: KpiDef, tickets: KpiTicket[], year: number, p: number, now: Date): Omit<KpiCell, "period" | "note" | "started" | "from"> | null {
+function fromTickets(kpi: KpiDef, tickets: KpiTicket[], year: number, p: number, now: Date): Pick<KpiCell, "value" | "numerator" | "denominator"> | null {
   const counted = tickets.filter((t) => matches(t, kpi.filter));
   const late = (t: KpiTicket) => new Date(t.resolvedAt ?? now) > new Date(t.dueAt);
   if (kpi.source === "ticket_sla") {
@@ -120,41 +144,89 @@ export function achievement(higherIsBetter: boolean, actual: number | null, targ
 /** One KPI's year: every month or quarter, the year so far and how it stands. */
 export function kpiResult(kpi: KpiDef, settings: KpiYear, figures: KpiFigure[], tickets: KpiTicket[], year: number, now = new Date()): KpiResult {
   const current = periodOf(now, kpi.period);
+  // Each month or quarter on its own; a yearly total's target shared out over them (150 hours a
+  // year is 37.5 a quarter).
+  const shared = kpi.targetFor === "year" && (kpi.unit === "number" || kpi.unit === "hours");
+  const n = periodsIn(kpi.period);
+  const periodTargets = shared ? { target: settings.target / n, baseline: settings.baseline === null ? null : settings.baseline / n } : settings;
   const cells: KpiCell[] = Array.from({ length: periodsIn(kpi.period) }, (_, i) => {
     const p = i + 1;
     const started = year < current.year || (year === current.year && p <= current.period);
+    const ended = year < current.year || (year === current.year && p < current.period);
     const entered = figures.find((f) => f.period === p);
     const note = entered?.note ?? "";
+    const done = (figure: Pick<KpiCell, "value" | "numerator" | "denominator" | "from">): KpiCell => ({
+      period: p,
+      ...figure,
+      note,
+      started,
+      ended,
+      status: rag(kpi.higherIsBetter, figure.value, periodTargets),
+    });
     // What IT staff entered stands; otherwise what the tickets say, once the period has begun.
     if (entered && (entered.value !== null || (entered.numerator !== null && entered.denominator))) {
       const value = entered.value ?? entered.numerator! / entered.denominator!;
-      return { period: p, value, numerator: entered.numerator, denominator: entered.denominator, from: "entered", note, started };
+      return done({ value, numerator: entered.numerator, denominator: entered.denominator, from: "entered" });
     }
     const worked = started && kpi.source !== "manual" ? fromTickets(kpi, tickets, year, p, now) : null;
-    return worked
-      ? { period: p, ...worked, from: "tickets", note, started }
-      : { period: p, value: null, numerator: null, denominator: null, from: null, note, started };
+    return done(worked ? { ...worked, from: "tickets" } : { value: null, numerator: null, denominator: null, from: null });
   });
 
   const known = cells.filter((c) => c.value !== null);
-  let yearValue: number | null = null;
-  if (known.length) {
-    if (kpi.unit === "percent") {
-      // Counted figures add up into the year's share; figures without counts are averaged.
-      const counted = known.every((c) => c.numerator !== null && c.denominator);
-      yearValue = counted ? known.reduce((a, c) => a + c.numerator!, 0) / known.reduce((a, c) => a + c.denominator!, 0) : mean(known.map((c) => c.value!));
-    } else if (kpi.unit === "score") yearValue = mean(known.map((c) => c.value!));
-    else yearValue = known.reduce((a, c) => a + c.value!, 0);
-  }
-  const judged = kpi.targetFor === "year" ? yearValue : (known.at(-1)?.value ?? null);
+  const yearValue = combine(kpi.unit, known);
+  // A share or score over the year compares with a monthly target as it stands; a count does not
+  // (eight complaints a quarter is not 32 by the fourth), so it is the latest period that is over,
+  // or the one under way when none is.
+  const byYear = kpi.targetFor === "year" || kpi.unit === "percent" || kpi.unit === "score";
+  const judged = byYear ? yearValue : latest(known);
+
+  // Each quarter on its own: its months (or the quarter itself), judged as the year is. A yearly
+  // total's target is shared out evenly: 150 training hours a year is 37.5 a quarter.
+  const quarterTarget = shared ? settings.target / 4 : settings.target;
+  const quarterBaseline = shared && settings.baseline !== null ? settings.baseline / 4 : settings.baseline;
+  const quarters: KpiQuarter[] = [1, 2, 3, 4].map((q) => {
+    const inQuarter = kpi.period === "quarter" ? cells.filter((c) => c.period === q) : cells.filter((c) => Math.ceil(c.period / 3) === q);
+    const withFigures = inQuarter.filter((c) => c.value !== null);
+    const value = combine(kpi.unit, withFigures);
+    const counted = kpi.unit === "percent" && withFigures.length > 0 && withFigures.every((c) => c.numerator !== null && c.denominator);
+    const quarterJudged = byYear || kpi.period === "quarter" ? value : latest(withFigures);
+    return {
+      quarter: q,
+      value,
+      numerator: counted ? withFigures.reduce((a, c) => a + c.numerator!, 0) : null,
+      denominator: counted ? withFigures.reduce((a, c) => a + c.denominator!, 0) : null,
+      judged: quarterJudged,
+      target: quarterTarget,
+      baseline: quarterBaseline,
+      status: rag(kpi.higherIsBetter, quarterJudged, { baseline: quarterBaseline, target: quarterTarget }),
+      achievement: achievement(kpi.higherIsBetter, quarterJudged, quarterTarget),
+      started: inQuarter.some((c) => c.started),
+      ended: inQuarter.every((c) => c.ended),
+    };
+  });
   return {
     cells,
+    quarters,
     year: yearValue,
     judged,
     status: rag(kpi.higherIsBetter, judged, settings),
     achievement: achievement(kpi.higherIsBetter, judged, settings.target),
   };
 }
+
+/** Figures put together: counted shares add up (48 of 50 and 9 of 10 is 57 of 60), other shares and scores are averaged, counts and hours added. */
+function combine(unit: KpiUnit, known: KpiCell[]) {
+  if (!known.length) return null;
+  if (unit === "percent") {
+    const counted = known.every((c) => c.numerator !== null && c.denominator);
+    return counted ? known.reduce((a, c) => a + c.numerator!, 0) / known.reduce((a, c) => a + c.denominator!, 0) : mean(known.map((c) => c.value!));
+  }
+  if (unit === "score") return mean(known.map((c) => c.value!));
+  return known.reduce((a, c) => a + c.value!, 0);
+}
+
+/** The latest figure for a period that is over, or the one under way when none is. */
+const latest = (known: KpiCell[]) => (known.filter((c) => c.ended).at(-1) ?? known.at(-1))?.value ?? null;
 
 /**
  * A person's (or a role's) score: their KPIs' achievements, weighted as set for the year. KPIs

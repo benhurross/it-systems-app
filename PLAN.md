@@ -440,6 +440,8 @@ The IT department's Master KPI Register (12 KPIs for the IT Manager, the Cyber S
 - [x] The five KPIs (SLA, complaints, satisfaction, training hours, ISO non-conformities) moved into the register as ordinary, editable entries, with the targets set for each year in Settings and the quarterly figures entered before. The register is changed by admins; figures are recorded by IT staff
 - [x] Import register loads the register's Excel layout, checked first (added, updated or left out, and why); Export to Excel writes the year in the same layout, with a sheet of scores. Checked with the department's register (12 KPIs, July and August)
 - [x] Settings → API access: keys for the GM/DGM/Board dashboard to read `GET /api/public/kpis?year=` as JSON; shown once, kept as a SHA-256 hash, last use noted, revoked at once
+- [x] Status on the year so far for shares and scores and for yearly totals, on the latest period that is over for counts judged period by period (a month still under way, worked out from part of its tickets, no longer sets it); each month's own status under its figure
+- [x] Quarters: each KPI's quarter figure (counts added up, scores averaged, totals summed), status against the quarter's target (a yearly total's shared out) and each role's quarter score; Period filter on the page, Q1-Q4 columns and quarter scores in the export, `&quarter=` on the API
 
 ### Look, feel and speed (added after Phase 10)
 - [x] The dashboard and KPIs load at once: dates were worked out with a new formatter each time (thousands per page), now each formatter is made once; the dashboard's monthly chart counts each ticket once; monitoring checks are indexed by time, so the last day is read without scanning the month kept
