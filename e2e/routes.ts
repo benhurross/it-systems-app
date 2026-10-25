@@ -36,6 +36,7 @@ export const IT = [
   "/network",
   "/network/status",
   "/network/daily",
+  "/network/floor-plan",
   "/projects",
   "/projects/:project",
   "/finance",

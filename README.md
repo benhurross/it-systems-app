@@ -208,6 +208,18 @@ Set up the label printer once, in **Settings → Label printer**:
 
 Either way, set the **label size** and the printer's **resolution** (203 or 300 dpi, shown on the label under the printer) to match. **Download ZPL file** saves the tags in the printer's own language, for Zebra's utilities.
 
+## Network floor plan
+
+**Network → Floor plan** shows the office plan with every wall point on it, each labelled with its patch panel port over its switch port (P5-18 over S4-42: patch panel 5, port 18, patched to switch 4, port 42).
+
+1. **Upload floor plan** and choose the plan as a PDF (its first page). The P and S labels are read from the drawing itself, so nothing is traced by hand. Before saving, it says how many outlets it found and what to check: a port on two outlets, a label with no pair or no port number, a label tidied to be read (a stray mark after it). A scanned plan (a picture, with no text) is kept without outlets; they can be added by hand.
+2. **Find an outlet** by its label (P5-18, S4-42), a whole switch (S4), a room or a device; Enter takes the plan to it. Click an outlet to see its patch panel port, switch port, room and the device plugged in.
+3. **More → Plan and switches** says which asset each switch number is, so its status from monitoring shows beside its ports. Delete a plan here too.
+4. **Edit** an outlet to correct its labels, give its room or desk, or the device plugged in (the device's page then shows its wall port). **Move** places it again; **Add outlet** adds one the drawing lacks.
+5. **More → Upload a new drawing** when the plan changes: read the outlets from it again, or keep those you have. **Export to Excel** lists every patch panel port and what it serves.
+
+The plan is kept in the app's uploads folder, so backups include it.
+
 ## KPIs
 
 **KPIs** is the IT KPI register: each KPI grouped by role (IT department, IT Manager, Cyber Security Officer, IT Officer…), month by month or quarter by quarter, against the baseline, target and weight set for the year, with the year so far, a status (on target, improving, off target) and each role's weighted score.

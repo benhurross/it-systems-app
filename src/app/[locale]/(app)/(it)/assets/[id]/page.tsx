@@ -4,6 +4,7 @@ import { Archive, ArrowLeft, ArrowRightLeft, Network, Pencil, Tag } from "lucide
 import { useTranslations } from "next-intl";
 import { use, useState, type ReactNode } from "react";
 import { AttachmentList, AttachmentsCard } from "@/components/attachments";
+import { OnPlansCard } from "@/components/network/floor-plan/on-plans-card";
 import { AnydeskConnect } from "@/components/assets/anydesk-connect";
 import { AssetDialog, toAssetInput } from "@/components/assets/asset-dialog";
 import { MoveDialog } from "@/components/assets/move-dialog";
@@ -198,6 +199,7 @@ export default function AssetPage({ params }: PageProps<"/[locale]/assets/[id]">
               </section>
             )}
           </AttachmentsCard>
+          <OnPlansCard assetId={asset.id} />
           <Card>
             <CardHeader>
               <CardTitle>{t("assets.relationships")}</CardTitle>

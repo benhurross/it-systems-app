@@ -439,6 +439,33 @@ export const kpiFigureInput = z
   .refine((f) => (f.numerator === null) === (f.denominator === null), { message: "validation.kpiCounts", path: ["denominator"] })
   .refine((f) => f.denominator === null || (f.denominator > 0 && f.numerator! <= f.denominator), { message: "validation.kpiCounts", path: ["denominator"] });
 
+const unitNumber = z.number().int().min(0).max(999).nullable();
+const fraction = z.number().min(0).max(1);
+
+/** A wall point on a floor plan: its patch panel and switch ports, where it is, and what it serves. */
+export const outletInput = z.object({
+  panel: unitNumber,
+  panelPort: unitNumber,
+  switchNo: unitNumber,
+  switchPort: unitNumber,
+  x: fraction,
+  y: fraction,
+  room: z.string().trim().max(200).nullish().transform((v) => v ?? ""),
+  assetId: optionalId,
+  note: shortText,
+});
+
+/** The outlets read from a drawing, sent with it. */
+export const readOutletsInput = z
+  .array(outletInput.extend({ written: z.string().max(200).default("") }))
+  .max(5_000);
+
+/** A plan's name and which asset each of its switch numbers is. */
+export const floorPlanInput = z.object({
+  name: z.string().trim().min(1).max(120),
+  switches: z.record(z.string().regex(/^\d{1,3}$/), id).default({}),
+});
+
 const password = z.string().min(10).max(128);
 
 export const userCreate = z

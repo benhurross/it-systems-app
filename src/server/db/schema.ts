@@ -581,6 +581,57 @@ export const dailyChecks = pgTable(
   (t) => [unique().on(t.date, t.item)],
 );
 
+// ---------------------------------------------------------------- floor plans
+
+/**
+ * A floor's plan: the drawing (a PDF under UPLOADS_DIR, at `storageKey`) and its network outlets.
+ * `switches` says which asset each switch number on the plan is (S4 is the core switch, say).
+ */
+export const floorPlans = pgTable("floor_plans", {
+  id: id(),
+  name: text().notNull(),
+  fileName: text().notNull(),
+  size: integer().notNull(),
+  storageKey: text().notNull().unique(),
+  /** The page's size in points, and the size an outlet's mark is drawn at. */
+  pageWidth: real().notNull(),
+  pageHeight: real().notNull(),
+  markWidth: real().notNull().default(10),
+  markHeight: real().notNull().default(9),
+  switches: jsonb().$type<Record<string, number>>().notNull().default({}),
+  updatedByName: text().notNull(),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+});
+
+/**
+ * A wall point: where it is on the plan (fractions of the page from its top left), the patch panel
+ * port it is wired to and the switch port that is patched to, and what is plugged into it.
+ */
+export const networkOutlets = pgTable(
+  "network_outlets",
+  {
+    id: id(),
+    planId: integer()
+      .notNull()
+      .references(() => floorPlans.id, { onDelete: "cascade" }),
+    panel: smallint(),
+    panelPort: smallint(),
+    switchNo: smallint(),
+    switchPort: smallint(),
+    x: real().notNull(),
+    y: real().notNull(),
+    room: text().notNull().default(""),
+    assetId: integer().references(() => assets.id, { onDelete: "set null" }),
+    note: text().notNull().default(""),
+    /** The labels as the drawing had them, when they were tidied to be read. */
+    written: text().notNull().default(""),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [index().on(t.planId), index().on(t.assetId)],
+);
+
 // ---------------------------------------------------------------- KPIs
 
 /** Quarterly figures entered by hand; the other KPIs are computed from tickets. */

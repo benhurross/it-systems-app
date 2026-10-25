@@ -1,0 +1,577 @@
+"use client";
+
+import { useQuery } from "@tanstack/react-query";
+import { Download, Ellipsis, Map as MapIcon, Maximize, Move, Pencil, Plus, Settings2, Upload, X, ZoomIn, ZoomOut } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
+import { type ReactNode, Suspense, useCallback, useEffect, useEffectEvent, useId, useMemo, useRef, useState } from "react";
+import { EnumBadge } from "@/components/badges";
+import { EmptyState } from "@/components/empty-state";
+import { OutletDialog, outletName, PlanSettingsDialog } from "@/components/network/floor-plan/dialogs";
+import { UploadDialog } from "@/components/network/floor-plan/upload-dialog";
+import { NetworkHeader } from "@/components/network/network-header";
+import { PdfPage, usePdfDocument } from "@/components/tools/pdf-preview";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
+import { useApi, useApiMutation } from "@/hooks/use-api";
+import { useFormat } from "@/hooks/use-format";
+import { Link } from "@/i18n/navigation";
+import { api } from "@/lib/api";
+import type { FloorPlan, FloorPlanSummary, Outlet } from "@/lib/api-types";
+import { outletMatches } from "@/lib/floor-plan";
+import { cn } from "@/lib/utils";
+
+const ZOOMS = [0.5, 0.75, 1, 1.5, 2, 3, 4, 6, 8];
+const ALL = "all";
+const clamp = (n: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, n));
+
+export default function FloorPlanPage() {
+  // The plan, a search or an outlet can be asked for in the address (?plan=, ?find=, ?outlet=).
+  return (
+    <Suspense>
+      <FloorPlans />
+    </Suspense>
+  );
+}
+
+function FloorPlans() {
+  const t = useTranslations("floorPlan");
+  const params = useSearchParams();
+  const { data: plans } = useApi<FloorPlanSummary[]>("/floor-plans");
+  const [chosen, setChosen] = useState<number | null>(Number(params.get("plan")) || null);
+  const [uploading, setUploading] = useState(false);
+  const planId = plans?.some((p) => p.id === chosen) ? chosen : (plans?.[0]?.id ?? null);
+
+  const upload = (
+    <Button variant={plans?.length ? "outline" : "default"} onClick={() => setUploading(true)}>
+      <Upload />
+      {t("upload")}
+    </Button>
+  );
+  return (
+    <>
+      <NetworkHeader />
+      {!plans ? (
+        <Skeleton className="h-[60vh] w-full" />
+      ) : planId === null ? (
+        <EmptyState icon={MapIcon} title={t("empty")} description={t("emptyHint")} action={upload} />
+      ) : (
+        <PlanView key={planId} planId={planId} plans={plans} onChoose={setChosen} upload={upload} params={params} />
+      )}
+      {uploading && <UploadDialog plan={null} onClose={() => setUploading(false)} onSaved={setChosen} />}
+    </>
+  );
+}
+
+function PlanView({
+  planId,
+  plans,
+  onChoose,
+  upload,
+  params,
+}: {
+  planId: number;
+  plans: FloorPlanSummary[];
+  onChoose: (id: number) => void;
+  upload: ReactNode;
+  params: URLSearchParams;
+}) {
+  const t = useTranslations("floorPlan");
+  const format = useFormat();
+  const searchId = useId();
+  const searchHint = useId();
+  const problemsId = useId();
+  const { data: plan } = useApi<FloorPlan>(`/floor-plans/${planId}`);
+  // The drawing, fetched again when a new one is uploaded.
+  const { data: bytes = null } = useQuery({
+    queryKey: ["floor-plan-drawing", planId, plan?.drawingVersion],
+    enabled: !!plan,
+    queryFn: async () => {
+      const res = await fetch(`/api/floor-plans/${planId}/drawing`);
+      if (!res.ok) throw new Error(String(res.status));
+      return new Uint8Array(await res.arrayBuffer());
+    },
+    staleTime: Infinity,
+  });
+  const doc = usePdfDocument(bytes);
+
+  const [query, setQuery] = useState(params.get("find") ?? "");
+  const [switchNo, setSwitchNo] = useState<number | null>(null);
+  const [showProblems, setShowProblems] = useState(false);
+  const [selected, setSelected] = useState<number | null>(Number(params.get("outlet")) || null);
+  const [placing, setPlacing] = useState<{ move?: Outlet } | null>(null);
+  const [adding, setAdding] = useState<{ x: number; y: number } | null>(null);
+  const [editing, setEditing] = useState<Outlet | null>(null);
+  const [dialog, setDialog] = useState<"replace" | "settings" | null>(null);
+  const [zoom, setZoom] = useState(1);
+  const [drawn, setDrawn] = useState(false);
+  // A point of the page (fractions) to bring to the middle of the view, once the page is its new size.
+  const [focus, setFocus] = useState<{ x: number; y: number; n: number } | null>(null);
+  const map = useRef<HTMLDivElement>(null);
+  const zoomBy = useCallback((step: 1 | -1) => setZoom((z) => ZOOMS[clamp(ZOOMS.indexOf(z) + step, 0, ZOOMS.length - 1)]), []);
+  const onDrawn = useCallback(() => setDrawn(true), []);
+
+  const outlets = useMemo(() => plan?.outlets ?? [], [plan]);
+  const matches = useMemo(() => outlets.filter((o) => outletMatches({ ...o, device: o.assetName }, query)), [outlets, query]);
+  const hit = new Set(matches.map((o) => o.id));
+  const problemOutlets = outlets.filter((o) => o.problems.length);
+  const current = outlets.find((o) => o.id === selected) ?? null;
+
+  const move = useApiMutation(
+    ({ outlet, x, y }: { outlet: Outlet; x: number; y: number }) =>
+      api(`/outlets/${outlet.id}`, {
+        method: "PATCH",
+        body: { panel: outlet.panel, panelPort: outlet.panelPort, switchNo: outlet.switchNo, switchPort: outlet.switchPort, x, y, room: outlet.room, assetId: outlet.assetId, note: outlet.note },
+      }),
+    { success: t("moved") },
+  );
+
+  // Brings a point to the middle of the view: the page is laid out at its new size by now.
+  useEffect(() => {
+    if (!focus || !drawn) return;
+    const frame = requestAnimationFrame(() => {
+      const scroller = map.current?.querySelector<HTMLElement>("[data-pdf-scroller]");
+      const canvas = scroller?.querySelector("canvas");
+      if (!scroller || !canvas) return;
+      const page = canvas.getBoundingClientRect();
+      const view = scroller.getBoundingClientRect();
+      scroller.scrollLeft += page.left + focus.x * page.width - (view.left + view.width / 2);
+      scroller.scrollTop += page.top + focus.y * page.height - (view.top + view.height / 2);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [focus, zoom, drawn]);
+
+  /** Zooms to show every outlet (or those given), as large as fits. */
+  const fitTo = useCallback(
+    (list: Outlet[]) => {
+      const scroller = map.current?.querySelector<HTMLElement>("[data-pdf-scroller]");
+      if (!plan || !scroller || !list.length) return;
+      const xs = list.map((o) => o.x);
+      const ys = list.map((o) => o.y);
+      const w = Math.max(...xs) - Math.min(...xs) + (2 * plan.markWidth) / plan.pageWidth;
+      const h = Math.max(...ys) - Math.min(...ys) + (2 * plan.markHeight) / plan.pageHeight;
+      const across = scroller.clientWidth - 32;
+      // The page fits the space across at 1; so many times larger, the outlets fill the view.
+      const want = Math.min(0.95 / w, (0.95 * (scroller.clientHeight - 32)) / ((across * plan.pageHeight) / plan.pageWidth) / h);
+      setZoom(ZOOMS.findLast((z) => z <= want) ?? ZOOMS[0]);
+      setFocus({ x: (Math.max(...xs) + Math.min(...xs)) / 2, y: (Math.max(...ys) + Math.min(...ys)) / 2, n: Date.now() });
+    },
+    [plan],
+  );
+
+  // On opening: the outlet asked for, else what was searched for, else every outlet, once the
+  // drawing is first drawn.
+  const open = useEffectEvent(() => {
+    if (!plan) return;
+    const asked = plan.outlets.find((o) => o.id === selected);
+    if (asked) {
+      setZoom(4);
+      setFocus({ x: asked.x, y: asked.y, n: Date.now() });
+    } else fitTo(query && matches.length ? matches : plan.outlets);
+  });
+  const opened = useRef(false);
+  useEffect(() => {
+    if (!drawn || opened.current) return;
+    opened.current = true;
+    open();
+  }, [drawn]);
+
+  const select = (o: Outlet) => {
+    setSelected(o.id);
+    if (zoom < 3) setZoom(3);
+    setFocus({ x: o.x, y: o.y, n: Date.now() });
+  };
+
+  useEffect(() => {
+    if (!placing) return;
+    const esc = (e: KeyboardEvent) => e.key === "Escape" && setPlacing(null);
+    window.addEventListener("keydown", esc);
+    return () => window.removeEventListener("keydown", esc);
+  }, [placing]);
+
+  if (!plan) return <Skeleton className="h-[60vh] w-full" />;
+  const markW = plan.markWidth / plan.pageWidth;
+  const markH = plan.markHeight / plan.pageHeight;
+  const filtering = query.trim() !== "" || switchNo !== null;
+  const label = (o: Outlet) => outletName(o) || t("unlabelled");
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-end gap-3">
+        {plans.length > 1 && (
+          <div className="grid gap-1.5">
+            <Label htmlFor={`${searchId}-plan`}>{t("plan")}</Label>
+            <Select value={String(planId)} onValueChange={(v) => onChoose(Number(v))}>
+              <SelectTrigger id={`${searchId}-plan`} className="w-48 max-w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {plans.map((p) => (
+                  <SelectItem key={p.id} value={String(p.id)}>
+                    {p.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+        <div className="grid min-w-0 basis-64 gap-1.5">
+          <Label htmlFor={searchId}>{t("search")}</Label>
+          <Input
+            id={searchId}
+            type="search"
+            value={query}
+            aria-describedby={searchHint}
+            placeholder="P5-18"
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && matches.length) {
+                e.preventDefault();
+                if (matches.length === 1) select(matches[0]);
+                else fitTo(matches);
+              }
+            }}
+          />
+        </div>
+        <div className="grid gap-1.5">
+          <Label htmlFor={`${searchId}-switch`}>{t("switch")}</Label>
+          <Select value={switchNo === null ? ALL : String(switchNo)} onValueChange={(v) => setSwitchNo(v === ALL ? null : Number(v))}>
+            <SelectTrigger id={`${searchId}-switch`} className="w-48 max-w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL}>{t("allSwitches")}</SelectItem>
+              {plan.switches.map((s) => (
+                <SelectItem key={s.number} value={String(s.number)}>
+                  {s.asset ? t("switchOptionNamed", { number: s.number, name: s.asset.name }) : t("switchOption", { number: s.number })}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex h-9 items-center gap-2">
+          <Switch id={problemsId} checked={showProblems} onCheckedChange={setShowProblems} />
+          <Label htmlFor={problemsId}>{t("showProblems")}</Label>
+        </div>
+        <div className="ms-auto flex flex-wrap items-center gap-2">
+          <Button onClick={() => setPlacing({})}>
+            <Plus />
+            {t("addOutlet")}
+          </Button>
+          {upload}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon" aria-label={t("more")}>
+                <Ellipsis />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onSelect={() => setDialog("settings")}>
+                <Settings2 />
+                {t("settings")}
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => setDialog("replace")}>
+                <Upload />
+                {t("replaceDrawing")}
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <a href={`/api/floor-plans/${plan.id}/export`} download>
+                  <Download />
+                  {t("export")}
+                </a>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <a href={`/api/floor-plans/${plan.id}/drawing`} download>
+                  <Download />
+                  {t("download")}
+                </a>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
+      <p id={searchHint} className="-mt-2 text-sm text-muted-foreground">
+        {t("searchHint")}{" "}
+        {query.trim() && (
+          <span aria-live="polite" className="font-medium text-foreground">
+            {t("found", { count: matches.length })}
+          </span>
+        )}
+      </p>
+
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
+        <section ref={map} className="min-w-0 space-y-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <div role="group" aria-label={t("zoom")} className="flex items-center gap-1">
+              <Button variant="outline" size="icon" disabled={zoom === ZOOMS[0]} onClick={() => zoomBy(-1)} aria-label={t("zoomOut")}>
+                <ZoomOut />
+              </Button>
+              <span className="w-14 text-center text-sm tabular-nums" aria-label={t("zoomLevel", { percent: format.number(zoom * 100) })}>
+                {format.number(zoom * 100)}%
+              </span>
+              <Button variant="outline" size="icon" disabled={zoom === ZOOMS.at(-1)} onClick={() => zoomBy(1)} aria-label={t("zoomIn")}>
+                <ZoomIn />
+              </Button>
+            </div>
+            <Button variant="ghost" size="sm" onClick={() => fitTo(outlets)} disabled={!outlets.length}>
+              <Maximize />
+              {t("fit")}
+            </Button>
+            {placing ? (
+              <p role="status" className="flex items-center gap-2 text-sm font-medium text-primary">
+                {placing.move ? t("moveHint", { label: label(placing.move) }) : t("placeHint")}
+                <Button variant="outline" size="sm" onClick={() => setPlacing(null)}>
+                  <X />
+                  {t("cancelPlacing")}
+                </Button>
+              </p>
+            ) : (
+              <p className="text-sm text-muted-foreground">{t("mapHint")}</p>
+            )}
+          </div>
+          <PdfPage doc={doc} page={1} label={t("mapLabel", { name: plan.name })} zoom={zoom} onZoom={zoomBy} onDrawn={onDrawn} pan tall>
+            <div className="absolute inset-0">
+              {outlets.map((o) => {
+                const inSwitch = switchNo !== null && o.switchNo === switchNo;
+                const found = hit.has(o.id);
+                const problem = showProblems && o.problems.length > 0;
+                return (
+                  <button
+                    key={o.id}
+                    type="button"
+                    data-outlet={o.id}
+                    aria-label={t("outletLabel", { label: label(o) })}
+                    aria-pressed={o.id === selected}
+                    onClick={() => setSelected(o.id)}
+                    className={cn(
+                      "absolute rounded-[2px] border border-primary/40 bg-primary/5 transition-colors hover:bg-primary/20 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring",
+                      inSwitch && "border-warning bg-warning/25",
+                      problem && "border-2 border-dashed border-danger bg-danger/10",
+                      found && "border-2 border-danger bg-danger/30",
+                      o.id === selected && "border-2 border-primary bg-primary/25 ring-2 ring-primary ring-offset-1",
+                      filtering && !found && !inSwitch && o.id !== selected && "opacity-30",
+                    )}
+                    style={{ left: `${(o.x - markW / 2) * 100}%`, top: `${(o.y - markH / 2) * 100}%`, width: `${markW * 100}%`, height: `${markH * 100}%` }}
+                  />
+                );
+              })}
+              {placing && (
+                <button
+                  type="button"
+                  aria-label={t("placeLabel")}
+                  className="absolute inset-0 z-10 cursor-crosshair bg-primary/5"
+                  onClick={(e) => {
+                    const box = e.currentTarget.getBoundingClientRect();
+                    const at = { x: clamp((e.clientX - box.left) / box.width, 0, 1), y: clamp((e.clientY - box.top) / box.height, 0, 1) };
+                    if (placing.move) move.mutate({ outlet: placing.move, ...at });
+                    else setAdding(at);
+                    setPlacing(null);
+                  }}
+                />
+              )}
+            </div>
+          </PdfPage>
+        </section>
+
+        <aside className="min-w-0 space-y-4">
+          {current ? (
+            <OutletCard
+              plan={plan}
+              outlet={current}
+              onClose={() => setSelected(null)}
+              onEdit={() => setEditing(current)}
+              onMove={() => setPlacing({ move: current })}
+              onSwitch={(n) => setSwitchNo(n)}
+            />
+          ) : null}
+          {query.trim() && matches.length > 0 && (
+            <OutletList title={t("results")} outlets={matches} selected={selected} onSelect={select} label={label} />
+          )}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">{t("summary")}</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 text-sm">
+              <p>{t("outlets", { count: outlets.length })}</p>
+              {plan.switches.length > 0 && (
+                <div className="space-y-1">
+                  <h3 className="font-medium">{t("switches")}</h3>
+                  <ul className="space-y-1">
+                    {plan.switches.map((s) => (
+                      <li key={s.number} className="flex items-center justify-between gap-2">
+                        <button type="button" className="min-w-0 truncate text-start hover:text-primary" onClick={() => setSwitchNo(switchNo === s.number ? null : s.number)} aria-pressed={switchNo === s.number}>
+                          <span dir="ltr" className="font-mono">
+                            S{s.number}
+                          </span>
+                          {s.asset && <span className="text-muted-foreground"> · {s.asset.name}</span>}
+                        </button>
+                        <span className="flex shrink-0 items-center gap-2">
+                          {s.asset && <EnumBadge kind="deviceStatus" value={s.asset.monitorStatus} />}
+                          <span className="text-muted-foreground tabular-nums">{t("switchPorts", { count: s.ports })}</span>
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              <div className="space-y-1">
+                <h3 className="font-medium">{t("toCheck")}</h3>
+                {problemOutlets.length ? (
+                  <>
+                    <p className="text-muted-foreground">{t("toCheckCount", { count: problemOutlets.length })}</p>
+                    <ul className="max-h-64 space-y-0.5 overflow-y-auto">
+                      {problemOutlets.map((o) => (
+                        <li key={o.id}>
+                          <button type="button" onClick={() => select(o)} className={cn("w-full rounded px-1 text-start hover:bg-muted", o.id === selected && "bg-muted")}>
+                            <span dir="ltr" className="font-mono">
+                              {label(o)}
+                            </span>{" "}
+                            <span className="text-muted-foreground">{t(`problems.${o.problems[0]}`, { written: o.written })}</span>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                ) : (
+                  <p className="text-muted-foreground">{t("allGood")}</p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </aside>
+      </div>
+
+      {adding && <OutletDialog plan={plan} at={adding} onClose={() => setAdding(null)} onSaved={setSelected} />}
+      {editing && <OutletDialog plan={plan} outlet={editing} onClose={() => setEditing(null)} />}
+      {dialog === "settings" && <PlanSettingsDialog plan={plan} onClose={() => setDialog(null)} />}
+      {dialog === "replace" && <UploadDialog plan={plan} onClose={() => setDialog(null)} onSaved={() => setDrawn(false)} />}
+    </div>
+  );
+}
+
+function OutletList({ title, outlets, selected, onSelect, label }: { title: string; outlets: Outlet[]; selected: number | null; onSelect: (o: Outlet) => void; label: (o: Outlet) => string }) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">{title}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <ul className="max-h-64 space-y-0.5 overflow-y-auto text-sm">
+          {outlets.map((o) => (
+            <li key={o.id}>
+              <button type="button" onClick={() => onSelect(o)} className={cn("w-full rounded px-1 text-start hover:bg-muted", o.id === selected && "bg-muted")}>
+                <span dir="ltr" className="font-mono">
+                  {label(o)}
+                </span>
+                {(o.room || o.assetName) && <span className="text-muted-foreground"> · {[o.room, o.assetName].filter(Boolean).join(" · ")}</span>}
+              </button>
+            </li>
+          ))}
+        </ul>
+      </CardContent>
+    </Card>
+  );
+}
+
+/** What an outlet is wired and patched to, what is plugged in, and what to look at in it. */
+function OutletCard({
+  plan,
+  outlet,
+  onClose,
+  onEdit,
+  onMove,
+  onSwitch,
+}: {
+  plan: FloorPlan;
+  outlet: Outlet;
+  onClose: () => void;
+  onEdit: () => void;
+  onMove: () => void;
+  onSwitch: (n: number) => void;
+}) {
+  const t = useTranslations("floorPlan");
+  const sw = plan.switches.find((s) => s.number === outlet.switchNo) ?? null;
+  const port = (n: number | null) => (n === null ? t("noPort") : String(n));
+  return (
+    <Card aria-live="polite">
+      <CardHeader className="flex flex-row items-start justify-between gap-2">
+        <CardTitle className="text-base">
+          <span dir="ltr" className="font-mono">
+            {outletName(outlet) || t("unlabelled")}
+          </span>
+        </CardTitle>
+        <Button variant="ghost" size="icon" className="-mt-1 -me-2 size-8" onClick={onClose} aria-label={t("close")}>
+          <X />
+        </Button>
+      </CardHeader>
+      <CardContent className="space-y-3 text-sm">
+        <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-1.5">
+          <dt className="text-muted-foreground">{t("panel")}</dt>
+          <dd>{outlet.panel === null ? "—" : t("panelValue", { panel: outlet.panel, port: port(outlet.panelPort) })}</dd>
+          <dt className="text-muted-foreground">{t("switchNo")}</dt>
+          <dd className="space-y-1">
+            <p>{outlet.switchNo === null ? "—" : t("switchValue", { number: outlet.switchNo, port: port(outlet.switchPort) })}</p>
+            {sw?.asset ? (
+              <p className="flex flex-wrap items-center gap-2">
+                <Link href={`/assets/${sw.asset.id}`} className="font-medium hover:text-primary">
+                  {sw.asset.name}
+                </Link>
+                <EnumBadge kind="deviceStatus" value={sw.asset.monitorStatus} />
+              </p>
+            ) : (
+              outlet.switchNo !== null && <p className="text-muted-foreground">{t("notLinked")}</p>
+            )}
+          </dd>
+          <dt className="text-muted-foreground">{t("room")}</dt>
+          <dd dir="auto">{outlet.room || "—"}</dd>
+          <dt className="text-muted-foreground">{t("device")}</dt>
+          <dd>
+            {outlet.assetId ? (
+              <Link href={`/assets/${outlet.assetId}`} className="font-medium hover:text-primary">
+                {outlet.assetName}
+              </Link>
+            ) : (
+              "—"
+            )}
+          </dd>
+          {outlet.note && (
+            <>
+              <dt className="text-muted-foreground">{t("note")}</dt>
+              <dd dir="auto" className="whitespace-pre-line">
+                {outlet.note}
+              </dd>
+            </>
+          )}
+        </dl>
+        {outlet.problems.length > 0 && (
+          <ul className="space-y-0.5 text-danger">
+            {outlet.problems.map((p) => (
+              <li key={p}>{t(`problems.${p}`, { written: outlet.written })}</li>
+            ))}
+          </ul>
+        )}
+        <div className="flex flex-wrap gap-2">
+          <Button size="sm" variant="outline" onClick={onEdit}>
+            <Pencil />
+            {t("edit")}
+          </Button>
+          <Button size="sm" variant="outline" onClick={onMove}>
+            <Move />
+            {t("move")}
+          </Button>
+          {outlet.switchNo !== null && (
+            <Button size="sm" variant="ghost" onClick={() => onSwitch(outlet.switchNo!)}>
+              {t("sameSwitch", { number: outlet.switchNo })}
+            </Button>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}

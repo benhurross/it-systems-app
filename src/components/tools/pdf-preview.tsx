@@ -1,7 +1,7 @@
 "use client";
 
 import type { PDFDocumentProxy, RenderTask } from "pdfjs-dist";
-import { type ReactNode, useEffect, useEffectEvent, useLayoutEffect, useRef, useState } from "react";
+import { type PointerEvent as ReactPointerEvent, type MouseEvent as ReactMouseEvent, type ReactNode, useEffect, useEffectEvent, useLayoutEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
 // pdf.js draws page thumbnails; it is loaded only when a tool needs it, with its worker beside it.
@@ -137,6 +137,8 @@ export function PdfPage({
   onDrawn,
   zoom,
   onZoom,
+  pan,
+  tall,
   children,
 }: {
   doc: PDFDocumentProxy | null;
@@ -151,6 +153,10 @@ export function PdfPage({
   zoom?: number;
   /** Ctrl and the mouse wheel (or a pinch on a touchpad) over the page: 1 to zoom in, -1 out. */
   onZoom?: (step: 1 | -1) => void;
+  /** Dragging the page with the mouse moves it, like a map; a click that does not drag still clicks. */
+  pan?: boolean;
+  /** Fits the page to the space across, and the view to most of the window's height, for a drawing to look round. */
+  tall?: boolean;
   children?: ReactNode;
 }) {
   const canvas = useRef<HTMLCanvasElement>(null);
@@ -199,7 +205,7 @@ export function PdfPage({
 
   useEffect(() => {
     if (!zooming || !aspect || !room.current) return;
-    const measure = () => setFit(Math.min(room.current!.clientWidth, window.innerHeight * 0.7 * aspect));
+    const measure = () => setFit(tall ? room.current!.clientWidth : Math.min(room.current!.clientWidth, window.innerHeight * 0.7 * aspect));
     measure();
     const observer = new ResizeObserver(measure);
     observer.observe(room.current);
@@ -208,7 +214,7 @@ export function PdfPage({
       observer.disconnect();
       window.removeEventListener("resize", measure);
     };
-  }, [zooming, aspect]);
+  }, [zooming, aspect, tall]);
 
   // The point in the middle of the view stays there as the page grows or shrinks: the scroll
   // position is still where it was, over a page of the size before.
@@ -238,6 +244,40 @@ export function PdfPage({
     return () => el.removeEventListener("wheel", wheel);
   }, [onZoom]);
 
+  // Where a drag began, and whether it has moved far enough to be one rather than a click.
+  const drag = useRef<{ x: number; y: number; left: number; top: number; moved: boolean } | null>(null);
+  const panning = pan
+    ? {
+        onPointerDown: (e: ReactPointerEvent<HTMLDivElement>) => {
+          if (e.pointerType !== "mouse" || e.button !== 0) return;
+          const el = e.currentTarget;
+          drag.current = { x: e.clientX, y: e.clientY, left: el.scrollLeft, top: el.scrollTop, moved: false };
+        },
+        onPointerMove: (e: ReactPointerEvent<HTMLDivElement>) => {
+          const d = drag.current;
+          if (!d) return;
+          const dx = e.clientX - d.x;
+          const dy = e.clientY - d.y;
+          if (!d.moved && Math.hypot(dx, dy) < 5) return;
+          if (!d.moved) e.currentTarget.setPointerCapture(e.pointerId);
+          d.moved = true;
+          e.currentTarget.scrollLeft = d.left - dx;
+          e.currentTarget.scrollTop = d.top - dy;
+        },
+        onPointerUp: () => {
+          // The click that ends a drag is not one; it is let go of on the next frame.
+          if (drag.current?.moved) requestAnimationFrame(() => (drag.current = null));
+          else drag.current = null;
+        },
+        onClickCapture: (e: ReactMouseEvent) => {
+          if (drag.current?.moved) {
+            e.preventDefault();
+            e.stopPropagation();
+          }
+        },
+      }
+    : {};
+
   const page_ = (
     // The page reads left to right whatever the app's language; what lies on it is placed by fractions of its size.
     <div dir="ltr" className={cn("relative", zooming ? "mx-auto" : "max-w-full", aspect === null ? "w-full max-w-md" : "w-fit")}>
@@ -257,7 +297,12 @@ export function PdfPage({
   );
   if (!zooming) return <div className="flex justify-center rounded-xl border bg-muted/40 p-3 sm:p-4">{page_}</div>;
   return (
-    <div ref={scroller} className="max-h-[75vh] overflow-auto overscroll-contain rounded-xl border bg-muted/40 p-3 sm:p-4">
+    <div
+      ref={scroller}
+      data-pdf-scroller
+      {...panning}
+      className={cn("overflow-auto overscroll-contain rounded-xl border bg-muted/40 p-3 sm:p-4", tall ? "h-[75vh]" : "max-h-[75vh]", pan && "cursor-grab active:cursor-grabbing")}
+    >
       {/* Measures the space across; the page inside may be wider and scroll. */}
       <div ref={room} className="w-full">
         {page_}

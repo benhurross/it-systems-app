@@ -102,3 +102,14 @@ export function quarterParam(req: Request) {
   if (!Number.isInteger(n) || n < 1 || n > 4) throw badRequest("quarter");
   return n;
 }
+
+/** A JSON field of a multipart form, as sent with a file; 400 when it is not JSON. */
+export function formJson(form: FormData, name: string): unknown {
+  const value = form.get(name);
+  if (typeof value !== "string") return undefined;
+  try {
+    return JSON.parse(value);
+  } catch {
+    throw badRequest(name);
+  }
+}

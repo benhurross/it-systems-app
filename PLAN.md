@@ -443,6 +443,12 @@ The IT department's Master KPI Register (12 KPIs for the IT Manager, the Cyber S
 - [x] Status on the year so far for shares and scores and for yearly totals, on the latest period that is over for counts judged period by period (a month still under way, worked out from part of its tickets, no longer sets it); each month's own status under its figure
 - [x] Quarters: each KPI's quarter figure (counts added up, scores averaged, totals summed), status against the quarter's target (a yearly total's shared out) and each role's quarter score; Period filter on the page, Q1-Q4 columns and quarter scores in the export, `&quarter=` on the API
 
+### Network floor plan (added after Phase 10)
+- [x] Network → Floor plan: the office plan uploaded as a PDF, its P (patch panel port) and S (switch port) labels read from the drawing's text in the browser with pdf.js, P paired with the S under it. Digits some fonts keep under other codes are read; stray marks are tidied and noted
+- [x] What to check: a patch panel or switch port on two outlets, a label without its pair or its port number, a label tidied; shown before saving and on the plan
+- [x] The plan drawn with pdf.js, zoomed (50% to 800%) and dragged round like a map, each outlet a button over it. Search by label, switch, room or device; a switch's ports highlighted; the outlet's ports, room, device and the switch's status from monitoring
+- [x] Outlets corrected, moved, added and removed by IT staff; switch numbers linked to assets; a new drawing replaces the outlets or keeps them; Excel export of every port. An asset's page shows its wall port, or the plan where it is a switch
+
 ### Look, feel and speed (added after Phase 10)
 - [x] The dashboard and KPIs load at once: dates were worked out with a new formatter each time (thousands per page), now each formatter is made once; the dashboard's monthly chart counts each ticket once; monitoring checks are indexed by time, so the last day is read without scanning the month kept
 - [x] Soft glows of blue, teal, violet and pink drift slowly behind the pages and the sign-in page (still for people who ask for less motion), under a faint grain. Cards, tables and the toolkit's panels are glass: clear enough for the colour to come through, with a sheen, a white edge and a soft shadow. Menus, dialogs and the sidebar stay solid. Secondary text is darker, to keep 4.5:1 over the colour
