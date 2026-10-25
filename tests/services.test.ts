@@ -327,8 +327,6 @@ describe("settings and reference lists", () => {
   it("falls back to defaults and validates what is saved", async () => {
     expect(await settings.getSetting("organisation")).toEqual({ name: "AP Plus", fiscalYearStartMonth: 1 });
     await expect(settings.putSetting("monitoring", { enabled: true }, admin)).rejects.toThrow();
-    await settings.putKpiTargets(2027, (await settings.getKpiTargets(2026)), admin);
-    expect((await settings.getKpiTargets(2027)).tat.target).toBe(0.9);
   });
 
   it("keeps a list code fixed when an admin renames it", async () => {
@@ -372,21 +370,54 @@ describe("dashboard", () => {
 });
 
 describe("KPIs", () => {
-  it("reports the year from tickets and the figures IT staff entered", async () => {
-    const { rows } = await kpis.kpis(2026, NOW);
-    const training = rows.find((r) => r.kpi === "training_hours")!;
-    expect(training).toMatchObject({ quarters: [42, 38, 45, null], year: 125, status: "amber" });
-    const tat = rows.find((r) => r.kpi === "tat")!;
-    expect(tat.quarters.slice(0, 3).every((q) => q !== null && q > 0 && q <= 1)).toBe(true);
-    expect(tat.quarters[3]).toBeNull();
+  it("sets up the register with the five KPIs and moves across the figures entered before it", async () => {
+    const { rows, roles } = await kpis.kpiRegister(2026, NOW);
+    expect(rows.slice(0, 5).map((r) => r.code)).toEqual(["IT-TAT", "IT-SLA-BREACH", "IT-TRAINING", "IT-ISO", "IT-CSAT"]);
+    const training = rows.find((r) => r.code === "IT-TRAINING")!;
+    expect(training.cells.map((c) => c.value)).toEqual([42, 38, 45, null]);
+    expect(training).toMatchObject({ year: 125, status: "amber", settings: { baseline: 0, target: 150 } });
+    const tat = rows.find((r) => r.code === "IT-TAT")!;
+    expect(tat.cells.slice(0, 3).every((c) => c.from === "tickets" && c.value! > 0 && c.value! <= 1)).toBe(true);
+    expect(tat.cells[3].value).toBeNull();
+    // The made-up role KPIs carry weights, and each role gets a score from them.
+    const manager = roles.find((r) => r.role === "IT Manager")!;
+    expect(manager).toMatchObject({ level: "manager", total: 100 });
+    expect(manager.score).toBeGreaterThan(0);
+    // Set up once: asking again changes nothing.
+    expect((await kpis.kpiRegister(2026, NOW)).rows).toHaveLength(rows.length);
   });
 
-  it("records and clears quarterly figures, with an audit entry", async () => {
-    await kpis.setKpiActuals({ year: 2024, kpi: "iso_ncs", quarters: [2, null, 1, null] }, it_);
-    expect((await kpis.kpis(2024, NOW)).rows.find((r) => r.kpi === "iso_ncs")!.quarters).toEqual([2, null, 1, null]);
-    await kpis.setKpiActuals({ year: 2024, kpi: "iso_ncs", quarters: [null, 0, 1, null] }, it_);
-    expect((await kpis.kpis(2024, NOW)).rows.find((r) => r.kpi === "iso_ncs")!.quarters).toEqual([null, 0, 1, null]);
-    expect((await lastAudit("kpi")).summary).toBe("Recorded iso_ncs for 2024: Q1 –, Q2 0, Q3 1, Q4 –");
+  it("records, explains and clears a month's figure, with an audit entry", async () => {
+    const { rows } = await kpis.kpiRegister(2026, NOW);
+    const backups = rows.find((r) => r.code === "DM-IT-03")!;
+    await kpis.setKpiFigure(backups.id, { year: 2026, period: 9, numerator: 50, denominator: 51, value: null, note: "One Exchange job failed" }, it_);
+    let cell = (await kpis.kpiRegister(2026, NOW)).rows.find((r) => r.id === backups.id)!.cells[8];
+    expect(cell).toMatchObject({ numerator: 50, denominator: 51, from: "entered", note: "One Exchange job failed" });
+    expect((await lastAudit("kpi")).summary).toBe("Recorded DM-IT-03 2026 month 9: 50 of 51");
+    await kpis.setKpiFigure(backups.id, { year: 2026, period: 9, numerator: null, denominator: null, value: null, note: "" }, it_);
+    cell = (await kpis.kpiRegister(2026, NOW)).rows.find((r) => r.id === backups.id)!.cells[8];
+    expect(cell).toMatchObject({ value: null, from: null });
+    await expect(kpis.setKpiFigure(backups.id, { year: 2026, period: 13, numerator: null, denominator: null, value: 1, note: "" }, it_)).rejects.toMatchObject({ status: 400 });
+  });
+
+  it("adds, changes and removes KPIs, each year's targets carrying on until changed", async () => {
+    const input = {
+      code: "CYB-01", name: "Patch compliance", nameAr: "", level: "employee" as const, department: "IT", role: "Cyber Security Officer", ownerId: null,
+      definition: "", formula: "", higherIsBetter: true, frequency: "Monthly", period: "month" as const, unit: "percent" as const, targetFor: "period" as const,
+      source: "manual" as const, filter: { type: null, issueType: null, assigneeId: null, documented: false }, dataSource: "", reviewer: "", redFlag: "", notes: "", sortOrder: 30, active: true,
+    };
+    const made = await kpis.createKpi(input, { baseline: null, baselineNote: "To be established", target: 0.9, weight: 20 }, 2026, admin);
+    await expect(kpis.createKpi(input, { baseline: null, baselineNote: "", target: 0.9, weight: null }, 2026, admin)).rejects.toMatchObject({ issues: [{ path: ["code"], message: "validation.kpiCode" }] });
+    const later = (await kpis.kpiRegister(2027, NOW)).rows.find((r) => r.id === made.id)!;
+    expect(later.settings).toMatchObject({ year: 2026, baseline: null, baselineNote: "To be established", target: 0.9, weight: 20 });
+    await kpis.setKpiYear(made.id, 2027, { baseline: 0.85, baselineNote: "", target: 0.95, weight: 25 }, admin);
+    expect((await kpis.kpiRegister(2027, NOW)).rows.find((r) => r.id === made.id)!.settings).toMatchObject({ year: 2027, target: 0.95 });
+    expect((await kpis.kpiRegister(2026, NOW)).rows.find((r) => r.id === made.id)!.settings).toMatchObject({ year: 2026, target: 0.9 });
+    const renamed = await kpis.updateKpi(made.id, { ...input, name: "Patch compliance (servers)" }, admin);
+    expect(renamed.name).toBe("Patch compliance (servers)");
+    await kpis.deleteKpi(made.id, admin);
+    expect((await kpis.kpiRegister(2026, NOW)).rows.some((r) => r.id === made.id)).toBe(false);
+    expect((await lastAudit("kpi")).summary).toBe("Deleted KPI CYB-01: Patch compliance (servers)");
   });
 });
 

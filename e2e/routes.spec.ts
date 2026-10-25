@@ -53,7 +53,7 @@ const APIS = {
     "/api/settings/email/outbox",
     "/api/settings/tools",
     "/api/tools/admin",
-    `/api/settings/kpi-targets?year=${new Date().getFullYear()}`,
+    "/api/settings/api-tokens",
   ],
 };
 const AREAS = { admin: ["request", "it", "settings"], it: ["request", "it"], employee: ["request"] } as const;

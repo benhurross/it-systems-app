@@ -25,6 +25,10 @@ import type {
   IdCardStatus,
   EmailStatus,
   KbStatus,
+  KpiLevel,
+  KpiPeriod,
+  KpiSource,
+  KpiUnit,
   LicenseType,
   LookupList,
   MonitorMethod,
@@ -41,6 +45,7 @@ import type {
   VulnStatus,
 } from "@/lib/domain";
 import type { FontChoice } from "@/lib/id-card";
+import type { KpiFilter } from "@/lib/kpi-register";
 import type { ToolAccessState, ToolKey } from "@/lib/tools";
 
 const id = () => integer().primaryKey().generatedAlwaysAsIdentity();
@@ -591,6 +596,100 @@ export const kpiActuals = pgTable(
   },
   (t) => [unique().on(t.year, t.quarter, t.kpi)],
 );
+
+/**
+ * The KPI register: each KPI, whose it is, what it measures and where its figure comes from.
+ * Baselines, targets and weights are set for each year in `kpiYears`; figures in `kpiFigures`.
+ */
+export const kpis = pgTable("kpis", {
+  id: id(),
+  /** The register's own ID for it, as 2-DM-IT-01. */
+  code: text().notNull().unique(),
+  name: text().notNull(),
+  /** Its name in Arabic, when given; the English one is shown otherwise. */
+  nameAr: text().notNull().default(""),
+  level: text().$type<KpiLevel>().notNull().default("department"),
+  department: text().notNull().default("IT"),
+  /** Who it applies to, as the register says: IT Manager, Cyber Security Officer. */
+  role: text().notNull().default(""),
+  /** The account it belongs to, for "My KPIs". */
+  ownerId: text().references(() => users.id, { onDelete: "set null" }),
+  definition: text().notNull().default(""),
+  formula: text().notNull().default(""),
+  higherIsBetter: boolean().notNull().default(true),
+  /** As the register words it: Monthly, Monthly / Quarterly. */
+  frequency: text().notNull().default(""),
+  period: text().$type<KpiPeriod>().notNull().default("month"),
+  unit: text().$type<KpiUnit>().notNull().default("percent"),
+  /** Whether the target is for each month or quarter, or for the year's total (training hours). */
+  targetFor: text().$type<"period" | "year">().notNull().default("period"),
+  source: text().$type<KpiSource>().notNull().default("manual"),
+  /** For figures from tickets: which tickets count. */
+  filter: jsonb().$type<KpiFilter>().notNull().default({}),
+  dataSource: text().notNull().default(""),
+  reviewer: text().notNull().default(""),
+  redFlag: text().notNull().default(""),
+  notes: text().notNull().default(""),
+  sortOrder: integer().notNull().default(0),
+  active: boolean().notNull().default(true),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+});
+
+/** A KPI's baseline, target and weight for one year; a year without them takes the latest before it. */
+export const kpiYears = pgTable(
+  "kpi_years",
+  {
+    id: id(),
+    kpiId: integer()
+      .notNull()
+      .references(() => kpis.id, { onDelete: "cascade" }),
+    year: integer().notNull(),
+    baseline: numeric({ precision: 12, scale: 4, mode: "number" }),
+    /** Why there is no baseline yet, as "To be established after implementation". */
+    baselineNote: text().notNull().default(""),
+    target: numeric({ precision: 12, scale: 4, mode: "number" }).notNull(),
+    /** Its share of its owner's score, in percent. */
+    weight: numeric({ precision: 6, scale: 2, mode: "number" }),
+  },
+  (t) => [unique().on(t.kpiId, t.year)],
+);
+
+/**
+ * A KPI's figure for a month (1 to 12) or a quarter (1 to 4): counted (48 of 50) or a value. A figure
+ * entered for a KPI worked out from tickets stands in its place; a note alone explains the one worked out.
+ */
+export const kpiFigures = pgTable(
+  "kpi_figures",
+  {
+    id: id(),
+    kpiId: integer()
+      .notNull()
+      .references(() => kpis.id, { onDelete: "cascade" }),
+    year: integer().notNull(),
+    period: smallint().notNull(),
+    numerator: numeric({ precision: 14, scale: 4, mode: "number" }),
+    denominator: numeric({ precision: 14, scale: 4, mode: "number" }),
+    value: numeric({ precision: 14, scale: 4, mode: "number" }),
+    note: text().notNull().default(""),
+    updatedBy: text(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [unique().on(t.kpiId, t.year, t.period)],
+);
+
+/** Keys for other systems to read the KPIs (the board's dashboard): kept as a hash, shown once. */
+export const apiTokens = pgTable("api_tokens", {
+  id: id(),
+  name: text().notNull(),
+  /** SHA-256 of the key; the first characters are kept to tell keys apart. */
+  hash: text().notNull().unique(),
+  prefix: text().notNull(),
+  createdBy: text(),
+  createdAt: createdAt(),
+  lastUsedAt: timestamp({ withTimezone: true }),
+  revokedAt: timestamp({ withTimezone: true }),
+});
 
 // ---------------------------------------------------------------- email
 

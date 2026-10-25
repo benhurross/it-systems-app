@@ -84,3 +84,12 @@ export function one<T>(rows: T[]): T {
   if (rows.length === 0) throw notFound();
   return rows[0];
 }
+
+/** The year a request asks for with `?year=`; the current year when it names none. */
+export function yearParam(req: Request) {
+  const year = new URL(req.url).searchParams.get("year");
+  if (!year) return new Date().getFullYear();
+  const n = Number(year);
+  if (!Number.isInteger(n) || n < 2000 || n > 2100) throw badRequest("year");
+  return n;
+}

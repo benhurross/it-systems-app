@@ -64,7 +64,7 @@ export const SETTINGS = [
   "/settings/id-card",
   "/settings/label-printer",
   "/settings/tools",
-  "/settings/kpis",
+  "/settings/api",
   "/settings/organisation",
   "/settings/audit",
 ];

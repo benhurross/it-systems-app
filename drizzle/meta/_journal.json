@@ -78,6 +78,13 @@
       "when": 1792313248262,
       "tag": "0010_asset_anydesk",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1792919561181,
+      "tag": "0011_kpi_register",
+      "breakpoints": true
     }
   ]
 }

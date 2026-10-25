@@ -81,8 +81,8 @@ describe("access", () => {
     expect((await routes.assets.GET(request("GET"), params())).status).toBe(200);
     expect((await routes.dashboard.GET(request("GET"), params())).status).toBe(200);
     expect((await routes.kpis.GET(request("GET"), params())).status).toBe(200);
-    // Only training hours and ISO non-conformities are entered by hand.
-    expect((await routes.kpis.PUT(request("PUT", { year: 2026, kpi: "tat", quarters: [1, 1, 1, 1] }), params())).status).toBe(400);
+    // IT staff record figures; only admins change the register itself.
+    expect((await routes.kpis.POST(request("POST", {}), params())).status).toBe(403);
   });
 
   it("lets admins into Settings, and only for known keys", async () => {

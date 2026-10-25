@@ -6,7 +6,7 @@ import { AreaGuard } from "@/components/app-shell/area-guard";
 import { PageHeader } from "@/components/page-header";
 import { SectionTabs } from "@/components/section-tabs";
 
-const TABS = ["users", "lists", "serviceDesk", "monitoring", "email", "idCard", "labelPrinter", "tools", "kpis", "organisation", "audit"] as const;
+const TABS = ["users", "lists", "serviceDesk", "monitoring", "email", "idCard", "labelPrinter", "tools", "api", "organisation", "audit"] as const;
 const PATHS: Record<(typeof TABS)[number], string> = {
   users: "/settings/users",
   lists: "/settings/lists",
@@ -16,7 +16,7 @@ const PATHS: Record<(typeof TABS)[number], string> = {
   idCard: "/settings/id-card",
   labelPrinter: "/settings/label-printer",
   tools: "/settings/tools",
-  kpis: "/settings/kpis",
+  api: "/settings/api",
   organisation: "/settings/organisation",
   audit: "/settings/audit",
 };

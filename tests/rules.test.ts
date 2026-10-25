@@ -4,7 +4,7 @@ import { addDays, daysBetween, hoursBetween, isoDate } from "@/lib/dates";
 import { expandCidr, parseArp, reconcile } from "@/lib/discovery";
 import { type Priority, ref } from "@/lib/domain";
 import { budgetLines, contractState, fiscalYearOf, fiscalYearRange } from "@/lib/finance";
-import { quarterOf, rag, DEFAULT_KPI_TARGETS } from "@/lib/kpis";
+import { quarterOf } from "@/lib/kpis";
 import { compliance, licenseState } from "@/lib/licenses";
 import { assetFlags } from "@/lib/lifecycle";
 import { availability, nextState, parsePing } from "@/lib/monitor";
@@ -421,17 +421,6 @@ describe("joiners and leavers", () => {
 });
 
 describe("KPIs", () => {
-  it("rates each KPI against its baseline and target", () => {
-    expect(rag("tat", 0.92, DEFAULT_KPI_TARGETS.tat)).toBe("green");
-    expect(rag("tat", 0.8, DEFAULT_KPI_TARGETS.tat)).toBe("amber");
-    expect(rag("tat", 0.6, DEFAULT_KPI_TARGETS.tat)).toBe("red");
-    expect(rag("complaints", 8, DEFAULT_KPI_TARGETS.complaints)).toBe("green");
-    expect(rag("complaints", 12, DEFAULT_KPI_TARGETS.complaints)).toBe("amber");
-    expect(rag("complaints", 16, DEFAULT_KPI_TARGETS.complaints)).toBe("red");
-    expect(rag("iso_ncs", 1, DEFAULT_KPI_TARGETS.iso_ncs)).toBe("amber");
-    expect(rag("training_hours", 0, DEFAULT_KPI_TARGETS.training_hours)).toBe("red");
-    expect(rag("satisfaction", null, DEFAULT_KPI_TARGETS.satisfaction)).toBe("none");
-  });
 
   it("places a date in its Riyadh quarter", () => {
     expect(quarterOf("2026-03-31T20:00:00Z")).toEqual({ year: 2026, quarter: 1 });

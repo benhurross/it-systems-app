@@ -126,9 +126,16 @@ export const ID_CARD_STATUSES = ["requested", "printed"] as const;
 /** Where a card is, as people see it: waiting to print, printed and ready to collect, or handed over. */
 export const ID_CARD_STAGES = ["requested", "printed", "handed_over"] as const;
 
-export const KPI_KEYS = ["tat", "complaints", "training_hours", "iso_ncs", "satisfaction"] as const;
+/** Where a KPI's figure comes from: entered by IT staff, or worked out from the tickets. */
+export const KPI_SOURCES = ["manual", "ticket_sla", "sla_breaches", "satisfaction"] as const;
+/** What a KPI counts: a share (shown as %), a number, hours, or a score out of 5. */
+export const KPI_UNITS = ["percent", "number", "hours", "score"] as const;
+/** How often its figure is recorded. */
+export const KPI_PERIODS = ["month", "quarter"] as const;
+/** Whose KPI it is, as the register groups them. */
+export const KPI_LEVELS = ["department", "manager", "employee"] as const;
+
 /** KPIs entered by hand each quarter; the rest are computed from tickets. */
-export const MANUAL_KPIS = ["training_hours", "iso_ncs"] as const;
 
 export type TicketType = (typeof TICKET_TYPES)[number];
 export type TicketStatus = (typeof TICKET_STATUSES)[number];
@@ -149,7 +156,10 @@ export type RiskStatus = (typeof RISK_STATUSES)[number];
 export type VulnStatus = (typeof VULN_STATUSES)[number];
 export type Severity = (typeof SEVERITIES)[number];
 export type LookupList = (typeof LOOKUP_LISTS)[number];
-export type KpiKey = (typeof KPI_KEYS)[number];
+export type KpiSource = (typeof KPI_SOURCES)[number];
+export type KpiUnit = (typeof KPI_UNITS)[number];
+export type KpiPeriod = (typeof KPI_PERIODS)[number];
+export type KpiLevel = (typeof KPI_LEVELS)[number];
 export type OnboardingTask = (typeof ONBOARDING_TASKS)[number]["key"];
 export type OffboardingTask = (typeof OFFBOARDING_TASKS)[number];
 export type DailyCheck = (typeof DAILY_CHECKS)[number];

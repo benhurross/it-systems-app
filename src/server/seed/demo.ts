@@ -36,6 +36,7 @@ import {
   VULNERABILITIES,
 } from "./demo-data";
 import type { Person } from "./people";
+import { resetKpiRegister } from "./kpi-defaults";
 import { seedReference } from "./reference";
 
 export { DEMO_PASSWORD } from "./demo-data";
@@ -47,6 +48,10 @@ export type DemoAccount = { name: string; email: string; role: Role; password: s
 const TABLES = [
   "audit_log",
   "kpi_actuals",
+  "kpi_figures",
+  "kpi_years",
+  "kpis",
+  "api_tokens",
   "daily_checks",
   "discovery_hosts",
   "discovery_runs",
@@ -1050,6 +1055,46 @@ export async function seedDemo(now = new Date(), options: { people?: Person[] } 
     actuals.push({ year: current.year, quarter: q, kpi: "iso_ncs", value: iso });
   }
   await db.insert(s.kpiActuals).values(actuals);
+  // The register sets itself up from these on first use, as it does on a database from before it.
+  resetKpiRegister();
+
+  // KPIs of the register's kind for the IT manager and the helpdesk, made up, with this year's
+  // monthly figures so far; the ticket SLA ones are worked out from the tickets.
+  const month = Number(isoDate(now).slice(5, 7));
+  const roleKpis: { kpi: typeof s.kpis.$inferInsert; year: Omit<typeof s.kpiYears.$inferInsert, "kpiId">; figures?: (m: number) => { numerator?: number; denominator?: number; value?: number } }[] = [
+    {
+      kpi: { code: "DM-IT-01", name: "System availability", level: "manager", role: "IT Manager", ownerId: admin, definition: "Availability of the critical systems: email, the domain controller, the ERP server and the firewall.", formula: "Available system hours ÷ scheduled system hours.", frequency: "Monthly", period: "month", unit: "percent", source: "manual", dataSource: "Monitoring logs", reviewer: "GM-DGM", sortOrder: 10 },
+      year: { year: current.year, baseline: 0.8, target: 0.98, weight: 40 },
+      figures: (m) => ({ value: [0.9991, 0.9975, 0.9962, 0.9988][m % 4] }),
+    },
+    {
+      kpi: { code: "DM-IT-02", name: "IT ticket SLA", level: "manager", role: "IT Manager", ownerId: admin, definition: "How quickly support issues are resolved.", formula: "Tickets resolved within SLA ÷ tickets resolved.", frequency: "Monthly", period: "month", unit: "percent", source: "ticket_sla", dataSource: "Tickets", reviewer: "GM-DGM", sortOrder: 11 },
+      year: { year: current.year, baseline: 0.89, target: 0.95, weight: 35 },
+    },
+    {
+      kpi: { code: "DM-IT-03", name: "Backup and recovery readiness", level: "manager", role: "IT Manager", ownerId: admin, definition: "Backups completed and recovery tests passed.", formula: "Successful backups and recovery tests ÷ planned.", frequency: "Monthly", period: "month", unit: "percent", source: "manual", dataSource: "Backup logs", reviewer: "GM-DGM", redFlag: "Any failed recovery test", sortOrder: 12 },
+      year: { year: current.year, baseline: 0.9, target: 1, weight: 25 },
+      figures: (m) => ({ numerator: 49 + (m % 3), denominator: 51 }),
+    },
+    {
+      kpi: { code: "OFF-01", name: "IT ticket resolution SLA", level: "employee", role: "IT Officer", ownerId: helpdesk, definition: "Helpdesk responsiveness on the tickets this officer handles.", formula: "Their tickets resolved within SLA ÷ their tickets resolved.", frequency: "Monthly", period: "month", unit: "percent", source: "ticket_sla", filter: { assigneeId: helpdesk }, dataSource: "Tickets", reviewer: "IT Manager", sortOrder: 20 },
+      year: { year: current.year, baseline: 0.89, target: 0.95, weight: 60 },
+    },
+    {
+      kpi: { code: "OFF-02", name: "IT asset inventory accuracy", level: "employee", role: "IT Officer", ownerId: helpdesk, definition: "Assets checked against the register and found correct.", formula: "Assets verified ÷ assets sampled.", frequency: "Quarterly", period: "quarter", unit: "percent", source: "manual", dataSource: "IT asset register", reviewer: "IT Manager", sortOrder: 21 },
+      year: { year: current.year, baseline: 0.95, target: 0.98, weight: 40 },
+      figures: () => ({ numerator: 39, denominator: 40 }),
+    },
+  ];
+  for (const { kpi, year, figures } of roleKpis) {
+    const [row] = await db.insert(s.kpis).values(kpi).returning({ id: s.kpis.id, period: s.kpis.period });
+    await db.insert(s.kpiYears).values({ kpiId: row.id, ...year });
+    if (!figures) continue;
+    const last = row.period === "month" ? month - 1 : current.quarter - 1;
+    if (last > 0) {
+      await db.insert(s.kpiFigures).values(Array.from({ length: last }, (_, i) => ({ kpiId: row.id, year: current.year, period: i + 1, ...figures(i + 1) })));
+    }
+  }
 
   return { employees: employees.length + onboarded, assets: infraRows.length + deviceRows.length, tickets: ticketRows.length, accounts };
 }

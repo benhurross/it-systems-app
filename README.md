@@ -208,6 +208,29 @@ Set up the label printer once, in **Settings → Label printer**:
 
 Either way, set the **label size** and the printer's **resolution** (203 or 300 dpi, shown on the label under the printer) to match. **Download ZPL file** saves the tags in the printer's own language, for Zebra's utilities.
 
+## KPIs
+
+**KPIs** is the IT KPI register: each KPI grouped by role (IT department, IT Manager, Cyber Security Officer, IT Officer…), month by month or quarter by quarter, against the baseline, target and weight set for the year, with the year so far, a status (on target, improving, off target) and each role's weighted score.
+
+- **Figures**: click a month to record it, as counts (48 out of 50) or as a share, with a note for the reviewer. Ticket SLA, complaints and satisfaction KPIs are worked out from the tickets (shown in italics); a figure entered stands in their place.
+- **The register itself** (admins, as the IT manager): **Add KPI**, or the pencil on a row, to set what a KPI is, whose it is, where its figure comes from, and the year's baseline, target and weight. Any KPI can be renamed, retargeted or removed, the original five included.
+- **Import register** loads the register kept in Excel (the Master KPI Register layout: KPI ID, KPI Name, Baseline, Target, Weight %, the months). It shows what each row will do before anything changes; KPIs already in are brought up to date.
+- **Export to Excel** downloads the year in the same layout, with a sheet of each role's score, to send to the GM and DGM.
+
+### Showing the KPIs on another dashboard
+
+Another system (the GM/DGM/Board dashboard) can read the KPIs as they stand:
+
+1. In **Settings → API access**, make a key (name it after the system that uses it) and copy it; it is shown only once.
+2. That system asks for the year's KPIs with the key:
+   ```bash
+   curl -H "Authorization: Bearer apit_…" http://192.168.0.119:3200/api/public/kpis?year=2026
+   ```
+   The answer is JSON: each KPI with its target, baseline, weight, figures by month or quarter, year so far and status, and each role's score. Shares are fractions (0.95 is 95%).
+3. Revoke the key in the same place when it is no longer needed; it stops working at once.
+
+Keep the key in the other system's settings, not in a web page anyone can open. The key only reads.
+
 ## Commands
 
 | Command | What it does |

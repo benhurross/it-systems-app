@@ -21,11 +21,25 @@ import { api } from "@/lib/api";
  * Delete, asked first: removes the record at `path` (as /projects/3) for good, then `onDeleted`
  * (to leave its page, say). `detail` says what else goes with it.
  */
-export function DeleteRecord({ path, name, detail, onDeleted }: { path: string; name: string; detail?: string; onDeleted?: () => void }) {
+export function DeleteRecord({
+  path,
+  name,
+  detail,
+  onDeleted,
+  labels,
+}: {
+  path: string;
+  name: string;
+  detail?: string;
+  onDeleted?: () => void;
+  /** Other words for it, as Revoke for a key. */
+  labels?: { action: string; confirm: string; done: string };
+}) {
   const t = useTranslations("common");
+  const words = labels ?? { action: t("delete"), confirm: t("confirmDelete", { name }), done: t("deleted", { name }) };
   const [asking, setAsking] = useState(false);
   const remove = useApiMutation(() => api(path, { method: "DELETE" }), {
-    success: t("deleted", { name }),
+    success: words.done,
     gone: path,
     onSuccess: () => {
       setAsking(false);
@@ -36,13 +50,13 @@ export function DeleteRecord({ path, name, detail, onDeleted }: { path: string; 
     <>
       <Button type="button" variant="outline" className="text-destructive hover:text-destructive" onClick={() => setAsking(true)}>
         <Trash2 />
-        {t("delete")}
+        {words.action}
       </Button>
       <AlertDialog open={asking} onOpenChange={setAsking}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle className="break-words">{t("confirmDelete", { name })}</AlertDialogTitle>
-            <AlertDialogDescription>{[detail, t("deleteForGood")].filter(Boolean).join(" ")}</AlertDialogDescription>
+            <AlertDialogTitle className="break-words">{words.confirm}</AlertDialogTitle>
+            <AlertDialogDescription>{[detail, !labels && t("deleteForGood")].filter(Boolean).join(" ")}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>{t("keep")}</AlertDialogCancel>
@@ -55,7 +69,7 @@ export function DeleteRecord({ path, name, detail, onDeleted }: { path: string; 
                 remove.mutate(undefined);
               }}
             >
-              {t("delete")}
+              {words.action}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

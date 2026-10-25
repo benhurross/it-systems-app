@@ -1,6 +1,5 @@
 import { eq } from "drizzle-orm";
 import type { z } from "zod";
-import { DEFAULT_KPI_TARGETS, type KpiTargets } from "@/lib/kpis";
 import { DEFAULT_MONITOR_SETTINGS } from "@/lib/monitor";
 import { labelPrinterSettings, monitorSettings, organisationSettings, slaSettings, ticketSettings, toolSettings } from "@/lib/schemas";
 import { DEFAULT_SLA } from "@/lib/sla";
@@ -36,20 +35,3 @@ export async function putSetting<K extends SettingKey>(key: K, value: unknown, a
   return parsed;
 }
 
-const KPI_KEY = "kpi_targets";
-
-/** Baselines and targets for a year; the workbook's figures until an admin sets that year. */
-export async function getKpiTargets(year: number): Promise<KpiTargets> {
-  const [row] = await db.select().from(settings).where(eq(settings.key, KPI_KEY));
-  return (row?.value as Record<string, KpiTargets> | undefined)?.[year] ?? DEFAULT_KPI_TARGETS;
-}
-
-export async function putKpiTargets(year: number, targets: KpiTargets, actor: Actor) {
-  const [row] = await db.select().from(settings).where(eq(settings.key, KPI_KEY));
-  const value = { ...((row?.value as Record<string, KpiTargets>) ?? {}), [year]: targets };
-  await db
-    .insert(settings)
-    .values({ key: KPI_KEY, value })
-    .onConflictDoUpdate({ target: settings.key, set: { value } });
-  await audit(actor, "update", "settings", KPI_KEY, `Changed KPI targets for ${year}`);
-}

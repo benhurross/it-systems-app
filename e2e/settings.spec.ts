@@ -141,8 +141,6 @@ test.describe("as an admin", () => {
     await expect(page.getByLabel("Critical (Hours)")).toHaveValue("4");
     await page.goto("/en/settings/monitoring");
     await expect(page.getByRole("switch", { name: "Run checks" })).toHaveAttribute("aria-checked", "false");
-    await page.goto("/en/settings/kpis");
-    await expect(page.getByRole("group", { name: /Tickets resolved within SLA/ }).getByLabel("Target")).toHaveValue("90");
     await page.goto("/en/settings/organisation");
     await expect(page.getByLabel("Organization name")).toHaveValue("AP Plus");
     // A choice from a list loads too (it used to come up empty, and saving failed).

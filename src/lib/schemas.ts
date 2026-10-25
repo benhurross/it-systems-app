@@ -14,7 +14,10 @@ import {
   KB_STATUSES,
   LICENSE_TYPES,
   LOOKUP_LISTS,
-  MANUAL_KPIS,
+  KPI_LEVELS,
+  KPI_PERIODS,
+  KPI_SOURCES,
+  KPI_UNITS,
   MONITOR_METHODS,
   PRIORITIES,
   PROJECT_STATUSES,
@@ -377,24 +380,64 @@ export const organisationSettings = z.object({
   fiscalYearStartMonth: z.number().int().min(1).max(12),
 });
 
-const kpiTarget = z.object({ baseline: z.number().min(0), target: z.number().min(0) });
-/** A year's quarterly figures for a KPI entered by hand; null clears a quarter. */
-export const kpiActualsInput = z.object({
-  year: z.number().int().min(2000).max(2100),
-  kpi: z.enum(MANUAL_KPIS),
-  quarters: z.array(z.number().min(0).max(1_000_000).nullable()).length(4),
+const year = z.number().int().min(2000).max(2100);
+const optionalNumber = z.number().min(0).max(1_000_000_000).nullish().transform((v) => v ?? null);
+const shortText = z.string().trim().max(2_000).nullish().transform((v) => v ?? "");
+
+/** A KPI in the register: what it measures, whose it is, and where its figure comes from. */
+export const kpiInput = z.object({
+  code: z.string().trim().min(1).max(40),
+  name,
+  nameAr: z.string().trim().max(200).nullish().transform((v) => v ?? ""),
+  level: z.enum(KPI_LEVELS),
+  department: z.string().trim().min(1).max(100),
+  role: z.string().trim().max(200).nullish().transform((v) => v ?? ""),
+  ownerId: optionalUser,
+  definition: shortText,
+  formula: shortText,
+  higherIsBetter: z.boolean(),
+  frequency: z.string().trim().max(100).nullish().transform((v) => v ?? ""),
+  period: z.enum(KPI_PERIODS),
+  unit: z.enum(KPI_UNITS),
+  targetFor: z.enum(["period", "year"]),
+  source: z.enum(KPI_SOURCES),
+  filter: z
+    .object({
+      type: z.enum(TICKET_TYPES).nullish(),
+      issueType: z.string().trim().max(60).nullish(),
+      assigneeId: z.string().min(1).nullish(),
+      documented: z.boolean().optional(),
+    })
+    .default({})
+    .transform((f) => ({ type: f.type ?? null, issueType: f.issueType || null, assigneeId: f.assigneeId ?? null, documented: f.documented ?? false })),
+  dataSource: shortText,
+  reviewer: z.string().trim().max(200).nullish().transform((v) => v ?? ""),
+  redFlag: shortText,
+  notes: shortText,
+  sortOrder: z.number().int().min(0).max(10_000).default(0),
+  active: z.boolean().default(true),
 });
 
-export const kpiTargetsInput = z.object({
-  year: z.number().int().min(2000).max(2100),
-  targets: z.object({
-    tat: kpiTarget,
-    complaints: kpiTarget,
-    training_hours: kpiTarget,
-    iso_ncs: kpiTarget,
-    satisfaction: kpiTarget,
-  }),
+/** A KPI's baseline, target and weight for a year; shares (percent KPIs) as fractions, 0.95 for 95%. */
+export const kpiYearInput = z.object({
+  baseline: z.number().min(0).max(1_000_000_000).nullable(),
+  baselineNote: shortText,
+  target: z.number().min(0).max(1_000_000_000),
+  weight: z.number().min(0).max(100).nullable(),
 });
+
+/** A month's or quarter's figure: counted (48 of 50), or a value; all empty with no note clears it. */
+export const kpiFigureInput = z
+  .object({
+    year,
+    period: z.number().int().min(1).max(12),
+    numerator: optionalNumber,
+    denominator: optionalNumber,
+    value: optionalNumber,
+    note: shortText,
+  })
+  .refine((f) => (f.numerator === null) === (f.denominator === null), { message: "validation.kpiCounts", path: ["denominator"] })
+  .refine((f) => f.denominator === null || (f.denominator > 0 && f.numerator! <= f.denominator), { message: "validation.kpiCounts", path: ["denominator"] });
 
 const password = z.string().min(10).max(128);
 
