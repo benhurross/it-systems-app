@@ -8,6 +8,7 @@ import { beforeAll, describe, expect, it, vi } from "vitest";
 import type { Drawing } from "@/server/services/floor-plans";
 import { createTestDb } from "./helpers/db";
 import { floorPlanPdf } from "./helpers/floor-plan-pdf";
+import { floorPlanSvg } from "./helpers/floor-plan-svg";
 
 vi.mock("@/server/db", async () => ({ db: await createTestDb() }));
 process.env.UPLOADS_DIR = await mkdtemp(path.join(tmpdir(), "ap-it-uploads-"));
@@ -120,5 +121,59 @@ describe("floor plans", () => {
     await expect(plans.getPlan(id)).rejects.toThrow();
     expect(await db.select().from(s.networkOutlets).where(eq(s.networkOutlets.planId, id))).toEqual([]);
     expect(existsSync(path.join(process.env.UPLOADS_DIR!, key))).toBe(false);
+  });
+});
+
+describe("SVG floor plans", () => {
+  const svg = new TextEncoder().encode(floorPlanSvg([{ p: "P1-1", s: "S1-1", x: 140, y: 200 }]));
+  const svgDrawing = (outlets: ReturnType<typeof read>[] | null, fit: number[] | null = null): Drawing => ({
+    file: { name: "Office.svg", bytes: svg },
+    page: { width: 200, height: 300 },
+    mark: { width: 6, height: 5 },
+    outlets,
+    fit,
+  });
+
+  it("tells an SVG drawing by its content", () => {
+    expect(plans.isSvg(svg)).toBe(true);
+    expect(plans.isSvg(new TextEncoder().encode("\uFEFF  <svg xmlns='http://www.w3.org/2000/svg'></svg>"))).toBe(true);
+    expect(plans.isSvg(new TextEncoder().encode("<html><svg></svg></html>"))).toBe(false);
+    expect(plans.isSvg(new TextEncoder().encode('<?xml version="1.0"?><note/>'))).toBe(false);
+  });
+
+  it("adds a plan from an SVG, kept as one", async () => {
+    const { id } = await plans.createPlan("Office 3D", svgDrawing([read(1, 1, 1, 1, 0.2, 0.33)]), it_);
+    const plan = await plans.getPlan(id);
+    expect(plan).toMatchObject({ format: "svg", fileName: "Office.svg", rack: null, layers: {} });
+    const file = await plans.planDrawing(id);
+    expect(file.format).toBe("svg");
+    expect(new TextDecoder().decode(file.bytes)).toContain("<svg");
+  });
+
+  it("keeps the outlets and the rack, moved onto a new drawing, with what was entered for them", async () => {
+    const { id } = await plans.createPlan("Moved", drawing([read(1, 1, 1, 1, 0.1, 0.2), read(2, 2, 2, 2, 0.5, 0.6)]), it_);
+    const [first] = (await plans.getPlan(id)).outlets;
+    await plans.updateOutlet(first.id, { ...first, room: "IT office" }, it_);
+    await plans.updatePlan(id, { rack: { x: 0.4, y: 0.4 }, layers: { walls: "wall" } }, it_);
+    // The new sheet holds the floor turned a quarter: x' = 0.2 + 0.5·y, y' = 0.9 - 0.6·x.
+    await plans.replaceDrawing(id, svgDrawing(null, [0, 0.5, 0.2, -0.6, 0, 0.9]), it_);
+    const plan = await plans.getPlan(id);
+    expect(plan).toMatchObject({ format: "svg", layers: {} });
+    expect(plan.rack!.x).toBeCloseTo(0.4);
+    expect(plan.rack!.y).toBeCloseTo(0.66);
+    const it1 = plan.outlets.find((o) => o.panel === 1)!;
+    expect(it1).toMatchObject({ room: "IT office" });
+    expect(it1.x).toBeCloseTo(0.3);
+    expect(it1.y).toBeCloseTo(0.84);
+    await expect(plans.replaceDrawing(id, svgDrawing(null, [1, 2, 3]), it_)).rejects.toThrow("fit");
+  });
+
+  it("changes only what is given: the rack, the layers, the name", async () => {
+    const { id } = await plans.createPlan("Partly", svgDrawing([]), it_);
+    await plans.updatePlan(id, { rack: { x: 0.25, y: 0.75 } }, it_);
+    await plans.updatePlan(id, { layers: { fire: "wall", DOOR: "flat" } }, it_);
+    expect(await plans.getPlan(id)).toMatchObject({ name: "Partly", rack: { x: 0.25, y: 0.75 }, layers: { fire: "wall", DOOR: "flat" } });
+    await expect(plans.updatePlan(id, { rack: { x: 2, y: 0 } }, it_)).rejects.toThrow();
+    await expect(plans.updatePlan(id, { layers: { fire: "roof" as "wall" } }, it_)).rejects.toThrow();
   });
 });

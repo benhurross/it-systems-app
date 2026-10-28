@@ -1,7 +1,8 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { Download, Ellipsis, Map as MapIcon, Maximize, Move, Pencil, Plus, Settings2, Upload, X, ZoomIn, ZoomOut } from "lucide-react";
+import { Box, Download, Ellipsis, Map as MapIcon, Maximize, Move, Pencil, Plus, Server, Settings2, Square, Upload, X, ZoomIn, ZoomOut } from "lucide-react";
+import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { type ReactNode, Suspense, useCallback, useEffect, useEffectEvent, useId, useMemo, useRef, useState } from "react";
@@ -25,7 +26,25 @@ import { Link } from "@/i18n/navigation";
 import { api } from "@/lib/api";
 import type { FloorPlan, FloorPlanSummary, Outlet } from "@/lib/api-types";
 import { outletMatches } from "@/lib/floor-plan";
+import { defaultRoles, readSvgPlan, type SvgPlan } from "@/lib/svg-plan";
+import type { OutletLook, Plan3DProps } from "@/components/network/floor-plan/plan-3d";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { cn } from "@/lib/utils";
+
+// Three.js is loaded only for a plan shown in 3D.
+const Plan3D = dynamic<Plan3DProps>(() => import("@/components/network/floor-plan/plan-3d"), {
+  ssr: false,
+  loading: () => <Skeleton className="h-[70vh] w-full rounded-xl" />,
+});
+
+/** An SVG drawing read for the 3D view; null when it cannot be. */
+function readModel(bytes: Uint8Array) {
+  try {
+    return readSvgPlan(new DOMParser().parseFromString(new TextDecoder().decode(bytes), "image/svg+xml"));
+  } catch {
+    return null;
+  }
+}
 
 const ZOOMS = [0.5, 0.75, 1, 1.5, 2, 3, 4, 6, 8];
 const ALL = "all";
@@ -90,7 +109,8 @@ function PlanView({
   const { data: plan } = useApi<FloorPlan>(`/floor-plans/${planId}`);
   // The drawing, fetched again when a new one is uploaded.
   const { data: bytes = null } = useQuery({
-    queryKey: ["floor-plan-drawing", planId, plan?.drawingVersion],
+    queryKey: [`/floor-plans/${planId}/drawing`, plan?.drawingVersion],
+    meta: { versioned: true },
     enabled: !!plan,
     queryFn: async () => {
       const res = await fetch(`/api/floor-plans/${planId}/drawing`);
@@ -99,13 +119,29 @@ function PlanView({
     },
     staleTime: Infinity,
   });
-  const doc = usePdfDocument(bytes);
+  const svg = plan?.format === "svg";
+  const doc = usePdfDocument(svg ? null : bytes);
+  const model = useMemo<SvgPlan | null>(() => (svg && bytes ? readModel(bytes) : null), [svg, bytes]);
+  const roles = useMemo(() => (model ? { ...defaultRoles(model.layers), ...plan?.layers } : {}), [model, plan?.layers]);
 
   const [query, setQuery] = useState(params.get("find") ?? "");
-  const [switchNo, setSwitchNo] = useState<number | null>(null);
+  const [switchNo, setSwitchNoState] = useState<number | null>(null);
+  const [panelNo, setPanelNoState] = useState<number | null>(null);
+  // A switch or a patch panel is looked at, not both.
+  const setSwitchNo = (n: number | null) => {
+    setSwitchNoState(n);
+    if (n !== null) setPanelNoState(null);
+  };
+  const setPanelNo = (n: number | null) => {
+    setPanelNoState(n);
+    if (n !== null) setSwitchNoState(null);
+  };
+  const [view, setView] = useState<"3d" | "top">("3d");
+  const [networkOnly, setNetworkOnly] = useState(true);
+  const [fitRequest, setFitRequest] = useState(0);
   const [showProblems, setShowProblems] = useState(false);
   const [selected, setSelected] = useState<number | null>(Number(params.get("outlet")) || null);
-  const [placing, setPlacing] = useState<{ move?: Outlet } | null>(null);
+  const [placing, setPlacing] = useState<{ move?: Outlet; rack?: true } | null>(null);
   const [adding, setAdding] = useState<{ x: number; y: number } | null>(null);
   const [editing, setEditing] = useState<Outlet | null>(null);
   const [dialog, setDialog] = useState<"replace" | "settings" | null>(null);
@@ -123,6 +159,7 @@ function PlanView({
   const problemOutlets = outlets.filter((o) => o.problems.length);
   const current = outlets.find((o) => o.id === selected) ?? null;
 
+  const placeRack = useApiMutation((at: { x: number; y: number }) => api(`/floor-plans/${planId}`, { method: "PATCH", body: { rack: at } }), { success: t("rackPlaced") });
   const move = useApiMutation(
     ({ outlet, x, y }: { outlet: Outlet; x: number; y: number }) =>
       api(`/outlets/${outlet.id}`, {
@@ -150,10 +187,16 @@ function PlanView({
   /** Zooms to show every outlet (or those given), as large as fits. */
   const fitTo = useCallback(
     (list: Outlet[]) => {
-      const scroller = map.current?.querySelector<HTMLElement>("[data-pdf-scroller]");
-      if (!plan || !scroller || !list.length) return;
+      if (!plan || !list.length) return;
       const xs = list.map((o) => o.x);
       const ys = list.map((o) => o.y);
+      if (plan.format === "svg") {
+        if (list.length === plan.outlets.length) setFitRequest((n) => n + 1);
+        else setFocus({ x: (Math.max(...xs) + Math.min(...xs)) / 2, y: (Math.max(...ys) + Math.min(...ys)) / 2, n: Date.now() });
+        return;
+      }
+      const scroller = map.current?.querySelector<HTMLElement>("[data-pdf-scroller]");
+      if (!scroller) return;
       const w = Math.max(...xs) - Math.min(...xs) + (2 * plan.markWidth) / plan.pageWidth;
       const h = Math.max(...ys) - Math.min(...ys) + (2 * plan.markHeight) / plan.pageHeight;
       const across = scroller.clientWidth - 32;
@@ -176,11 +219,12 @@ function PlanView({
     } else fitTo(query && matches.length ? matches : plan.outlets);
   });
   const opened = useRef(false);
+  const ready = svg ? !!model : drawn;
   useEffect(() => {
-    if (!drawn || opened.current) return;
+    if (!ready || opened.current) return;
     opened.current = true;
     open();
-  }, [drawn]);
+  }, [ready]);
 
   const select = (o: Outlet) => {
     setSelected(o.id);
@@ -198,8 +242,21 @@ function PlanView({
   if (!plan) return <Skeleton className="h-[60vh] w-full" />;
   const markW = plan.markWidth / plan.pageWidth;
   const markH = plan.markHeight / plan.pageHeight;
-  const filtering = query.trim() !== "" || switchNo !== null;
+  const filtering = query.trim() !== "" || switchNo !== null || panelNo !== null;
   const label = (o: Outlet) => outletName(o) || t("unlabelled");
+  const inGroup = (o: Outlet) => (switchNo !== null && o.switchNo === switchNo) || (panelNo !== null && o.panel === panelNo);
+  const look = (o: Outlet): OutletLook =>
+    o.id === selected ? "selected" : hit.has(o.id) ? "hit" : inGroup(o) ? "group" : showProblems && o.problems.length ? "problem" : filtering ? "faded" : "normal";
+  // The rack where it was put, else in the room the drawing calls the server room.
+  const serverRoom = model?.rooms.find((r) => /server/i.test(r.text)) ?? null;
+  const rack = plan.rack ?? (serverRoom ? { x: serverRoom.x, y: serverRoom.y } : null);
+  const traced = current ? [current.id] : outlets.filter(inGroup).map((o) => o.id);
+  const place = (at: { x: number; y: number }) => {
+    if (placing?.rack) placeRack.mutate(at);
+    else if (placing?.move) move.mutate({ outlet: placing.move, ...at });
+    else setAdding(at);
+    setPlacing(null);
+  };
 
   return (
     <div className="space-y-4">
@@ -308,7 +365,29 @@ function PlanView({
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <section ref={map} className="min-w-0 space-y-2">
           <div className="flex flex-wrap items-center gap-2">
-            <div role="group" aria-label={t("zoom")} className="flex items-center gap-1">
+            {svg && (
+              <>
+                <ToggleGroup type="single" variant="outline" size="sm" value={view} onValueChange={(v) => v && setView(v as "3d" | "top")} aria-label={t("view")}>
+                  <ToggleGroupItem value="3d">
+                    <Box />
+                    {t("view3d")}
+                  </ToggleGroupItem>
+                  <ToggleGroupItem value="top">
+                    <Square />
+                    {t("viewTop")}
+                  </ToggleGroupItem>
+                </ToggleGroup>
+                <div className="flex items-center gap-2">
+                  <Switch id={`${problemsId}-focus`} checked={networkOnly} onCheckedChange={setNetworkOnly} />
+                  <Label htmlFor={`${problemsId}-focus`}>{t("networkOnly")}</Label>
+                </div>
+                <Button variant="ghost" size="sm" onClick={() => setPlacing({ rack: true })}>
+                  <Server />
+                  {t("placeRack")}
+                </Button>
+              </>
+            )}
+            <div role="group" aria-label={t("zoom")} className={cn("flex items-center gap-1", svg && "hidden")}>
               <Button variant="outline" size="icon" disabled={zoom === ZOOMS[0]} onClick={() => zoomBy(-1)} aria-label={t("zoomOut")}>
                 <ZoomOut />
               </Button>
@@ -325,16 +404,49 @@ function PlanView({
             </Button>
             {placing ? (
               <p role="status" className="flex items-center gap-2 text-sm font-medium text-primary">
-                {placing.move ? t("moveHint", { label: label(placing.move) }) : t("placeHint")}
+                {placing.rack ? t("rackHint") : placing.move ? t("moveHint", { label: label(placing.move) }) : t("placeHint")}
                 <Button variant="outline" size="sm" onClick={() => setPlacing(null)}>
                   <X />
                   {t("cancelPlacing")}
                 </Button>
               </p>
             ) : (
-              <p className="text-sm text-muted-foreground">{t("mapHint")}</p>
+              <p className="text-sm text-muted-foreground">{svg ? t(view === "3d" ? "hint3d" : "hintTop") : t("mapHint")}</p>
             )}
           </div>
+          {svg ? (
+            model ? (
+              <Plan3D
+                model={model}
+                roles={roles}
+                outlets={outlets.map((o) => ({ id: o.id, x: o.x, y: o.y, label: label(o), panel: o.panel, panelPort: o.panelPort, switchNo: o.switchNo, switchPort: o.switchPort, look: look(o) }))}
+                rack={rack}
+                units={[
+                  ...plan.panels.map((n) => ({ kind: "panel" as const, number: n, picked: panelNo === n || current?.panel === n })),
+                  ...plan.switches.map((w) => ({ kind: "switch" as const, number: w.number, status: w.asset?.monitorStatus ?? null, picked: switchNo === w.number || current?.switchNo === w.number })),
+                ]}
+                traced={traced}
+                view={view}
+                focus={networkOnly}
+                placing={!!placing}
+                focusOn={focus}
+                fitRequest={fitRequest}
+                label={t("mapLabel", { name: plan.name })}
+                noWebGl={t("noWebGl")}
+                onPickOutlet={(id) => setSelected(id)}
+                onPickUnit={(u) => {
+                  setSelected(null);
+                  if (u.kind === "panel") setPanelNo(panelNo === u.number ? null : u.number);
+                  else setSwitchNo(switchNo === u.number ? null : u.number);
+                }}
+                onPlace={place}
+              />
+            ) : bytes ? (
+              <p className="rounded-xl border p-6 text-sm text-destructive">{t("unreadable")}</p>
+            ) : (
+              <Skeleton className="h-[70vh] w-full rounded-xl" />
+            )
+          ) : (
           <PdfPage doc={doc} page={1} label={t("mapLabel", { name: plan.name })} zoom={zoom} onZoom={zoomBy} onDrawn={onDrawn} pan tall>
             <div className="absolute inset-0">
               {outlets.map((o) => {
@@ -368,15 +480,13 @@ function PlanView({
                   className="absolute inset-0 z-10 cursor-crosshair bg-primary/5"
                   onClick={(e) => {
                     const box = e.currentTarget.getBoundingClientRect();
-                    const at = { x: clamp((e.clientX - box.left) / box.width, 0, 1), y: clamp((e.clientY - box.top) / box.height, 0, 1) };
-                    if (placing.move) move.mutate({ outlet: placing.move, ...at });
-                    else setAdding(at);
-                    setPlacing(null);
+                    place({ x: clamp((e.clientX - box.left) / box.width, 0, 1), y: clamp((e.clientY - box.top) / box.height, 0, 1) });
                   }}
                 />
               )}
             </div>
           </PdfPage>
+          )}
         </section>
 
         <aside className="min-w-0 space-y-4">
@@ -420,6 +530,18 @@ function PlanView({
                   </ul>
                 </div>
               )}
+              {plan.panels.length > 0 && (
+                <div className="space-y-1">
+                  <h3 className="font-medium">{t("panels")}</h3>
+                  <div className="flex flex-wrap gap-1.5">
+                    {plan.panels.map((n) => (
+                      <Button key={n} size="sm" variant={panelNo === n ? "default" : "outline"} className="h-7 px-2 font-mono" aria-pressed={panelNo === n} onClick={() => setPanelNo(panelNo === n ? null : n)}>
+                        P{n}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              )}
               <div className="space-y-1">
                 <h3 className="font-medium">{t("toCheck")}</h3>
                 {problemOutlets.length ? (
@@ -449,7 +571,7 @@ function PlanView({
 
       {adding && <OutletDialog plan={plan} at={adding} onClose={() => setAdding(null)} onSaved={setSelected} />}
       {editing && <OutletDialog plan={plan} outlet={editing} onClose={() => setEditing(null)} />}
-      {dialog === "settings" && <PlanSettingsDialog plan={plan} onClose={() => setDialog(null)} />}
+      {dialog === "settings" && <PlanSettingsDialog plan={plan} roles={model ? roles : null} onClose={() => setDialog(null)} />}
       {dialog === "replace" && <UploadDialog plan={plan} onClose={() => setDialog(null)} onSaved={() => setDrawn(false)} />}
     </div>
   );

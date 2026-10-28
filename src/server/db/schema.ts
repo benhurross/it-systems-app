@@ -46,6 +46,7 @@ import type {
 } from "@/lib/domain";
 import type { FontChoice } from "@/lib/id-card";
 import type { KpiFilter } from "@/lib/kpi-register";
+import type { LayerRole } from "@/lib/svg-plan";
 import type { ToolAccessState, ToolKey } from "@/lib/tools";
 
 const id = () => integer().primaryKey().generatedAlwaysAsIdentity();
@@ -599,6 +600,12 @@ export const floorPlans = pgTable("floor_plans", {
   markWidth: real().notNull().default(10),
   markHeight: real().notNull().default(9),
   switches: jsonb().$type<Record<string, number>>().notNull().default({}),
+  /** What the drawing is: a PDF, or an SVG shown in 3D. */
+  format: text().$type<"pdf" | "svg">().notNull().default("pdf"),
+  /** Where the server room's rack stands, in fractions of the plan; null until placed. */
+  rack: jsonb().$type<{ x: number; y: number } | null>(),
+  /** How each layer of an SVG is shown, where chosen: raised as walls, as glass, or flat. */
+  layers: jsonb().$type<Record<string, LayerRole>>().notNull().default({}),
   updatedByName: text().notNull(),
   createdAt: createdAt(),
   updatedAt: updatedAt(),

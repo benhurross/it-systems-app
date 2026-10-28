@@ -16,6 +16,7 @@ import { useFormat } from "@/hooks/use-format";
 import type { FloorPlan } from "@/lib/api-types";
 import { MAX_UPLOAD_BYTES, sniffType } from "@/lib/files";
 import { outletProblems, pageTexts, readOutlets, type OutletProblem, type ReadOutlet } from "@/lib/floor-plan";
+import { carryOver, fitOutlets, readSvgPlan } from "@/lib/svg-plan";
 
 type Read = {
   file: File;
@@ -24,15 +25,37 @@ type Read = {
   outlets: ReadOutlet[];
   pages: number;
   problems: [OutletProblem, number][];
+  format: "pdf" | "svg";
 };
 const ERRORS = ["fileType", "fileSize", "fileEmpty", "unreadable"] as const;
 
-/** The plan's first page read here: its size, and the outlets its labels mark. */
+const problemCounts = (outlets: ReadOutlet[]) => {
+  const counts = new Map<OutletProblem, number>();
+  for (const list of outletProblems(outlets)) for (const p of list) counts.set(p, (counts.get(p) ?? 0) + 1);
+  return [...counts];
+};
+
+/** An SVG plan read here: its size, and the outlets its labels mark. */
+function readSvg(file: File, bytes: Uint8Array): Read {
+  const text = new TextDecoder().decode(bytes).replace(/^\uFEFF/, "");
+  if (!/^\s*<(\?xml|svg|!--|!DOCTYPE svg)/i.test(text)) throw new Error("fileType");
+  const doc = new DOMParser().parseFromString(text, "image/svg+xml");
+  if (doc.getElementsByTagName("parsererror").length) throw new Error("unreadable");
+  let plan;
+  try {
+    plan = readSvgPlan(doc);
+  } catch {
+    throw new Error("unreadable");
+  }
+  return { file, page: { width: plan.width, height: plan.height }, mark: plan.mark, outlets: plan.outlets, pages: 1, problems: problemCounts(plan.outlets), format: "svg" };
+}
+
+/** The plan read here, a PDF's first page or an SVG: its size, and the outlets its labels mark. */
 async function readDrawing(file: File): Promise<Read> {
   if (file.size === 0) throw new Error("fileEmpty");
   if (file.size > MAX_UPLOAD_BYTES) throw new Error("fileSize");
   const bytes = new Uint8Array(await file.arrayBuffer());
-  if (sniffType(bytes) !== "application/pdf") throw new Error("fileType");
+  if (sniffType(bytes) !== "application/pdf") return readSvg(file, bytes);
   let doc;
   try {
     doc = await openPdf(bytes);
@@ -42,21 +65,20 @@ async function readDrawing(file: File): Promise<Read> {
   try {
     const { texts, size } = await pageTexts(await doc.getPage(1), await loadPdfJs());
     const { outlets, mark } = readOutlets(texts, size);
-    const counts = new Map<OutletProblem, number>();
-    for (const list of outletProblems(outlets)) for (const p of list) counts.set(p, (counts.get(p) ?? 0) + 1);
-    return { file, page: size, mark, outlets, pages: doc.numPages, problems: [...counts] };
+    return { file, page: size, mark, outlets, pages: doc.numPages, problems: problemCounts(outlets), format: "pdf" };
   } finally {
     void doc.destroy();
   }
 }
 
-async function send(read: Read, plan: FloorPlan | null, name: string, keep: boolean) {
+async function send(read: Read, plan: FloorPlan | null, name: string, keep: boolean, fit: number[] | null, outlets: unknown[]) {
   const form = new FormData();
   form.set("file", read.file);
   form.set("name", name);
   form.set("page", JSON.stringify(read.page));
   form.set("mark", JSON.stringify(read.mark));
-  if (!keep) form.set("outlets", JSON.stringify(read.outlets.map((o) => ({ ...o, room: "", assetId: null, note: "" }))));
+  if (!keep) form.set("outlets", JSON.stringify(outlets));
+  else if (fit) form.set("fit", JSON.stringify(fit));
   const res = await fetch(plan ? `/api/floor-plans/${plan.id}/drawing` : "/api/floor-plans", { method: plan ? "PUT" : "POST", body: form });
   const data = await res.json().catch(() => null);
   if (!res.ok) throw new Error((data as { error?: string } | null)?.error ?? "");
@@ -75,12 +97,19 @@ export function UploadDialog({ plan, onClose, onSaved }: { plan: FloorPlan | nul
   const hintId = useId();
   const [read, setRead] = useState<Read | null>(null);
   const [name, setName] = useState("");
-  const [keep, setKeep] = useState(false);
+  // Unchosen, the outlets are kept when they line up with the new drawing: what was entered stays.
+  const [keepChoice, setKeep] = useState<boolean | null>(null);
   const [error, setError] = useState<string | null>(null);
   const fail = (e: Error) => setError(t(`errors.${(ERRORS as readonly string[]).includes(e.message) ? e.message : "generic"}` as "errors.generic"));
   const reading = useMutation({ mutationFn: readDrawing, onSuccess: setRead, onError: fail });
+  const fit = plan && read ? fitOutlets(plan.outlets, read.outlets) : null;
+  // Within 2% of the sheet at worst: the same floor.
+  const fits = !!fit && fit.error < 0.02;
+  const keep = keepChoice ?? false;
+  // Read from the new drawing, what was entered for the plan's outlets goes with their labels.
+  const merged = read ? (plan ? carryOver(plan.outlets, read.outlets, fit?.matrix ?? null) : { outlets: read.outlets.map((o) => ({ ...o, room: "", assetId: null, note: "" })), carried: 0, lost: 0 }) : null;
   const save = useMutation({
-    mutationFn: () => send(read!, plan, name.trim(), keep),
+    mutationFn: () => send(read!, plan, name.trim(), keep, keep && fit ? fit.matrix : null, merged!.outlets),
     onSuccess: async ({ id }) => {
       toast.success(t("saved"));
       await queries.invalidateQueries();
@@ -103,7 +132,7 @@ export function UploadDialog({ plan, onClose, onSaved }: { plan: FloorPlan | nul
             <Input
               id={fileId}
               type="file"
-              accept=".pdf,application/pdf"
+              accept=".pdf,.svg,application/pdf,image/svg+xml"
               onChange={(e) => {
                 const chosen = e.target.files?.[0] ?? null;
                 setRead(null);
@@ -154,12 +183,20 @@ export function UploadDialog({ plan, onClose, onSaved }: { plan: FloorPlan | nul
                   <RadioGroupItem value="read" id={`${hintId}-read`} className="mt-0.5" />
                   <Label htmlFor={`${hintId}-read`} className="font-normal leading-snug">
                     {t("readNew", { count: read.outlets.length, current: format.number(plan.outlets.length) })}
+                    {merged && merged.carried + merged.lost > 0 && (
+                      <span className="block text-muted-foreground">
+                        {t("carried", { count: merged.carried })} {merged.lost > 0 && t("notCarried", { count: merged.lost })}
+                      </span>
+                    )}
                   </Label>
                 </div>
                 <div className="flex items-start gap-2">
                   <RadioGroupItem value="keep" id={`${hintId}-keep`} className="mt-0.5" />
-                  <Label htmlFor={`${hintId}-keep`} className="font-normal leading-snug">
+                  <Label htmlFor={`${hintId}-keep`} className="block font-normal leading-snug">
                     {t("keep")}
+                    <span className="block text-muted-foreground">
+                      {fit ? t(fits ? "fitMatched" : "fitPoor", { count: fit.matched }) : t("fitNone")}
+                    </span>
                   </Label>
                 </div>
               </RadioGroup>

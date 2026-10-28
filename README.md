@@ -216,7 +216,19 @@ Either way, set the **label size** and the printer's **resolution** (203 or 300 
 2. **Find an outlet** by its label (P5-18, S4-42), a whole switch (S4), a room or a device; Enter takes the plan to it. Click an outlet to see its patch panel port, switch port, room and the device plugged in.
 3. **More → Plan and switches** says which asset each switch number is, so its status from monitoring shows beside its ports. Delete a plan here too.
 4. **Edit** an outlet to correct its labels, give its room or desk, or the device plugged in (the device's page then shows its wall port). **Move** places it again; **Add outlet** adds one the drawing lacks.
-5. **More → Upload a new drawing** when the plan changes: read the outlets from it again, or keep those you have. **Export to Excel** lists every patch panel port and what it serves.
+5. **More → Upload a new drawing** when the plan changes. Read the outlets from it again (the room, device and note entered for each outlet go with its label), or keep those you have. **Export to Excel** lists every patch panel port and what it serves.
+
+### The plan in 3D (SVG drawings)
+
+Upload the plan as an **SVG** (exported from the CAD drawing) instead of a PDF and it is shown in 3D:
+
+- **3D** or **Top view**: drag to turn (3D) or move (top view), right-drag to move in 3D, the wheel zooms. **Show all the outlets** goes back to the whole office.
+- **Network only** keeps the outlets, the server rack, its patch panels and switches and the cables solid, and fades the walls, doors and room names.
+- **Tracing**: click an outlet (or find one) and its cable is drawn up to the ceiling, across to the server rack, down into its patch panel port, then the patch cord to its switch port. Click a patch panel or a switch in the rack, or under **Patch panels** and **Switches**, to see every outlet on it. Switches linked to a device in **Plan and switches** show its status (green, amber, red).
+- **Place the rack**: the rack stands in the room the drawing calls SERVER until it is placed by a click on the plan.
+- **Plan and switches** also says how each of the drawing's layers shows: raised as walls, as glass, or flat. The layer with the most lines is taken to be the walls.
+- The cable lines show which outlet goes to which port, not the cables' actual route.
+- 3D needs WebGL, which every current browser has; if a PC has hardware acceleration turned off, the page says so.
 
 The plan is kept in the app's uploads folder, so backups include it.
 

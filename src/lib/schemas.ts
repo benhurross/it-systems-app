@@ -460,10 +460,12 @@ export const readOutletsInput = z
   .array(outletInput.extend({ written: z.string().max(200).default("") }))
   .max(5_000);
 
-/** A plan's name and which asset each of its switch numbers is. */
+/** A plan's name, which asset each of its switch numbers is, where its rack stands and how its layers show; each when given. */
 export const floorPlanInput = z.object({
-  name: z.string().trim().min(1).max(120),
-  switches: z.record(z.string().regex(/^\d{1,3}$/), id).default({}),
+  name: z.string().trim().min(1).max(120).optional(),
+  switches: z.record(z.string().regex(/^\d{1,3}$/), id).optional(),
+  rack: z.object({ x: fraction, y: fraction }).nullable().optional(),
+  layers: z.record(z.string().max(200), z.enum(["wall", "glass", "flat"])).optional(),
 });
 
 const password = z.string().min(10).max(128);

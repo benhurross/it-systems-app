@@ -27,7 +27,16 @@ function makeQueryClient() {
     // except a record the change deleted, which would only come back as missing.
     mutationCache: new MutationCache({
       onSuccess: (_data, _variables, _context, mutation) =>
-        client.invalidateQueries({ predicate: (query) => mutation.meta?.gone === undefined || query.queryKey[0] !== mutation.meta.gone }),
+        client.invalidateQueries({
+          predicate: (query) => {
+            const gone = mutation.meta?.gone as string | undefined;
+            const key = query.queryKey[0];
+            // A file keyed by its version (a plan's drawing) only changes with a new version.
+            if (query.meta?.versioned) return false;
+            // What hangs off it goes too: a plan's drawing with the plan.
+            return gone === undefined || typeof key !== "string" || (key !== gone && !key.startsWith(`${gone}/`));
+          },
+        }),
     }),
   });
   return client;

@@ -10,14 +10,28 @@ import { assets, floorPlans, networkOutlets } from "../db/schema";
 import { readStoredFile, removeStoredFile, storeFile } from "../files";
 import { badRequest, notFound, one } from "../http";
 
-/** A drawing as uploaded: the PDF, its page's size in points, the size of an outlet's mark, and the outlets read from it. */
+/** A drawing as uploaded: the PDF or SVG, its page's size, the size of an outlet's mark, and the outlets read from it. */
 export type Drawing = {
   file: { name: string; bytes: Uint8Array };
   page: { width: number; height: number };
   mark: { width: number; height: number };
   /** Null keeps the outlets the plan has: a new drawing of the same floor. */
   outlets: z.input<typeof readOutletsInput> | null;
+  /**
+   * With the outlets kept, the move that puts them onto the new drawing (x' = a·x + b·y + c,
+   * y' = d·x + e·y + f, in fractions of each page), found from the outlets labelled alike on both.
+   */
+  fit?: number[] | null;
 };
+
+/** Whether the bytes are an SVG drawing: XML text whose root is an svg element. */
+export function isSvg(bytes: Uint8Array) {
+  const head = new TextDecoder().decode(bytes.subarray(0, 4096)).replace(/^\uFEFF/, "").trimStart();
+  if (!/^<(\?xml|svg|!--|!DOCTYPE svg)/i.test(head)) return false;
+  return /<svg[\s>]/i.test(head);
+}
+
+const fileNameFor = (name: string, format: "pdf" | "svg") => cleanFileName(name, "application/pdf").replace(/\.pdf$/, `.${format}`);
 
 const PROBLEM_TEXT: Record<OutletProblem, string> = {
   duplicatePanelPort: "Patch panel port on another outlet too",
@@ -31,11 +45,17 @@ const PROBLEM_TEXT: Record<OutletProblem, string> = {
 function checkDrawing(d: Drawing) {
   if (d.file.bytes.length === 0) throw badRequest("fileEmpty");
   if (d.file.bytes.length > MAX_UPLOAD_BYTES) throw badRequest("fileSize");
-  if (sniffType(d.file.bytes) !== "application/pdf") throw badRequest("fileType");
+  const format = sniffType(d.file.bytes) === "application/pdf" ? "pdf" : isSvg(d.file.bytes) ? "svg" : null;
+  if (!format) throw badRequest("fileType");
   const sizes = [d.page.width, d.page.height, d.mark.width, d.mark.height];
   if (sizes.some((n) => !Number.isFinite(n) || n <= 0 || n > 20_000)) throw badRequest("pageSize");
-  return d.outlets === null ? null : readOutletsInput.parse(d.outlets);
+  const fit = d.fit ?? null;
+  if (fit && (fit.length !== 6 || fit.some((n) => typeof n !== "number" || !Number.isFinite(n) || Math.abs(n) > 100))) throw badRequest("fit");
+  return { format, outlets: d.outlets === null ? null : readOutletsInput.parse(d.outlets), fit } as const;
 }
+
+const clamp01 = (n: number) => Math.min(1, Math.max(0, n));
+const moved = (fit: number[], p: { x: number; y: number }) => ({ x: clamp01(fit[0] * p.x + fit[1] * p.y + fit[2]), y: clamp01(fit[3] * p.x + fit[4] * p.y + fit[5]) });
 
 /** The floor plans, with how many outlets each has. */
 export async function listPlans() {
@@ -85,8 +105,9 @@ export async function getPlan(id: number) {
 
 /** Adds a floor's plan: the drawing and the outlets read from it. */
 export async function createPlan(name: string, drawing: Drawing, actor: Actor) {
-  const outlets = checkDrawing(drawing) ?? [];
-  const { name: planName } = floorPlanInput.parse({ name });
+  const checked = checkDrawing(drawing);
+  const outlets = checked.outlets ?? [];
+  const planName = floorPlanInput.shape.name.unwrap().parse(name);
   const storageKey = await storeFile(drawing.file.bytes);
   try {
     const plan = await db.transaction(async (tx) => {
@@ -95,7 +116,8 @@ export async function createPlan(name: string, drawing: Drawing, actor: Actor) {
           .insert(floorPlans)
           .values({
             name: planName,
-            fileName: cleanFileName(drawing.file.name, "application/pdf"),
+            format: checked.format,
+            fileName: fileNameFor(drawing.file.name, checked.format),
             size: drawing.file.bytes.length,
             storageKey,
             pageWidth: drawing.page.width,
@@ -117,9 +139,12 @@ export async function createPlan(name: string, drawing: Drawing, actor: Actor) {
   }
 }
 
-/** A new drawing for a plan; its outlets replaced with those read from it, or kept as they are. */
+/**
+ * A new drawing for a plan, a PDF or an SVG; its outlets replaced with those read from it, or kept
+ * (moved onto the new drawing when a fit is given, with the rack).
+ */
 export async function replaceDrawing(id: number, drawing: Drawing, actor: Actor) {
-  const outlets = checkDrawing(drawing);
+  const { format, outlets, fit } = checkDrawing(drawing);
   const [plan] = await db.select().from(floorPlans).where(eq(floorPlans.id, id));
   if (!plan) throw notFound();
   const storageKey = await storeFile(drawing.file.bytes);
@@ -128,7 +153,11 @@ export async function replaceDrawing(id: number, drawing: Drawing, actor: Actor)
       await tx
         .update(floorPlans)
         .set({
-          fileName: cleanFileName(drawing.file.name, "application/pdf"),
+          format,
+          fileName: fileNameFor(drawing.file.name, format),
+          // The new drawing's layers are its own; the rack goes where the fit puts it.
+          layers: {},
+          rack: plan.rack && fit && !outlets ? moved(fit, plan.rack) : plan.rack,
           size: drawing.file.bytes.length,
           storageKey,
           pageWidth: drawing.page.width,
@@ -141,6 +170,9 @@ export async function replaceDrawing(id: number, drawing: Drawing, actor: Actor)
       if (outlets) {
         await tx.delete(networkOutlets).where(eq(networkOutlets.planId, id));
         if (outlets.length) await tx.insert(networkOutlets).values(outlets.map((o) => ({ ...o, planId: id })));
+      } else if (fit) {
+        const kept = await tx.select({ id: networkOutlets.id, x: networkOutlets.x, y: networkOutlets.y }).from(networkOutlets).where(eq(networkOutlets.planId, id));
+        for (const o of kept) await tx.update(networkOutlets).set(moved(fit, o)).where(eq(networkOutlets.id, o.id));
       }
     });
   } catch (error) {
@@ -153,22 +185,24 @@ export async function replaceDrawing(id: number, drawing: Drawing, actor: Actor)
     "update",
     "floor_plan",
     id,
-    outlets ? `New drawing for "${plan.name}", ${outlets.length} outlets read from it` : `New drawing for "${plan.name}", outlets kept`,
+    outlets
+      ? `New drawing for "${plan.name}", ${outlets.length} outlets read from it`
+      : `New drawing for "${plan.name}", outlets kept${fit ? " and moved onto it" : ""}`,
   );
   return { id };
 }
 
-/** Renames a plan, or says which asset each switch number is. */
+/** Renames a plan, says which asset each switch number is, where the rack stands or how the layers show: whichever is given. */
 export async function updatePlan(id: number, input: z.input<typeof floorPlanInput>, actor: Actor) {
-  const { name, switches } = floorPlanInput.parse(input);
-  const ids = [...new Set(Object.values(switches))];
+  const values = floorPlanInput.parse(input);
+  const ids = [...new Set(Object.values(values.switches ?? {}))];
   if (ids.length) {
     const found = await db.select({ id: assets.id }).from(assets).where(inArray(assets.id, ids));
     if (found.length !== ids.length) throw badRequest("A linked record does not exist");
   }
-  const row = one(await db.update(floorPlans).set({ name, switches, updatedByName: actor.name }).where(eq(floorPlans.id, id)).returning({ id: floorPlans.id }));
-  await audit(actor, "update", "floor_plan", id, `Updated the floor plan "${name}"`);
-  return row;
+  const row = one(await db.update(floorPlans).set({ ...values, updatedByName: actor.name }).where(eq(floorPlans.id, id)).returning({ id: floorPlans.id, name: floorPlans.name }));
+  await audit(actor, "update", "floor_plan", id, `Updated the floor plan "${row.name}"`);
+  return { id: row.id };
 }
 
 export async function deletePlan(id: number, actor: Actor) {
@@ -182,7 +216,7 @@ export async function deletePlan(id: number, actor: Actor) {
 export async function planDrawing(id: number) {
   const [plan] = await db.select().from(floorPlans).where(eq(floorPlans.id, id));
   if (!plan) throw notFound();
-  return { name: plan.fileName, bytes: await readStoredFile(plan.storageKey) };
+  return { name: plan.fileName, format: plan.format, bytes: await readStoredFile(plan.storageKey) };
 }
 
 const described = (o: { panel: number | null; panelPort: number | null; switchNo: number | null; switchPort: number | null }) =>

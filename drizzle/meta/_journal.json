@@ -92,6 +92,13 @@
       "when": 1792949748867,
       "tag": "0012_floor_plans",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1793171848205,
+      "tag": "0013_floor_plan_svg",
+      "breakpoints": true
     }
   ]
 }

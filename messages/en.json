@@ -2296,8 +2296,8 @@
     "uploadDialog": {
       "title": "Upload floor plan",
       "replaceTitle": "New drawing for {name}",
-      "intro": "A PDF of the plan, its first page. The P and S labels on it are read here, in your browser, before anything is saved.",
-      "file": "Floor plan (PDF)",
+      "intro": "A PDF of the plan (its first page) or an SVG exported from the drawing. The P and S labels on it are read here, in your browser, before anything is saved; an SVG is shown in 3D.",
+      "file": "Floor plan (PDF or SVG)",
       "name": "Name",
       "namePlaceholder": "Ground floor",
       "reading": "Reading the plan…",
@@ -2307,7 +2307,7 @@
       "checkCount": "{count, plural, one {# to check after saving:} other {# to check after saving:}}",
       "outletsChoice": "Outlets",
       "readNew": "Read them from the new drawing ({count, plural, one {# outlet} other {# outlets}}, in place of the {current} now on the plan)",
-      "keep": "Keep the outlets where they are",
+      "keep": "Keep the outlets as they are, moved onto the new drawing",
       "save": "Save",
       "saving": "Saving…",
       "saved": "Floor plan saved",
@@ -2317,13 +2317,25 @@
         "fileEmpty": "The file is empty.",
         "unreadable": "The PDF could not be read.",
         "generic": "The plan could not be saved. Try again."
-      }
+      },
+      "fitMatched": "{count} outlets line up with the new drawing: they move onto it with what was entered for them.",
+      "fitPoor": "Only a rough match ({count} outlets): check their places after saving.",
+      "fitNone": "Too few outlets are labelled alike to place them on the new drawing: they stay where they are on the sheet.",
+      "carried": "{count, plural, =0 {} one {The room, device and note entered for # outlet go with its label.} other {The rooms, devices and notes entered for # outlets go with their labels.}}",
+      "notCarried": "{count, plural, one {# outlet with details entered has no label alike on the new drawing; its details are dropped.} other {# outlets with details entered have no label alike on the new drawing; their details are dropped.}}"
     },
     "settingsDialog": {
       "title": "Plan and switches",
       "intro": "Name the plan, and say which device each switch number on it is, to show its status and link to it.",
       "switchDevice": "S{number}",
-      "saved": "Plan saved"
+      "saved": "Plan saved",
+      "layers": "Layers of the drawing",
+      "layersHint": "How each layer shows in 3D: raised as walls, as glass, or flat on the floor.",
+      "roles": {
+        "wall": "Walls",
+        "glass": "Glass",
+        "flat": "Flat"
+      }
     },
     "onPlans": {
       "title": "Floor plan",
@@ -2339,6 +2351,18 @@
       "noSwitch": "no switch label",
       "noPort": "a port number missing",
       "written": "label tidied to be read"
-    }
+    },
+    "view": "View",
+    "view3d": "3D",
+    "viewTop": "Top view",
+    "networkOnly": "Network only",
+    "placeRack": "Place the rack",
+    "rackHint": "Click the plan where the server rack stands.",
+    "rackPlaced": "Rack placed",
+    "hint3d": "Drag to turn, right-drag to move, the wheel zooms. Click an outlet, a patch panel or a switch.",
+    "hintTop": "Drag to move, the wheel zooms. Click an outlet, a patch panel or a switch.",
+    "noWebGl": "This browser cannot show 3D (WebGL is off). Try another browser, or turn on hardware acceleration in its settings.",
+    "unreadable": "The drawing could not be read.",
+    "panels": "Patch panels"
   }
 }

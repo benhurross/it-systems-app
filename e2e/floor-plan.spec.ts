@@ -1,9 +1,12 @@
 import { expect, test } from "@playwright/test";
 import { floorPlanPdf } from "../tests/helpers/floor-plan-pdf";
+import { floorPlanSvg } from "../tests/helpers/floor-plan-svg";
 import { session } from "./env";
 import { unique, watchConsole } from "./helpers";
 
 test.use({ storageState: session("it") });
+// One after the other: each deletes its plan at the end, which another's page may be showing.
+test.describe.configure({ mode: "serial" });
 
 /** A made-up floor with four outlets, one patch panel port given twice and a stray mark on a label. */
 const plan = () =>
@@ -22,17 +25,19 @@ test("a floor plan is read from its PDF, searched, traced and kept up to date", 
   const dialog = page.getByRole("dialog", { name: "Upload floor plan" });
 
   // Not a PDF: said so, and nothing to save.
-  await dialog.getByLabel("Floor plan (PDF)").setInputFiles({ name: "plan.pdf", mimeType: "application/pdf", buffer: Buffer.from("not a pdf") });
+  await dialog.getByLabel("Floor plan (PDF or SVG)").setInputFiles({ name: "plan.pdf", mimeType: "application/pdf", buffer: Buffer.from("not a pdf") });
   await expect(dialog.getByRole("alert")).toHaveText("That file is not a PDF.");
   await expect(dialog.getByRole("button", { name: "Save" })).toBeDisabled();
 
-  await dialog.getByLabel("Floor plan (PDF)").setInputFiles({ name: "Ground floor.pdf", mimeType: "application/pdf", buffer: Buffer.from(await plan()) });
+  await dialog.getByLabel("Floor plan (PDF or SVG)").setInputFiles({ name: "Ground floor.pdf", mimeType: "application/pdf", buffer: Buffer.from(await plan()) });
   await expect(dialog).toContainText("4 outlets found on it.");
   await expect(dialog).toContainText("3 to check after saving:");
   await expect(dialog).toContainText("2 × patch panel port on more than one outlet");
   await expect(dialog).toContainText("1 × label tidied to be read");
   await dialog.getByLabel("Name").fill(name);
+  const created = page.waitForResponse((r) => r.url().endsWith("/api/floor-plans") && r.request().method() === "POST");
   await dialog.getByRole("button", { name: "Save" }).click();
+  const { id } = (await (await created).json()) as { id: number };
   await expect(page.getByText("Floor plan saved")).toBeVisible();
 
   const map = page.getByRole("img", { name: `${name}, the floor plan` });
@@ -99,16 +104,12 @@ test("a floor plan is read from its PDF, searched, traced and kept up to date", 
   expect(download.suggestedFilename()).toBe(`${name} outlets.xlsx`);
 
   // In Arabic.
-  await page.goto("/ar/network/floor-plan");
+  await page.goto(`/ar/network/floor-plan?plan=${id}`);
   await expect(page.getByRole("link", { name: "مخطط الطابق" })).toHaveAttribute("aria-current", "page");
   await expect(page.getByLabel("البحث عن نقطة شبكة")).toBeVisible();
 
   // Gone with its outlets.
-  await page.goto("/en/network/floor-plan");
-  if (await page.getByRole("combobox", { name: "Plan" }).isVisible()) {
-    await page.getByRole("combobox", { name: "Plan" }).click();
-    await page.getByRole("option", { name }).click();
-  }
+  await page.goto(`/en/network/floor-plan?plan=${id}`);
   await expect(page.getByRole("img", { name: `${name}, the floor plan` })).toBeVisible();
   await page.getByRole("button", { name: "More for this plan" }).click();
   await page.getByRole("menuitem", { name: "Plan and switches" }).click();
@@ -117,5 +118,95 @@ test("a floor plan is read from its PDF, searched, traced and kept up to date", 
   await page.getByRole("alertdialog").getByRole("button", { name: "Delete" }).click();
   await expect(page.getByRole("img", { name: `${name}, the floor plan` })).toBeHidden();
   expect(switchName.length).toBeGreaterThan(0);
+  console.assertClean();
+});
+
+test("a plan drawn as an SVG is shown in 3D and from above, and its cables traced to the rack", async ({ page }, info) => {
+  const console = watchConsole(page);
+  const name = unique(info, "Floor 3D");
+  const svg = floorPlanSvg([
+    { p: "P1-1", s: "S1-1", x: 140, y: 200 },
+    { p: "P1-2", s: "S1-2", x: 150, y: 200 },
+    { p: "P2-3", s: "S2-7", x: 250, y: 300 },
+    { p: "P2-4", s: "S2-8", x: 260, y: 300 },
+    { p: "P1-5", s: "S1-5", x: 140, y: 260 },
+  ]);
+  await page.goto("/en/network/floor-plan");
+  await page.getByRole("button", { name: "Upload floor plan" }).first().click();
+  const dialog = page.getByRole("dialog", { name: "Upload floor plan" });
+  await dialog.getByLabel("Floor plan (PDF or SVG)").setInputFiles({ name: "Office.svg", mimeType: "image/svg+xml", buffer: Buffer.from(svg) });
+  await expect(dialog).toContainText("5 outlets found on it.");
+  await dialog.getByLabel("Name").fill(name);
+  const created = page.waitForResponse((r) => r.url().endsWith("/api/floor-plans") && r.request().method() === "POST");
+  await dialog.getByRole("button", { name: "Save" }).click();
+  const { id } = (await (await created).json()) as { id: number };
+  await expect(page.getByText("Floor plan saved")).toBeVisible();
+
+  const map = page.getByRole("img", { name: `${name}, the floor plan` });
+  await expect(map.locator("canvas")).toBeVisible();
+  await expect(page.getByRole("radio", { name: "3D" })).toHaveAttribute("aria-checked", "true");
+  await expect(page.getByRole("switch", { name: "Network only" })).toBeChecked();
+
+  // An outlet found: its card, and its cable traced (drawn on the canvas, so the card is what is checked).
+  await page.getByLabel("Find an outlet").fill("P2-3");
+  await page.getByLabel("Find an outlet").press("Enter");
+  const card = page.getByRole("complementary").locator("[aria-live]").first();
+  await expect(card).toContainText("Panel 2, port 3");
+  await expect(card).toContainText("Switch 2, port 7");
+
+  // From above, and a whole patch panel.
+  await page.getByRole("radio", { name: "Top view" }).click();
+  await expect(page.getByText("Drag to move, the wheel zooms.")).toBeVisible();
+  await card.getByRole("button", { name: "Close" }).click();
+  await page.getByLabel("Find an outlet").fill("");
+  await page.getByRole("button", { name: "P1", exact: true }).click();
+  await expect(page.getByRole("button", { name: "P1", exact: true })).toHaveAttribute("aria-pressed", "true");
+
+  // The rack put where it stands: a click on the plan.
+  await page.getByRole("button", { name: "Place the rack" }).click();
+  await expect(page.getByText("Click the plan where the server rack stands.")).toBeVisible();
+  await map.click({ position: { x: 100, y: 100 } });
+  await expect(page.getByText("Rack placed")).toBeVisible();
+
+  // The drawing's layers: walls raised, doors flat, and changeable.
+  await page.getByRole("button", { name: "More for this plan" }).click();
+  await page.getByRole("menuitem", { name: "Plan and switches" }).click();
+  const settings = page.getByRole("dialog", { name: "Plan and switches" });
+  await expect(settings.getByRole("combobox", { name: "fire" })).toHaveText("Walls");
+  await expect(settings.getByRole("combobox", { name: "DOOR" })).toHaveText("Flat");
+  await settings.getByRole("combobox", { name: "DOOR" }).click();
+  await page.getByRole("option", { name: "Glass" }).click();
+  await settings.getByRole("button", { name: "Save" }).click();
+  await expect(page.getByText("Plan saved")).toBeVisible();
+
+  // A new drawing: the room entered for an outlet goes with its label.
+  await page.getByLabel("Find an outlet").fill("P1-2");
+  await page.getByLabel("Find an outlet").press("Enter");
+  await card.getByRole("button", { name: "Edit" }).click();
+  await page.getByRole("dialog").getByLabel("Room or desk").fill("Help desk");
+  await page.getByRole("dialog").getByRole("button", { name: "Save" }).click();
+  await expect(page.getByText("Outlet saved")).toBeVisible();
+  await page.getByRole("button", { name: "More for this plan" }).click();
+  await page.getByRole("menuitem", { name: "Upload a new drawing" }).click();
+  const replace = page.getByRole("dialog");
+  await replace.getByLabel("Floor plan (PDF or SVG)").setInputFiles({ name: "Office v2.svg", mimeType: "image/svg+xml", buffer: Buffer.from(svg.replace('x="150"', 'x="152"')) });
+  await expect(replace).toContainText("The room, device and note entered for 1 outlet go with its label.");
+  await replace.getByRole("button", { name: "Save" }).click();
+  await expect(page.getByText("Floor plan saved")).toBeVisible();
+  await page.getByLabel("Find an outlet").fill("P1-2");
+  await page.getByLabel("Find an outlet").press("Enter");
+  await expect(card).toContainText("Help desk");
+
+  // In Arabic.
+  await page.goto(`/ar/network/floor-plan?plan=${id}`);
+  await expect(page.getByRole("radio", { name: "ثلاثي الأبعاد" })).toBeVisible();
+
+  // Gone.
+  await page.goto(`/en/network/floor-plan?plan=${id}`);
+  await page.getByRole("button", { name: "More for this plan" }).click();
+  await page.getByRole("menuitem", { name: "Plan and switches" }).click();
+  await page.getByRole("dialog", { name: "Plan and switches" }).getByRole("button", { name: "Delete" }).click();
+  await page.getByRole("alertdialog").getByRole("button", { name: "Delete" }).click();
+  await expect(page.getByRole("img", { name: `${name}, the floor plan` })).toBeHidden();
   console.assertClean();
 });

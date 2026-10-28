@@ -5,12 +5,13 @@ import { useTranslations } from "next-intl";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
 import { DeleteRecord } from "@/components/delete-record";
-import { ComboboxField, FormDialog, NumberField, TextareaField, TextField } from "@/components/form";
+import { ComboboxField, FormDialog, NumberField, SelectField, TextareaField, TextField } from "@/components/form";
 import { useApi, useApiMutation } from "@/hooks/use-api";
 import { api } from "@/lib/api";
 import type { Asset, FloorPlan, Outlet } from "@/lib/api-types";
 import { panelLabel, switchLabel } from "@/lib/floor-plan";
 import { floorPlanInput, outletInput } from "@/lib/schemas";
+import type { LayerRole } from "@/lib/svg-plan";
 
 /** The assets to choose from: network devices first, the rest after, none retired. */
 export function useAssetOptions() {
@@ -83,21 +84,31 @@ export function OutletDialog({
   );
 }
 
-type Settings = { name: string; devices: Record<string, number | null> };
+type Settings = { name: string; devices: Record<string, number | null>; roles: Record<string, LayerRole> };
 
-/** The plan's name, and which device each switch number on it is. */
-export function PlanSettingsDialog({ plan, onClose }: { plan: FloorPlan; onClose: () => void }) {
+/**
+ * The plan's name, which device each switch number on it is, and for a plan in 3D, how each of
+ * its drawing's layers shows: raised as walls, as glass, or flat on the floor.
+ */
+export function PlanSettingsDialog({ plan, roles, onClose }: { plan: FloorPlan; roles: Record<string, LayerRole> | null; onClose: () => void }) {
   const t = useTranslations("floorPlan");
   const assets = useAssetOptions();
+  const layers = Object.keys(roles ?? {});
   const form = useForm<Settings>({
-    defaultValues: { name: plan.name, devices: Object.fromEntries(plan.switches.map((s) => [`s${s.number}`, s.asset?.id ?? null])) },
+    defaultValues: {
+      name: plan.name,
+      devices: Object.fromEntries(plan.switches.map((s) => [`s${s.number}`, s.asset?.id ?? null])),
+      // By position: layer names may hold anything, and form paths take letters and digits.
+      roles: Object.fromEntries(layers.map((l, i) => [`l${i}`, roles![l]])),
+    },
   });
   const save = useApiMutation(
     (values: Settings) => {
       const switches = Object.fromEntries(
         Object.entries(values.devices).flatMap(([key, id]) => (id ? [[key.slice(1), id]] : [])),
       );
-      return api(`/floor-plans/${plan.id}`, { method: "PATCH", body: floorPlanInput.parse({ name: values.name, switches }) });
+      const chosen = roles ? { layers: Object.fromEntries(layers.map((l, i) => [l, values.roles[`l${i}`]])) } : {};
+      return api(`/floor-plans/${plan.id}`, { method: "PATCH", body: floorPlanInput.parse({ name: values.name, switches, ...chosen }) });
     },
     { success: t("settingsDialog.saved"), onSuccess: onClose },
   );
@@ -118,6 +129,20 @@ export function PlanSettingsDialog({ plan, onClose }: { plan: FloorPlan; onClose
         // Keys stay letters first: react-hook-form takes a number in a path as an array's index.
         <ComboboxField key={s.number} name={`devices.s${s.number}`} label={t("settingsDialog.switchDevice", { number: s.number })} options={assets} optional />
       ))}
+      {layers.length > 0 && (
+        <fieldset className="space-y-3">
+          <legend className="mb-1 text-sm font-medium">{t("settingsDialog.layers")}</legend>
+          <p className="text-sm text-muted-foreground">{t("settingsDialog.layersHint")}</p>
+          {layers.map((l, i) => (
+            <SelectField
+              key={l}
+              name={`roles.l${i}`}
+              label={l}
+              options={(["wall", "glass", "flat"] as const).map((r) => ({ value: r, label: t(`settingsDialog.roles.${r}`) }))}
+            />
+          ))}
+        </fieldset>
+      )}
     </FormDialog>
   );
 }
