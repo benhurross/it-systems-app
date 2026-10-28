@@ -2273,7 +2273,6 @@
     "close": "Close",
     "summary": "On this plan",
     "switches": "Switches",
-    "switchPorts": "{count, plural, one {# port} other {# ports}}",
     "toCheck": "To check",
     "toCheckCount": "{count, plural, one {# outlet to check} other {# outlets to check}}",
     "allGood": "Nothing to check: every outlet has both labels and its own ports.",
@@ -2359,10 +2358,16 @@
     "placeRack": "Place the rack",
     "rackHint": "Click the plan where the server rack stands.",
     "rackPlaced": "Rack placed",
-    "hint3d": "Drag to turn, right-drag to move, the wheel zooms. Click an outlet, a patch panel or a switch.",
-    "hintTop": "Drag to move, the wheel zooms. Click an outlet, a patch panel or a switch.",
+    "hint3d": "Drag to turn, right-drag to move, the wheel zooms. Click an outlet, a patch panel or a switch to trace its cables; click it again, or anywhere else, or press Esc to clear them.",
+    "hintTop": "Drag to move, the wheel zooms. Click an outlet, a patch panel or a switch to trace its cables; click it again, or anywhere else, or press Esc to clear them.",
     "noWebGl": "This browser cannot show 3D (WebGL is off). Try another browser, or turn on hardware acceleration in its settings.",
     "unreadable": "The drawing could not be read.",
-    "panels": "Patch panels"
+    "panels": "Patch panels",
+    "rack": {
+      "title": "Server rack",
+      "hint": "Click a patch panel or a switch to show every outlet wired to it, with its cables; click it again to clear.",
+      "shown": "Shown on the plan",
+      "notLinked": "Not linked to a device yet"
+    }
   }
 }

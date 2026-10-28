@@ -31,6 +31,8 @@ export type Plan3DProps = {
   label: string;
   noWebGl: string;
   onPickOutlet: (id: number) => void;
+  /** A click on nothing in particular: the floor, a wall, the sky. */
+  onPickNothing: () => void;
   onPickUnit: (unit: { kind: "panel" | "switch"; number: number }) => void;
   onPlace: (at: { x: number; y: number }) => void;
 };
@@ -327,7 +329,9 @@ export default function Plan3D(props: Plan3DProps) {
     for (const o of labelled.length > 60 ? [] : labelled) {
       const sprite = textSprite(o.label.split(" / "), block * (props.view === "top" ? 0.9 : 0.6), "#0f172a", "#ffffffee");
       sprite.position.copy(toWorld(o.x, o.y)).setY(block * 2.2);
-      sprite.renderOrder = 2;
+      // Drawn over everything, cables included, so a label is always read.
+      sprite.material.depthTest = false;
+      sprite.renderOrder = 10;
       w.dynamic.add(sprite);
     }
 
@@ -382,7 +386,9 @@ export default function Plan3D(props: Plan3DProps) {
         const switchPort = portAt("switch", o.switchNo, o.switchPort);
         const end = panelPort ?? switchPort ?? new THREE.Vector3(base.x, rackHeight, base.z);
         const front = base.z - depth / 2 - block * 1.2;
-        const points = [start, start.clone().setY(ceiling), new THREE.Vector3(start.x, ceiling, front), new THREE.Vector3(end.x, ceiling, front), new THREE.Vector3(end.x, end.y, front), end];
+        // It rises a little to the side, towards the rack, clear of the outlet's label.
+        const side = start.clone().setX(start.x + Math.sign(end.x - start.x || 1) * block * 1.6);
+        const points = [start, side, side.clone().setY(ceiling), new THREE.Vector3(side.x, ceiling, front), new THREE.Vector3(end.x, ceiling, front), new THREE.Vector3(end.x, end.y, front), end];
         const path = new THREE.CurvePath<THREE.Vector3>();
         for (let i = 1; i < points.length; i++) if (!points[i].equals(points[i - 1])) path.add(new THREE.LineCurve3(points[i - 1], points[i]));
         const radius = one ? block * 0.18 : block * 0.09;
@@ -464,6 +470,7 @@ export default function Plan3D(props: Plan3DProps) {
       const u = unit.object.userData.unit as Unit3D;
       props.onPickUnit({ kind: u.kind, number: u.number });
     } else if (outlet?.instanceId !== undefined) props.onPickOutlet(props.outlets[outlet.instanceId].id);
+    else props.onPickNothing();
   });
   useEffect(() => {
     const el = host.current;

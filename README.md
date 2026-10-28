@@ -224,7 +224,7 @@ Upload the plan as an **SVG** (exported from the CAD drawing) instead of a PDF a
 
 - **3D** or **Top view**: drag to turn (3D) or move (top view), right-drag to move in 3D, the wheel zooms. **Show all the outlets** goes back to the whole office.
 - **Network only** keeps the outlets, the server rack, its patch panels and switches and the cables solid, and fades the walls, doors and room names.
-- **Tracing**: click an outlet (or find one) and its cable is drawn up to the ceiling, across to the server rack, down into its patch panel port, then the patch cord to its switch port. Click a patch panel or a switch in the rack, or under **Patch panels** and **Switches**, to see every outlet on it. Switches linked to a device in **Plan and switches** show its status (green, amber, red).
+- **Tracing**: click an outlet (or find one) and its cable is drawn up to the ceiling, across to the server rack, down into its patch panel port, then the patch cord to its switch port. Click a patch panel or a switch in the rack, or in the **Server rack** card beside the plan (drawn as the hardware, outlined in orange while shown), to see every outlet on it. Click it again, click anywhere else on the plan, or press Esc to clear the cables. Switches linked to a device in **Plan and switches** show its status (green, amber, red).
 - **Place the rack**: the rack stands in the room the drawing calls SERVER until it is placed by a click on the plan.
 - **Plan and switches** also says how each of the drawing's layers shows: raised as walls, as glass, or flat. The layer with the most lines is taken to be the walls.
 - The cable lines show which outlet goes to which port, not the cables' actual route.

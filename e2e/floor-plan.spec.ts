@@ -153,14 +153,27 @@ test("a plan drawn as an SVG is shown in 3D and from above, and its cables trace
   const card = page.getByRole("complementary").locator("[aria-live]").first();
   await expect(card).toContainText("Panel 2, port 3");
   await expect(card).toContainText("Switch 2, port 7");
+  // Let go with Escape: the card and the cable go.
+  await page.locator("body").press("Escape");
+  await expect(page.getByText("Panel 2, port 3")).toBeHidden();
+  // (Escape in the search box empties it too, as browsers do.)
+  await page.getByLabel("Find an outlet").fill("P2-3");
+  await page.getByLabel("Find an outlet").press("Enter");
+  await expect(card).toContainText("Panel 2, port 3");
 
   // From above, and a whole patch panel.
   await page.getByRole("radio", { name: "Top view" }).click();
   await expect(page.getByText("Drag to move, the wheel zooms.")).toBeVisible();
   await card.getByRole("button", { name: "Close" }).click();
   await page.getByLabel("Find an outlet").fill("");
-  await page.getByRole("button", { name: "P1", exact: true }).click();
-  await expect(page.getByRole("button", { name: "P1", exact: true })).toHaveAttribute("aria-pressed", "true");
+  // The rack's units are buttons drawn as the hardware, pressed while shown.
+  const p1 = page.getByRole("complementary").getByRole("button", { name: /^P1\b/ });
+  await p1.click();
+  await expect(p1).toHaveAttribute("aria-pressed", "true");
+  await expect(p1).toContainText("Shown on the plan");
+  await page.getByRole("complementary").getByRole("button", { name: /^S2\b/ }).click();
+  await expect(p1).toHaveAttribute("aria-pressed", "false");
+  await expect(page.getByRole("complementary").getByRole("button", { name: /^S2\b/ })).toContainText("Shown on the plan");
 
   // The rack put where it stands: a click on the plan.
   await page.getByRole("button", { name: "Place the rack" }).click();

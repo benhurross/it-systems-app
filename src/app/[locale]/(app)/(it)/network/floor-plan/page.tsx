@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Box, Download, Ellipsis, Map as MapIcon, Maximize, Move, Pencil, Plus, Server, Settings2, Square, Upload, X, ZoomIn, ZoomOut } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
@@ -9,6 +9,7 @@ import { type ReactNode, Suspense, useCallback, useEffect, useEffectEvent, useId
 import { EnumBadge } from "@/components/badges";
 import { EmptyState } from "@/components/empty-state";
 import { OutletDialog, outletName, PlanSettingsDialog } from "@/components/network/floor-plan/dialogs";
+import { RackPanel } from "@/components/network/floor-plan/rack-panel";
 import { UploadDialog } from "@/components/network/floor-plan/upload-dialog";
 import { NetworkHeader } from "@/components/network/network-header";
 import { PdfPage, usePdfDocument } from "@/components/tools/pdf-preview";
@@ -106,7 +107,12 @@ function PlanView({
   const searchId = useId();
   const searchHint = useId();
   const problemsId = useId();
-  const { data: plan } = useApi<FloorPlan>(`/floor-plans/${planId}`);
+  const { data: plan, error: missing } = useApi<FloorPlan>(`/floor-plans/${planId}`);
+  // A plan deleted meanwhile (by someone else, say): the list is read again and another shown.
+  const queries = useQueryClient();
+  useEffect(() => {
+    if (missing) void queries.invalidateQueries({ queryKey: ["/floor-plans"] });
+  }, [missing, queries]);
   // The drawing, fetched again when a new one is uploaded.
   const { data: bytes = null } = useQuery({
     queryKey: [`/floor-plans/${planId}/drawing`, plan?.drawingVersion],
@@ -232,12 +238,23 @@ function PlanView({
     setFocus({ x: o.x, y: o.y, n: Date.now() });
   };
 
+  /** Nothing chosen: no outlet, switch or patch panel, and so no cables drawn. */
+  const clearSelection = () => {
+    setSelected(null);
+    setSwitchNoState(null);
+    setPanelNoState(null);
+  };
+
+  // Escape stops placing something, else lets go of what is chosen.
+  const escape = useEffectEvent(() => (placing ? setPlacing(null) : clearSelection()));
   useEffect(() => {
-    if (!placing) return;
-    const esc = (e: KeyboardEvent) => e.key === "Escape" && setPlacing(null);
+    const esc = (e: KeyboardEvent) => {
+      // Not when a dialog or a menu is open: Escape closes that.
+      if (e.key === "Escape" && !document.querySelector("[role=dialog],[role=menu],[role=listbox]")) escape();
+    };
     window.addEventListener("keydown", esc);
     return () => window.removeEventListener("keydown", esc);
-  }, [placing]);
+  }, []);
 
   if (!plan) return <Skeleton className="h-[60vh] w-full" />;
   const markW = plan.markWidth / plan.pageWidth;
@@ -433,7 +450,9 @@ function PlanView({
                 fitRequest={fitRequest}
                 label={t("mapLabel", { name: plan.name })}
                 noWebGl={t("noWebGl")}
-                onPickOutlet={(id) => setSelected(id)}
+                // A second click on the chosen outlet lets it go, and its cable with it.
+                onPickOutlet={(id) => setSelected(selected === id ? null : id)}
+                onPickNothing={clearSelection}
                 onPickUnit={(u) => {
                   setSelected(null);
                   if (u.kind === "panel") setPanelNo(panelNo === u.number ? null : u.number);
@@ -503,45 +522,13 @@ function PlanView({
           {query.trim() && matches.length > 0 && (
             <OutletList title={t("results")} outlets={matches} selected={selected} onSelect={select} label={label} />
           )}
+          <RackPanel plan={plan} panelNo={panelNo} switchNo={switchNo} onPanel={(n) => (setSelected(null), setPanelNo(n))} onSwitch={(n) => (setSelected(null), setSwitchNo(n))} />
           <Card>
             <CardHeader>
               <CardTitle className="text-base">{t("summary")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4 text-sm">
               <p>{t("outlets", { count: outlets.length })}</p>
-              {plan.switches.length > 0 && (
-                <div className="space-y-1">
-                  <h3 className="font-medium">{t("switches")}</h3>
-                  <ul className="space-y-1">
-                    {plan.switches.map((s) => (
-                      <li key={s.number} className="flex items-center justify-between gap-2">
-                        <button type="button" className="min-w-0 truncate text-start hover:text-primary" onClick={() => setSwitchNo(switchNo === s.number ? null : s.number)} aria-pressed={switchNo === s.number}>
-                          <span dir="ltr" className="font-mono">
-                            S{s.number}
-                          </span>
-                          {s.asset && <span className="text-muted-foreground"> · {s.asset.name}</span>}
-                        </button>
-                        <span className="flex shrink-0 items-center gap-2">
-                          {s.asset && <EnumBadge kind="deviceStatus" value={s.asset.monitorStatus} />}
-                          <span className="text-muted-foreground tabular-nums">{t("switchPorts", { count: s.ports })}</span>
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              {plan.panels.length > 0 && (
-                <div className="space-y-1">
-                  <h3 className="font-medium">{t("panels")}</h3>
-                  <div className="flex flex-wrap gap-1.5">
-                    {plan.panels.map((n) => (
-                      <Button key={n} size="sm" variant={panelNo === n ? "default" : "outline"} className="h-7 px-2 font-mono" aria-pressed={panelNo === n} onClick={() => setPanelNo(panelNo === n ? null : n)}>
-                        P{n}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-              )}
               <div className="space-y-1">
                 <h3 className="font-medium">{t("toCheck")}</h3>
                 {problemOutlets.length ? (
