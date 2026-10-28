@@ -4,6 +4,7 @@ import { Archive, ArrowLeft, ArrowRightLeft, Network, Pencil, Tag } from "lucide
 import { useTranslations } from "next-intl";
 import { use, useState, type ReactNode } from "react";
 import { AttachmentList, AttachmentsCard } from "@/components/attachments";
+import { AssetPhoto } from "@/components/assets/asset-photo";
 import { OnPlansCard } from "@/components/network/floor-plan/on-plans-card";
 import { AnydeskConnect } from "@/components/assets/anydesk-connect";
 import { AssetDialog, toAssetInput } from "@/components/assets/asset-dialog";
@@ -109,8 +110,11 @@ export default function AssetPage({ params }: PageProps<"/[locale]/assets/[id]">
         <div className="space-y-6 lg:col-span-2">
           <div className="grid gap-6 md:grid-cols-2">
             <Card>
-              <CardHeader>
+              <CardHeader className="flex flex-row items-start justify-between gap-4">
                 <CardTitle>{t("assets.specs")}</CardTitle>
+                <div className="w-36 shrink-0 sm:w-44">
+                  <AssetPhoto assetId={asset.id} name={asset.name} />
+                </div>
               </CardHeader>
               <CardContent>
                 <dl className="@container divide-y text-sm">

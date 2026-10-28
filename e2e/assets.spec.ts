@@ -333,3 +333,22 @@ test.describe("tags", () => {
     console.assertClean();
   });
 });
+
+test("an asset shows its photo once one is uploaded, and a placeholder until then", async ({ page }) => {
+  const console = watchConsole(page);
+  const created = await page.request.post("/api/assets", {
+    data: { name: `Photo ${Date.now() % 100000}`, category: "servers", type: "physical_server", status: "in_use", location: "jeddah", supportStatus: "supported", criticality: "medium", monitorMethod: "none" },
+  });
+  expect(created.ok(), await created.text()).toBe(true);
+  const { id } = (await created.json()) as { id: number };
+  await page.goto(`/en/assets/${id}`);
+  await expect(page.getByRole("img", { name: "No photo yet" })).toBeVisible();
+  const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==", "base64");
+  const form = { entity: "asset", entityId: String(id), kind: "photo", file: { name: "router.png", mimeType: "image/png", buffer: png } };
+  const uploaded = await page.request.post("/api/attachments", { multipart: form });
+  expect(uploaded.ok(), await uploaded.text()).toBe(true);
+  await page.reload();
+  await expect(page.getByRole("img", { name: /^Photo of / })).toBeVisible();
+  await expect(page.getByRole("img", { name: "No photo yet" })).toBeHidden();
+  console.assertClean();
+});
