@@ -1,5 +1,6 @@
 "use client";
 
+import { Hint } from "@/components/hint";
 import { useMutation } from "@tanstack/react-query";
 import { Download, FileSpreadsheet, Upload } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -8,13 +9,7 @@ import { toast } from "sonner";
 import { AssetsHeader } from "@/components/assets/assets-header";
 import { StatusBadge, type Tone } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import {
@@ -165,8 +160,10 @@ export default function AssetImportPage() {
       <div className="grid gap-6 lg:grid-cols-[minmax(0,24rem)_minmax(0,1fr)]">
         <Card className="h-fit">
           <CardHeader>
-            <CardTitle>{t("assets.import.title")}</CardTitle>
-            <CardDescription>{t("assets.import.intro")}</CardDescription>
+            <CardTitle className="flex items-center gap-1.5">
+              {t("assets.import.title")}
+              <Hint>{t("assets.import.intro")}</Hint>
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-5">
             <Button variant="outline" onClick={template}>
@@ -174,9 +171,12 @@ export default function AssetImportPage() {
               {t("assets.import.template")}
             </Button>
             <Field>
-              <FieldLabel htmlFor={fileId}>
+              <div className="flex items-center gap-1">
+                <FieldLabel htmlFor={fileId}>
                 {t("assets.import.file")}
               </FieldLabel>
+                <Hint>{t("assets.import.fileHint")}</Hint>
+              </div>
               <Input
                 ref={input}
                 id={fileId}
@@ -186,7 +186,7 @@ export default function AssetImportPage() {
                 disabled={load.isPending}
                 onChange={(e) => choose(e.target.files?.[0] ?? null)}
               />
-              <FieldDescription id={hintId}>
+              <FieldDescription className="sr-only" id={hintId}>
                 {t("assets.import.fileHint")}
               </FieldDescription>
             </Field>

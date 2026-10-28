@@ -1,5 +1,6 @@
 "use client";
 
+import { Hint } from "@/components/hint";
 import { useMutation } from "@tanstack/react-query";
 import { Trash2, Upload } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -23,13 +24,11 @@ const SAMPLE = { name: "Sara Al-Harbi", designation: "Claims Officer", number: "
 
 /** The company's card design, front and back, printed edge to edge under each person's details. */
 export default function IdCardSettings() {
-  const t = useTranslations("settings.idCard");
   const { data, isLoading } = useApi<CardDesign>("/id-cards/design");
   const lines = useCardLines(SAMPLE);
 
   return (
     <div className="space-y-6">
-      <p className="max-w-3xl text-sm text-muted-foreground">{t("intro")}</p>
       <div className="grid max-w-4xl gap-6 md:grid-cols-2">
         {CARD_SIDES.map((side) =>
           isLoading || !data ? (
@@ -73,7 +72,10 @@ function DesignSide({ side, design, lines }: { side: CardSide; design: CardDesig
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t(side)}</CardTitle>
+        <CardTitle className="flex items-center gap-1.5">
+          {t(side)}
+          {side === "front" && <Hint>{t("intro")}</Hint>}
+        </CardTitle>
         <CardDescription>{current ? t("size", { width: current.width, height: current.height }) : t("none")}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">

@@ -39,7 +39,8 @@
     "confirmDelete": "Delete {name}?",
     "deleteForGood": "It is removed for good; only restoring a backup brings it back.",
     "deleted": "{name} deleted.",
-    "keep": "Keep it"
+    "keep": "Keep it",
+    "moreInfo": "More information"
   },
   "nav": {
     "groups": {
@@ -2366,8 +2367,8 @@
     "rack": {
       "title": "Server rack",
       "hint": "Click a patch panel or a switch to show every outlet wired to it, with its cables; click it again to clear.",
-      "shown": "Shown on the plan",
       "notLinked": "Not linked to a device yet"
-    }
+    },
+    "howTo": "How to use the plan"
   }
 }

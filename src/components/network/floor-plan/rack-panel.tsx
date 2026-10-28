@@ -1,9 +1,9 @@
 "use client";
 
-import { Check } from "lucide-react";
+import { Hint } from "@/components/hint";
 import { useTranslations } from "next-intl";
 import { EnumBadge } from "@/components/badges";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { FloorPlan } from "@/lib/api-types";
 import type { DeviceStatus } from "@/lib/domain";
 import { cn } from "@/lib/utils";
@@ -72,18 +72,14 @@ export function RackPanel({
       "flex w-full items-center gap-3 rounded-lg border bg-background p-2 text-start transition-colors hover:border-primary/50 hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
       active && "border-2 border-orange-500 bg-orange-50 hover:border-orange-500 hover:bg-orange-100 dark:bg-orange-950/40 dark:hover:bg-orange-950/60",
     );
-  const shown = (
-    <span className="flex items-center gap-1 text-xs font-medium text-orange-700 dark:text-orange-300">
-      <Check className="size-3.5" />
-      {t("rack.shown")}
-    </span>
-  );
   if (!plan.panels.length && !plan.switches.length) return null;
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">{t("rack.title")}</CardTitle>
-        <CardDescription>{t("rack.hint")}</CardDescription>
+        <CardTitle className="flex items-center gap-1.5 text-base">
+          {t("rack.title")}
+          <Hint>{t("rack.hint")}</Hint>
+        </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         {plan.panels.length > 0 && (
@@ -97,7 +93,6 @@ export function RackPanel({
                     P{n}
                   </span>
                   <span className="block text-xs text-muted-foreground">{t("outlets", { count: ports(n) })}</span>
-                  {panelNo === n && shown}
                 </span>
               </button>
             ))}
@@ -118,7 +113,6 @@ export function RackPanel({
                   </span>
                   <span className="block truncate text-xs text-muted-foreground">{s.asset ? s.asset.name : t("rack.notLinked")}</span>
                   <span className="block text-xs text-muted-foreground">{t("outlets", { count: s.ports })}</span>
-                  {switchNo === s.number && shown}
                 </span>
               </button>
             ))}

@@ -12,6 +12,7 @@ import {
   type SubmitHandler,
   type UseFormReturn,
 } from "react-hook-form";
+import { Hint } from "@/components/hint";
 import { Button } from "@/components/ui/button";
 import { Command, CommandEmpty, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import {
@@ -22,7 +23,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -79,12 +80,14 @@ function Shell({
   return (
     <Field data-invalid={!!message} orientation={horizontal ? "horizontal" : undefined}>
       {horizontal && children(id, !!message)}
-      <FieldLabel htmlFor={id}>
-        {label}
-        {optional && <span className="font-normal text-muted-foreground">{t("common.optional")}</span>}
-      </FieldLabel>
+      <div className="flex items-center gap-1">
+        <FieldLabel htmlFor={id}>
+          {label}
+          {optional && <span className="font-normal text-muted-foreground">{t("common.optional")}</span>}
+        </FieldLabel>
+        {description && <Hint>{description}</Hint>}
+      </div>
       {!horizontal && children(id, !!message)}
-      {description && <FieldDescription>{description}</FieldDescription>}
       {text && <FieldError>{text}</FieldError>}
     </Field>
   );
@@ -361,8 +364,11 @@ export function FormDialog<TIn extends FieldValues, TOut extends FieldValues = T
         {...(description ? {} : { "aria-describedby": undefined })}
       >
         <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-          {description && <DialogDescription>{description}</DialogDescription>}
+          <DialogTitle className="flex items-center gap-1.5">
+            {title}
+            {description && <Hint>{description}</Hint>}
+          </DialogTitle>
+          {description && <DialogDescription className="sr-only">{description}</DialogDescription>}
         </DialogHeader>
         <Form form={form} onSubmit={onSubmit} id={id} className="-mx-1 max-h-[65vh] overflow-y-auto px-1 py-1">
           <FieldGroup>{children}</FieldGroup>

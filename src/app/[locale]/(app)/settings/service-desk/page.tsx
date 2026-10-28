@@ -1,12 +1,13 @@
 "use client";
 
+import { Hint } from "@/components/hint";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslations } from "next-intl";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
 import { NumberField } from "@/components/form";
-import { FieldDescription, FieldLegend, FieldSet } from "@/components/ui/field";
+import { FieldLegend, FieldSet } from "@/components/ui/field";
 import { useApi, useApiMutation } from "@/hooks/use-api";
 import { useLookups } from "@/hooks/use-lookups";
 import { api } from "@/lib/api";
@@ -46,8 +47,10 @@ export default function ServiceDeskSettings() {
           ))}
         </div>
         <FieldSet>
-          <FieldLegend>{t("settings.sla.byIssueType")}</FieldLegend>
-          <FieldDescription>{t("settings.sla.byIssueTypeHint")}</FieldDescription>
+          <FieldLegend className="flex items-center gap-1">
+            {t("settings.sla.byIssueType")}
+            <Hint>{t("settings.sla.byIssueTypeHint")}</Hint>
+          </FieldLegend>
           <div className="grid gap-4 sm:grid-cols-2">
             {lookups.options("issue_type").map((o) => (
               <NumberField

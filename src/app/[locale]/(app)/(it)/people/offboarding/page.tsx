@@ -1,5 +1,6 @@
 "use client";
 
+import { Hint } from "@/components/hint";
 import { Plus } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
@@ -154,7 +155,12 @@ function LeaverSheet({ leaver, onClose }: { leaver: Row; onClose: () => void }) 
               </p>
             )}
           </div>
-          <TaskProgress done={doneCount(tasks)} total={OFFBOARDING_TASKS.length} />
+          <div className="flex items-center gap-1.5">
+            <div className="min-w-0 flex-1">
+              <TaskProgress done={doneCount(tasks)} total={OFFBOARDING_TASKS.length} />
+            </div>
+            <Hint>{t("people.offboarding.completeHint")}</Hint>
+          </div>
           <div className="space-y-2">
             {OFFBOARDING_TASKS.map((task) => (
               <div key={task} className="flex items-center gap-3">
@@ -173,7 +179,6 @@ function LeaverSheet({ leaver, onClose }: { leaver: Row; onClose: () => void }) 
               </div>
             ))}
           </div>
-          <p className="text-xs text-muted-foreground">{t("people.offboarding.completeHint")}</p>
           <div className="space-y-2">
             <Label htmlFor="leaver-notes">{t("people.offboarding.notes")}</Label>
             <Textarea id="leaver-notes" rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} />

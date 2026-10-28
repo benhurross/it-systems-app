@@ -118,7 +118,7 @@ export default function KpisPage() {
     <>
       <PageHeader
         title={t("kpis.title")}
-        description={t("kpis.intro")}
+        description={`${t("kpis.intro")} ${t("kpis.statusNote")}`}
         actions={
           <div className="flex flex-wrap gap-2">
             <Button variant="outline" asChild>
@@ -440,9 +440,6 @@ export default function KpisPage() {
           ))}
         </div>
       )}
-      <p className="mt-3 text-xs text-muted-foreground">
-        {t("kpis.statusNote")}
-      </p>
       {admin && inactive.length > 0 && (
         <p className="mt-2 text-xs text-muted-foreground">
           {t("kpis.inactive")}{" "}

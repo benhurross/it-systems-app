@@ -1,5 +1,6 @@
 "use client";
 
+import { Hint } from "@/components/hint";
 import { FileText, Loader2, type LucideIcon, RefreshCw } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { type ReactNode, useId } from "react";
@@ -35,9 +36,9 @@ export function ToolPanel({
         <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-brand-soft text-brand">
           <Icon className="size-5" aria-hidden />
         </span>
-        <div className="min-w-0 flex-1 basis-48">
+        <div className="flex min-w-0 flex-1 basis-48 items-center gap-1.5">
           <h2 className="font-medium">{title}</h2>
-          {description && <p className="text-sm text-muted-foreground">{description}</p>}
+          {description && <Hint>{description}</Hint>}
         </div>
         {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
       </div>

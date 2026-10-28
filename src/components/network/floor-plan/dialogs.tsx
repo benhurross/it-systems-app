@@ -1,5 +1,6 @@
 "use client";
 
+import { Hint } from "@/components/hint";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslations } from "next-intl";
 import { useForm } from "react-hook-form";
@@ -131,8 +132,10 @@ export function PlanSettingsDialog({ plan, roles, onClose }: { plan: FloorPlan; 
       ))}
       {layers.length > 0 && (
         <fieldset className="space-y-3">
-          <legend className="mb-1 text-sm font-medium">{t("settingsDialog.layers")}</legend>
-          <p className="text-sm text-muted-foreground">{t("settingsDialog.layersHint")}</p>
+          <legend className="mb-1 flex items-center gap-1 text-sm font-medium">
+            {t("settingsDialog.layers")}
+            <Hint>{t("settingsDialog.layersHint")}</Hint>
+          </legend>
           {layers.map((l, i) => (
             <SelectField
               key={l}

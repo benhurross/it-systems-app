@@ -1,5 +1,6 @@
 "use client";
 
+import { Hint } from "@/components/hint";
 import { Hash } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useId, useMemo, useState } from "react";
@@ -181,9 +182,12 @@ function StampPages({ pdf, onClear }: { pdf: OnePdf; onClear: () => void }) {
             {watermarkOn && (
               <div className="space-y-5 border-s-2 ps-4">
                 <Field data-invalid={textProblem !== null || undefined} className="max-w-md">
-                  <FieldLabel htmlFor={ids.text}>{t("stamp.text")}</FieldLabel>
+                  <div className="flex items-center gap-1">
+                    <FieldLabel htmlFor={ids.text}>{t("stamp.text")}</FieldLabel>
+                    <Hint>{t("stamp.textHint")}</Hint>
+                  </div>
                   <Input id={ids.text} value={text} maxLength={40} onChange={(e) => setText(e.target.value)} aria-invalid={textProblem !== null || undefined} dir="ltr" />
-                  <FieldDescription>{t("stamp.textHint")}</FieldDescription>
+                  <FieldDescription className="sr-only">{t("stamp.textHint")}</FieldDescription>
                   {textProblem && <FieldError>{t(`stamp.${textProblem}`)}</FieldError>}
                 </Field>
                 <Choices

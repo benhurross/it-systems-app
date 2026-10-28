@@ -1,5 +1,6 @@
 "use client";
 
+import { Hint } from "@/components/hint";
 import { ArrowDown, ArrowUp, CircleAlert, GripVertical, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
@@ -64,7 +65,11 @@ export function OrderedFiles<T extends { id: number; name: string }>({
           </li>
         ))}
       </ol>
-      {files.length > 1 && <p className="text-xs text-muted-foreground">{t("dragHint")}</p>}
+      {files.length > 1 && (
+        <p className="flex items-center gap-1 text-xs text-muted-foreground">
+          <Hint>{t("dragHint")}</Hint>
+        </p>
+      )}
     </div>
   );
 }

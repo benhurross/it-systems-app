@@ -1,5 +1,6 @@
 "use client";
 
+import { Hint } from "@/components/hint";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Send } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -11,7 +12,7 @@ import { useCurrentUser } from "@/components/app-shell/current-user";
 import { EnumBadge } from "@/components/badges";
 import { NumberField, SelectField, SwitchField, TextField } from "@/components/form";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -102,8 +103,10 @@ function TestEmail() {
   return (
     <Card className="max-w-2xl xl:max-w-none">
       <CardHeader>
-        <CardTitle>{t("testTitle")}</CardTitle>
-        <CardDescription>{t("testDescription")}</CardDescription>
+        <CardTitle className="flex items-center gap-1.5">
+          {t("testTitle")}
+          <Hint>{t("testDescription")}</Hint>
+        </CardTitle>
       </CardHeader>
       <CardContent>
         <form
@@ -141,8 +144,10 @@ function Outbox() {
   return (
     <Card className="xl:sticky xl:top-20">
       <CardHeader>
-        <CardTitle>{t("settings.email.outbox")}</CardTitle>
-        <CardDescription>{t("settings.email.outboxDescription")}</CardDescription>
+        <CardTitle className="flex items-center gap-1.5">
+          {t("settings.email.outbox")}
+          <Hint>{t("settings.email.outboxDescription")}</Hint>
+        </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
         <div role="group" aria-label={t("settings.email.show")} className="flex flex-wrap gap-1">

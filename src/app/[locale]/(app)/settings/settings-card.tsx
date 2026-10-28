@@ -4,8 +4,9 @@ import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 import type { FieldValues, SubmitHandler, UseFormReturn } from "react-hook-form";
 import { Form } from "@/components/form";
+import { Hint } from "@/components/hint";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { FieldGroup } from "@/components/ui/field";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
@@ -35,8 +36,10 @@ export function SettingsCard<TIn extends FieldValues, TOut extends FieldValues>(
   return (
     <Card className={cn("max-w-2xl", className)}>
       <CardHeader>
-        <CardTitle>{title}</CardTitle>
-        {description && <CardDescription>{description}</CardDescription>}
+        <CardTitle className="flex items-center gap-1.5">
+          {title}
+          {description && <Hint>{description}</Hint>}
+        </CardTitle>
       </CardHeader>
       <Form form={form} onSubmit={onSubmit}>
         <CardContent>{loading ? <Skeleton className="h-40 w-full" /> : <FieldGroup>{children}</FieldGroup>}</CardContent>

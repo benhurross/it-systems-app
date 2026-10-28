@@ -1,5 +1,6 @@
 "use client";
 
+import { Hint } from "@/components/hint";
 import { Check, ChevronLeft, ChevronRight, Circle, FormInput, GripVertical, Minus, Plus, Type, X, ZoomIn, ZoomOut } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { type KeyboardEvent, type PointerEvent, type ReactNode, useCallback, useEffect, useEffectEvent, useId, useRef, useState } from "react";
@@ -291,6 +292,9 @@ function FillFile({ pdf, onClear }: { pdf: OnePdf; onClear: () => void }) {
                   </Button>
                 </div>
               )}
+              <Hint>
+                {t(tool === "text" ? "fill.textHint" : "fill.markHint")} {t("fill.zoomHint")}
+              </Hint>
               <div role="group" aria-label={t("fill.zoom")} className="flex items-center gap-1">
                 <Button type="button" variant="outline" size="icon" disabled={zoom === ZOOMS[0]} onClick={() => zoomBy(-1)} aria-label={t("fill.zoomOut")}>
                   <ZoomOut />
@@ -346,7 +350,6 @@ function FillFile({ pdf, onClear }: { pdf: OnePdf; onClear: () => void }) {
                 </PageLayer>
               )}
             </PdfPage>
-            <p className="text-sm text-muted-foreground">{t(tool === "text" ? "fill.textHint" : "fill.markHint")} {t("fill.zoomHint")}</p>
           </section>
         </div>
       )}

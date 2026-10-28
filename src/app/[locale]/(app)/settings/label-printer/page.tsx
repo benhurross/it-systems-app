@@ -1,5 +1,6 @@
 "use client";
 
+import { Hint } from "@/components/hint";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Printer } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -9,7 +10,7 @@ import { toast } from "sonner";
 import type { z } from "zod";
 import { NumberField, SelectField, TextField } from "@/components/form";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useApi, useApiMutation } from "@/hooks/use-api";
@@ -77,8 +78,10 @@ export default function LabelPrinterSettings() {
       </SettingsCard>
       <Card className="max-w-2xl">
         <CardHeader>
-          <CardTitle>{t("testTitle")}</CardTitle>
-          <CardDescription>{t("testDescription")}</CardDescription>
+          <CardTitle className="flex items-center gap-1.5">
+            {t("testTitle")}
+            <Hint>{t("testDescription")}</Hint>
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <Button variant="outline" onClick={() => test.mutate(undefined)} disabled={test.isPending || !data?.host}>

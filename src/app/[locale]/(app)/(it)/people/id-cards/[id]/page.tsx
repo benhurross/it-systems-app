@@ -1,5 +1,6 @@
 "use client";
 
+import { Hint } from "@/components/hint";
 import { useMutation } from "@tanstack/react-query";
 import { ArrowLeft, Camera, CheckCircle2, HandHelping, ImageOff, Minus, Plus, Printer, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -22,7 +23,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -146,8 +147,10 @@ function Editor({ card }: { card: IdCardDetail }) {
       <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <Card>
           <CardHeader>
-            <CardTitle>{t("idCards.preview")}</CardTitle>
-            <CardDescription>{t("idCards.previewHint")}</CardDescription>
+            <CardTitle className="flex items-center gap-1.5">
+              {t("idCards.preview")}
+              <Hint>{t("idCards.previewHint")}</Hint>
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid max-w-lg grid-cols-2 gap-4">
@@ -186,8 +189,10 @@ function Editor({ card }: { card: IdCardDetail }) {
               className="flex flex-col gap-6"
             >
               <CardHeader>
-                <CardTitle>{t("idCards.text")}</CardTitle>
-                <CardDescription>{t("idCards.textHint")}</CardDescription>
+                <CardTitle className="flex items-center gap-1.5">
+                  {t("idCards.text")}
+                  <Hint>{t("idCards.textHint")}</Hint>
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-2">
@@ -279,8 +284,10 @@ function Editor({ card }: { card: IdCardDetail }) {
 
           <Card>
             <CardHeader>
-              <CardTitle>{t("idCards.print")}</CardTitle>
-              <CardDescription>{t("idCards.printerHint")}</CardDescription>
+              <CardTitle className="flex items-center gap-1.5">
+                {t("idCards.print")}
+                <Hint>{t("idCards.printerHint")}</Hint>
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <ol className="space-y-4 text-sm">
@@ -323,12 +330,12 @@ function Editor({ card }: { card: IdCardDetail }) {
                     ) : card.ticketId ? (
                       <p className="text-muted-foreground">{t("idCards.awaitingConfirmation", { name: card.personName, ref: ref("ticket", card.ticketId) })}</p>
                     ) : (
-                      <div className="space-y-1">
+                      <div className="flex items-center gap-1.5">
                         <Button variant="outline" disabled={handOver.isPending} onClick={() => handOver.mutate(undefined)}>
                           <HandHelping />
                           {t("idCards.markHandedOver")}
                         </Button>
-                        <p className="text-xs text-muted-foreground">{t("idCards.markHandedOverHint")}</p>
+                        <Hint>{t("idCards.markHandedOverHint")}</Hint>
                       </div>
                     )}
                   </Step>
@@ -505,8 +512,11 @@ function PhotoDialog({ card, design, lines, onClose }: { card: IdCardDetail; des
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>{card.hasPhoto ? t("changePhoto") : t("addPhoto")}</DialogTitle>
-          <DialogDescription>{t("photoDialogHint")}</DialogDescription>
+          <DialogTitle className="flex items-center gap-1.5">
+            {card.hasPhoto ? t("changePhoto") : t("addPhoto")}
+            <Hint>{t("photoDialogHint")}</Hint>
+          </DialogTitle>
+          <DialogDescription className="sr-only">{t("photoDialogHint")}</DialogDescription>
         </DialogHeader>
         <div className="grid items-start gap-6 sm:grid-cols-[minmax(0,14rem)_minmax(0,1fr)]">
           <div className="mx-auto w-full max-w-56">

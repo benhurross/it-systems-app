@@ -1,5 +1,6 @@
 "use client";
 
+import { Hint } from "@/components/hint";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import type { z } from "zod";
@@ -39,12 +40,14 @@ export default function DailyChecksPage() {
   return (
     <>
       <NetworkHeader />
-      <p className="mb-6 max-w-2xl text-muted-foreground">{t("intro")}</p>
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_16rem]">
         <Card>
           <CardHeader className="flex flex-row flex-wrap items-end justify-between gap-4">
             <div className="space-y-1">
-              <CardTitle>{format.date(date)}</CardTitle>
+              <CardTitle className="flex items-center gap-1.5">
+                {format.date(date)}
+                <Hint>{t("intro")}</Hint>
+              </CardTitle>
               <p className="text-sm text-muted-foreground">{t("progress", { done: format.number(done), total: format.number(total) })}</p>
             </div>
             <Field className="w-auto">

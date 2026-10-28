@@ -1,5 +1,6 @@
 "use client";
 
+import { Hint } from "@/components/hint";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Upload } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -123,8 +124,11 @@ export function UploadDialog({ plan, onClose, onSaved }: { plan: FloorPlan | nul
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="sm:max-w-xl">
         <DialogHeader>
-          <DialogTitle>{plan ? t("replaceTitle", { name: plan.name }) : t("title")}</DialogTitle>
-          <DialogDescription>{t("intro")}</DialogDescription>
+          <DialogTitle className="flex items-center gap-1.5">
+            {plan ? t("replaceTitle", { name: plan.name }) : t("title")}
+            <Hint>{t("intro")}</Hint>
+          </DialogTitle>
+          <DialogDescription className="sr-only">{t("intro")}</DialogDescription>
         </DialogHeader>
         <div className="max-h-[60vh] space-y-4 overflow-y-auto px-1">
           <Field>

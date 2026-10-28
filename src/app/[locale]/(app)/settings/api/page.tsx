@@ -1,5 +1,6 @@
 "use client";
 
+import { Hint } from "@/components/hint";
 import { Copy, KeyRound, Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useId, useState, type FormEvent } from "react";
@@ -7,7 +8,7 @@ import { toast } from "sonner";
 import { DeleteRecord } from "@/components/delete-record";
 import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -50,15 +51,20 @@ export default function ApiAccessSettings() {
     <div className="max-w-3xl space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>{t("title")}</CardTitle>
-          <CardDescription>{t("intro")}</CardDescription>
+          <CardTitle className="flex items-center gap-1.5">
+            {t("title")}
+            <Hint>{t("intro")}</Hint>
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <form onSubmit={submit} className="flex flex-wrap items-end gap-3">
             <Field className="min-w-0 flex-1 basis-64">
-              <FieldLabel htmlFor={nameId}>{t("name")}</FieldLabel>
+              <div className="flex items-center gap-1">
+                <FieldLabel htmlFor={nameId}>{t("name")}</FieldLabel>
+                <Hint>{t("nameHint")}</Hint>
+              </div>
               <Input id={nameId} value={name} onChange={(e) => setName(e.target.value)} placeholder={t("namePlaceholder")} maxLength={100} />
-              <FieldDescription>{t("nameHint")}</FieldDescription>
+              <FieldDescription className="sr-only">{t("nameHint")}</FieldDescription>
             </Field>
             <Button type="submit" className="mb-7" disabled={!name.trim() || create.isPending}>
               <Plus />
@@ -122,8 +128,10 @@ export default function ApiAccessSettings() {
       </Card>
       <Card>
         <CardHeader>
-          <CardTitle>{t("howTitle")}</CardTitle>
-          <CardDescription>{t("howIntro")}</CardDescription>
+          <CardTitle className="flex items-center gap-1.5">
+            {t("howTitle")}
+            <Hint>{t("howIntro")}</Hint>
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3 text-sm">
           <div className="flex items-start gap-2">

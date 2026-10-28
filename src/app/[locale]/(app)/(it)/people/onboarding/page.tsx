@@ -1,5 +1,6 @@
 "use client";
 
+import { Hint } from "@/components/hint";
 import { IdCard, Plus } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
@@ -184,7 +185,7 @@ function JoinerSheet({ joiner, onClose }: { joiner: Joiner; onClose: () => void 
             )
           ) : (
             <>
-              <p className="text-xs text-muted-foreground">{t("people.onboarding.completeHint", { name: joiner.name })}</p>
+              <Hint>{t("people.onboarding.completeHint", { name: joiner.name })}</Hint>
               <Button
                 disabled={!onboardingComplete(tasks) || update.isPending || complete.isPending}
                 onClick={() => complete.mutate(undefined)}

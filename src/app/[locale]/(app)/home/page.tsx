@@ -1,5 +1,6 @@
 "use client";
 
+import { Hint } from "@/components/hint";
 import { CheckCircle2, Clock, IdCard, Inbox, Laptop, Plus, UserX } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCurrentUser } from "@/components/app-shell/current-user";
@@ -144,8 +145,10 @@ export default function HomePage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>{t("devices")}</CardTitle>
-            <CardDescription>{t("devicesHint")}</CardDescription>
+            <CardTitle className="flex items-center gap-1.5">
+              {t("devices")}
+              <Hint>{t("devicesHint")}</Hint>
+            </CardTitle>
           </CardHeader>
           <CardContent>
             {data.assets.length === 0 ? (

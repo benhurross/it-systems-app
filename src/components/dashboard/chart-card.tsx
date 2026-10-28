@@ -3,8 +3,9 @@
 import { ChartColumn, Table2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState, type ReactNode } from "react";
+import { Hint } from "@/components/hint";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 /** A chart with its title and a switch to the same values as a table, so nothing depends on colour or hover. */
 export function ChartCard({
@@ -27,10 +28,10 @@ export function ChartCard({
     <Card className="gap-4">
       <CardHeader className="flex flex-row items-start justify-between gap-2">
         <div className="min-w-0 space-y-1">
-          <CardTitle>
+          <CardTitle className="flex items-center gap-1.5">
             <h2>{title}</h2>
+            {description && <Hint>{description}</Hint>}
           </CardTitle>
-          {description && <CardDescription>{description}</CardDescription>}
         </div>
         <Button
           variant="ghost"

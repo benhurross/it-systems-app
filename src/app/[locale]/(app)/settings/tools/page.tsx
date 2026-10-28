@@ -1,5 +1,6 @@
 "use client";
 
+import { Hint } from "@/components/hint";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ChevronDown, Plus, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -11,7 +12,7 @@ import { ComboboxField, FormDialog, SelectField } from "@/components/form";
 import { StatusBadge } from "@/components/status-badge";
 import { TOOL_ICONS } from "@/components/tools/tool-page";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -194,8 +195,10 @@ function People({ data }: { data: ToolsOverview | undefined }) {
     <Card className="max-w-3xl">
       <CardHeader className="flex flex-wrap items-start justify-between gap-3">
         <div className="space-y-1.5">
-          <CardTitle>{t("settings.toolsAccess.people")}</CardTitle>
-          <CardDescription>{t("settings.toolsAccess.peopleHint")}</CardDescription>
+          <CardTitle className="flex items-center gap-1.5">
+            {t("settings.toolsAccess.people")}
+            <Hint>{t("settings.toolsAccess.peopleHint")}</Hint>
+          </CardTitle>
         </div>
         <Button size="sm" variant="outline" onClick={() => setAdding(true)}>
           <Plus />

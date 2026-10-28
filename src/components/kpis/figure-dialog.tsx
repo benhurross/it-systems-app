@@ -1,5 +1,6 @@
 "use client";
 
+import { Hint } from "@/components/hint";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslations } from "next-intl";
 import { useForm } from "react-hook-form";
@@ -74,16 +75,15 @@ export function FigureDialog({ kpi, cell, year, label, onClose }: { kpi: KpiRow;
         <p className="rounded-lg border bg-muted/40 p-3 text-sm">
           {t("kpis.fromTicketsNow", { figure: showKpi(kpi.unit, cell.value, format, t) })}
           {cell.denominator !== null && ` (${t("kpis.counted", { numerator: format.number(cell.numerator!), denominator: format.number(cell.denominator) })})`}
-          <span className="mt-1 block text-muted-foreground">{t("kpis.overrideHint")}</span>
+          <Hint className="ms-1">{t("kpis.overrideHint")}</Hint>
         </p>
       )}
       {percent && (
         <>
           <div className="grid grid-cols-2 gap-4">
-            <NumberField name="numerator" label={t("kpis.numerator")} min={0} step={1} optional />
+            <NumberField name="numerator" label={t("kpis.numerator")} description={t("kpis.countsHint")} min={0} step={1} optional />
             <NumberField name="denominator" label={t("kpis.denominator")} min={0} step={1} optional />
           </div>
-          <p className="text-sm text-muted-foreground">{t("kpis.countsHint")}</p>
         </>
       )}
       <NumberField name="value" label={percent ? t("kpis.valuePercent") : t("kpis.value")} min={0} step={0.01} optional />

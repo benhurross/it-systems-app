@@ -163,6 +163,9 @@ test("a plan drawn as an SVG is shown in 3D and from above, and its cables trace
 
   // From above, and a whole patch panel.
   await page.getByRole("radio", { name: "Top view" }).click();
+  await expect(page.getByRole("radio", { name: "Top view" })).toHaveAttribute("aria-checked", "true");
+  // How to use it, behind the question mark.
+  await page.getByRole("button", { name: "How to use the plan" }).hover();
   await expect(page.getByText("Drag to move, the wheel zooms.")).toBeVisible();
   await card.getByRole("button", { name: "Close" }).click();
   await page.getByLabel("Find an outlet").fill("");
@@ -170,10 +173,9 @@ test("a plan drawn as an SVG is shown in 3D and from above, and its cables trace
   const p1 = page.getByRole("complementary").getByRole("button", { name: /^P1\b/ });
   await p1.click();
   await expect(p1).toHaveAttribute("aria-pressed", "true");
-  await expect(p1).toContainText("Shown on the plan");
   await page.getByRole("complementary").getByRole("button", { name: /^S2\b/ }).click();
   await expect(p1).toHaveAttribute("aria-pressed", "false");
-  await expect(page.getByRole("complementary").getByRole("button", { name: /^S2\b/ })).toContainText("Shown on the plan");
+  await expect(page.getByRole("complementary").getByRole("button", { name: /^S2\b/ })).toHaveAttribute("aria-pressed", "true");
 
   // The rack put where it stands: a click on the plan.
   await page.getByRole("button", { name: "Place the rack" }).click();

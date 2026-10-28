@@ -12,6 +12,7 @@ import { OutletDialog, outletName, PlanSettingsDialog } from "@/components/netwo
 import { RackPanel } from "@/components/network/floor-plan/rack-panel";
 import { UploadDialog } from "@/components/network/floor-plan/upload-dialog";
 import { NetworkHeader } from "@/components/network/network-header";
+import { Hint } from "@/components/hint";
 import { PdfPage, usePdfDocument } from "@/components/tools/pdf-preview";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -156,6 +157,18 @@ function PlanView({
   // A point of the page (fractions) to bring to the middle of the view, once the page is its new size.
   const [focus, setFocus] = useState<{ x: number; y: number; n: number } | null>(null);
   const map = useRef<HTMLDivElement>(null);
+  // The sticky controls' height, for the plan to sit just under them.
+  const bar = useRef<HTMLDivElement>(null);
+  const [barHeight, setBarHeight] = useState(120);
+  const loaded = !!plan;
+  useEffect(() => {
+    const el = bar.current;
+    if (!el) return;
+    const observer = new ResizeObserver(() => setBarHeight(el.offsetHeight));
+    observer.observe(el);
+    return () => observer.disconnect();
+    // The controls appear once the plan has loaded.
+  }, [loaded]);
   const zoomBy = useCallback((step: 1 | -1) => setZoom((z) => ZOOMS[clamp(ZOOMS.indexOf(z) + step, 0, ZOOMS.length - 1)]), []);
   const onDrawn = useCallback(() => setDrawn(true), []);
 
@@ -257,6 +270,8 @@ function PlanView({
   }, []);
 
   if (!plan) return <Skeleton className="h-[60vh] w-full" />;
+  // Under the app's bar (4rem) and the controls, with a little room.
+  const stickyTop = 64 + barHeight + 12;
   const markW = plan.markWidth / plan.pageWidth;
   const markH = plan.markHeight / plan.pageHeight;
   const filtering = query.trim() !== "" || switchNo !== null || panelNo !== null;
@@ -277,6 +292,8 @@ function PlanView({
 
   return (
     <div className="space-y-4">
+      {/* The controls stay at the top as the page scrolls, under the app's own bar. */}
+      <div ref={bar} className="sticky top-16 z-10 -mx-4 space-y-2 border-b bg-background/90 px-4 py-2 backdrop-blur md:-mx-6 md:px-6">
       <div className="flex flex-wrap items-end gap-3">
         {plans.length > 1 && (
           <div className="grid gap-1.5">
@@ -296,7 +313,18 @@ function PlanView({
           </div>
         )}
         <div className="grid min-w-0 basis-64 gap-1.5">
-          <Label htmlFor={searchId}>{t("search")}</Label>
+          <div className="flex items-center gap-1">
+            <Label htmlFor={searchId}>{t("search")}</Label>
+            <Hint>{t("searchHint")}</Hint>
+            <span id={searchHint} className="sr-only">
+              {t("searchHint")}
+            </span>
+            {query.trim() && (
+              <span aria-live="polite" className="ms-auto text-xs font-medium">
+                {t("found", { count: matches.length })}
+              </span>
+            )}
+          </div>
           <Input
             id={searchId}
             type="search"
@@ -370,17 +398,6 @@ function PlanView({
           </DropdownMenu>
         </div>
       </div>
-      <p id={searchHint} className="-mt-2 text-sm text-muted-foreground">
-        {t("searchHint")}{" "}
-        {query.trim() && (
-          <span aria-live="polite" className="font-medium text-foreground">
-            {t("found", { count: matches.length })}
-          </span>
-        )}
-      </p>
-
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
-        <section ref={map} className="min-w-0 space-y-2">
           <div className="flex flex-wrap items-center gap-2">
             {svg && (
               <>
@@ -428,9 +445,14 @@ function PlanView({
                 </Button>
               </p>
             ) : (
-              <p className="text-sm text-muted-foreground">{svg ? t(view === "3d" ? "hint3d" : "hintTop") : t("mapHint")}</p>
+              <Hint label={t("howTo")}>{svg ? t(view === "3d" ? "hint3d" : "hintTop") : t("mapHint")}</Hint>
             )}
           </div>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
+        {/* The plan stays in view beside the side panel as that scrolls. */}
+        <section ref={map} className="min-w-0 lg:sticky lg:self-start" style={{ top: stickyTop, ["--map-height" as string]: `calc(100dvh - ${stickyTop + 16}px)` }}>
           {svg ? (
             model ? (
               <Plan3D
@@ -449,6 +471,7 @@ function PlanView({
                 focusOn={focus}
                 fitRequest={fitRequest}
                 label={t("mapLabel", { name: plan.name })}
+                className="h-[70vh] lg:h-[var(--map-height)]"
                 noWebGl={t("noWebGl")}
                 // A second click on the chosen outlet lets it go, and its cable with it.
                 onPickOutlet={(id) => setSelected(selected === id ? null : id)}

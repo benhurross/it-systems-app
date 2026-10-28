@@ -1,5 +1,6 @@
 "use client";
 
+import { Hint } from "@/components/hint";
 import { zipSync } from "fflate";
 import { Check, File, Files, Layers, ListChecks, Scissors, X } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -10,7 +11,7 @@ import { FileProblems } from "@/components/tools/file-list";
 import { baseName, downloadBytes, FileDrop, type OnePdf, recordUse, useFileProblem, useOnePdf, useSizeLimit } from "@/components/tools/files";
 import { PdfThumb, usePdfDocument } from "@/components/tools/pdf-preview";
 import { Button } from "@/components/ui/button";
-import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field";
+import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { extractPages, formatPageRanges, parsePageRanges, splitPdf } from "@/lib/pdf-tools";
 import { cn } from "@/lib/utils";
@@ -116,7 +117,10 @@ function SplitPages({ pdf, onClear }: { pdf: OnePdf; onClear: () => void }) {
       <FileChip name={pdf.name} size={pdf.size} pages={pdf.pages} onClear={onClear} preview={<PdfThumb doc={doc} page={1} size={64} />} />
       <div className="flex flex-wrap items-end gap-3">
         <Field data-invalid={invalid || undefined} className="min-w-0 flex-1 basis-60">
-          <FieldLabel htmlFor={inputId}>{t("split.pages")}</FieldLabel>
+          <div className="flex items-center gap-1">
+            <FieldLabel htmlFor={inputId}>{t("split.pages")}</FieldLabel>
+            <Hint>{t("split.pagesHint")}</Hint>
+          </div>
           <Input id={inputId} value={text} onChange={(e) => setText(e.target.value)} aria-invalid={invalid || undefined} inputMode="numeric" autoComplete="off" placeholder="1-3, 5" />
         </Field>
         <div className="flex flex-wrap gap-1.5">
@@ -137,7 +141,6 @@ function SplitPages({ pdf, onClear }: { pdf: OnePdf; onClear: () => void }) {
         </div>
       </div>
       {invalid && <FieldError>{t("split.invalid", { count: pdf.pages })}</FieldError>}
-      {!invalid && <FieldDescription className="-mt-3">{t("split.pagesHint")}</FieldDescription>}
 
       <ul className="grid grid-cols-[repeat(auto-fill,minmax(7.5rem,1fr))] gap-3" aria-label={pdf.name}>
         {every.map((i) => (

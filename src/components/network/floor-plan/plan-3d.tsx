@@ -5,6 +5,7 @@ import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import type { DeviceStatus } from "@/lib/domain";
 import type { LayerRole, SvgPlan } from "@/lib/svg-plan";
+import { cn } from "@/lib/utils";
 
 /** How an outlet is drawn: as it is, found, on the switch or panel looked at, to check, chosen, or out of the way. */
 export type OutletLook = "normal" | "hit" | "group" | "problem" | "selected" | "faded";
@@ -29,6 +30,8 @@ export type Plan3DProps = {
   /** Shows the whole plan again; a new number each time. */
   fitRequest: number;
   label: string;
+  /** Its height, and whatever else of its box. */
+  className?: string;
   noWebGl: string;
   onPickOutlet: (id: number) => void;
   /** A click on nothing in particular: the floor, a wall, the sky. */
@@ -489,14 +492,14 @@ export default function Plan3D(props: Plan3DProps) {
     };
   }, []);
 
-  if (failed) return <p className="grid h-[70vh] place-items-center rounded-xl border bg-muted/40 p-6 text-center text-sm text-muted-foreground">{props.noWebGl}</p>;
+  if (failed) return <p className={cn("grid h-[70vh] place-items-center rounded-xl border bg-muted/40 p-6 text-center text-sm text-muted-foreground", props.className)}>{props.noWebGl}</p>;
   return (
     <div
       ref={host}
       role="img"
       aria-label={props.label}
       data-plan-3d
-      className={props.placing ? "h-[70vh] cursor-crosshair overflow-hidden rounded-xl border" : "h-[70vh] cursor-grab overflow-hidden rounded-xl border active:cursor-grabbing"}
+      className={cn("h-[70vh] overflow-hidden rounded-xl border", props.placing ? "cursor-crosshair" : "cursor-grab active:cursor-grabbing", props.className)}
     />
   );
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { Hint } from "@/components/hint";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Upload } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -57,12 +58,18 @@ export function ImportDialog({ onClose, onLoaded }: { onClose: () => void; onLoa
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="sm:max-w-3xl">
         <DialogHeader>
-          <DialogTitle>{t("title")}</DialogTitle>
-          <DialogDescription>{t("intro")}</DialogDescription>
+          <DialogTitle className="flex items-center gap-1.5">
+            {t("title")}
+            <Hint>{t("intro")}</Hint>
+          </DialogTitle>
+          <DialogDescription className="sr-only">{t("intro")}</DialogDescription>
         </DialogHeader>
         <div className="max-h-[60vh] space-y-4 overflow-y-auto px-1">
           <Field>
-            <FieldLabel htmlFor={fileId}>{t("file")}</FieldLabel>
+            <div className="flex items-center gap-1">
+              <FieldLabel htmlFor={fileId}>{t("file")}</FieldLabel>
+              <Hint>{t("hint")}</Hint>
+            </div>
             <Input
               id={fileId}
               type="file"
@@ -76,7 +83,7 @@ export function ImportDialog({ onClose, onLoaded }: { onClose: () => void; onLoa
                 if (chosen) check.mutate(chosen);
               }}
             />
-            <FieldDescription id={hintId}>{t("hint")}</FieldDescription>
+            <FieldDescription className="sr-only" id={hintId}>{t("hint")}</FieldDescription>
           </Field>
           {check.isPending && <p className="text-sm text-muted-foreground">{t("checking")}</p>}
           {error && (

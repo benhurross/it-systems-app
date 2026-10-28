@@ -1,5 +1,6 @@
 "use client";
 
+import { Hint } from "@/components/hint";
 import { ChevronLeft, ChevronRight, Plus, Signature as SignatureIcon, X } from "lucide-react";
 import type { PDFDocumentProxy } from "pdfjs-dist";
 import { useTranslations } from "next-intl";
@@ -142,9 +143,12 @@ function SignFile({ pdf, onClear }: { pdf: OnePdf; onClear: () => void }) {
             </div>
             {withDate && (
               <Field data-invalid={!!dateProblem || undefined} className="max-w-60 border-s-2 ps-4">
-                <FieldLabel htmlFor={`${dateId}-text`}>{t("sign.date")}</FieldLabel>
+                <div className="flex items-center gap-1">
+                  <FieldLabel htmlFor={`${dateId}-text`}>{t("sign.date")}</FieldLabel>
+                  <Hint>{t("sign.dateHint")}</Hint>
+                </div>
                 <Input id={`${dateId}-text`} value={date} maxLength={30} dir="ltr" onChange={(e) => setDate(e.target.value)} aria-invalid={!!dateProblem || undefined} />
-                <FieldDescription>{t("sign.dateHint")}</FieldDescription>
+                <FieldDescription className="sr-only">{t("sign.dateHint")}</FieldDescription>
                 {dateProblem && <FieldError>{t(dateProblem === "latinOnly" ? "stamp.latinOnly" : "sign.dateEmpty")}</FieldError>}
               </Field>
             )}

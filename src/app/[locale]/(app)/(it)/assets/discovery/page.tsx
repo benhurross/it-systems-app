@@ -1,5 +1,6 @@
 "use client";
 
+import { Hint } from "@/components/hint";
 import { Radar } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState, type FormEvent } from "react";
@@ -59,12 +60,16 @@ export default function DiscoveryPage() {
   return (
     <>
       <AssetsHeader />
-      <p className="mb-4 max-w-2xl text-muted-foreground">{t("discovery.intro")}</p>
       <form onSubmit={submit} className="mb-6 flex max-w-xl flex-wrap items-end gap-3">
         <Field className="flex-1">
-          <FieldLabel htmlFor="cidr">{t("discovery.cidr")}</FieldLabel>
+          <div className="flex items-center gap-1">
+            <FieldLabel htmlFor="cidr">{t("discovery.cidr")}</FieldLabel>
+            <Hint>
+            {t("discovery.intro")} {t("discovery.cidrHint")}
+          </Hint>
+          </div>
           <Input id="cidr" dir="ltr" placeholder="192.168.1.0/24" value={cidr} onChange={(e) => setCidr(e.target.value)} />
-          <FieldDescription>{t("discovery.cidrHint")}</FieldDescription>
+          <FieldDescription className="sr-only">{t("discovery.cidrHint")}</FieldDescription>
         </Field>
         <Button type="submit" className="mb-7" disabled={start.isPending || run?.status === "running"}>
           <Radar />

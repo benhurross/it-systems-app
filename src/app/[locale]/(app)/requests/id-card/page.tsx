@@ -1,5 +1,6 @@
 "use client";
 
+import { Hint } from "@/components/hint";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { IdCard, UserX } from "lucide-react";
@@ -140,7 +141,7 @@ function RequestForm({ data }: { data: MyCardRequest }) {
                       </div>
                     ))}
                   </dl>
-                  <p className="text-xs text-muted-foreground">{t("idCards.detailsHint")}</p>
+                  <Hint>{t("idCards.detailsHint")}</Hint>
                 </div>
                 <SelectField
                   name="reason"
