@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { StatusBadge, type Tone } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
+import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useFormat } from "@/hooks/use-format";
@@ -58,9 +58,9 @@ export function ImportDialog({ onClose, onLoaded }: { onClose: () => void; onLoa
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="sm:max-w-3xl">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-1.5">
+          <DialogTitle>
             {t("title")}
-            <Hint>{t("intro")}</Hint>
+            <Hint className="ms-1">{t("intro")}</Hint>
           </DialogTitle>
           <DialogDescription className="sr-only">{t("intro")}</DialogDescription>
         </DialogHeader>
@@ -83,7 +83,7 @@ export function ImportDialog({ onClose, onLoaded }: { onClose: () => void; onLoa
                 if (chosen) check.mutate(chosen);
               }}
             />
-            <FieldDescription className="sr-only" id={hintId}>{t("hint")}</FieldDescription>
+            <span id={hintId} hidden>{t("hint")}</span>
           </Field>
           {check.isPending && <p className="text-sm text-muted-foreground">{t("checking")}</p>}
           {error && (

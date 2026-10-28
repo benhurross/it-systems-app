@@ -9,7 +9,7 @@ import { DeleteRecord } from "@/components/delete-record";
 import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
+import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -51,9 +51,9 @@ export default function ApiAccessSettings() {
     <div className="max-w-3xl space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-1.5">
+          <CardTitle>
             {t("title")}
-            <Hint>{t("intro")}</Hint>
+            <Hint className="ms-1">{t("intro")}</Hint>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -64,7 +64,6 @@ export default function ApiAccessSettings() {
                 <Hint>{t("nameHint")}</Hint>
               </div>
               <Input id={nameId} value={name} onChange={(e) => setName(e.target.value)} placeholder={t("namePlaceholder")} maxLength={100} />
-              <FieldDescription className="sr-only">{t("nameHint")}</FieldDescription>
             </Field>
             <Button type="submit" className="mb-7" disabled={!name.trim() || create.isPending}>
               <Plus />
@@ -128,9 +127,9 @@ export default function ApiAccessSettings() {
       </Card>
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-1.5">
+          <CardTitle>
             {t("howTitle")}
-            <Hint>{t("howIntro")}</Hint>
+            <Hint className="ms-1">{t("howIntro")}</Hint>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3 text-sm">

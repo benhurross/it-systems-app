@@ -147,9 +147,9 @@ function Editor({ card }: { card: IdCardDetail }) {
       <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-1.5">
+            <CardTitle>
               {t("idCards.preview")}
-              <Hint>{t("idCards.previewHint")}</Hint>
+              <Hint className="ms-1">{t("idCards.previewHint")}</Hint>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -189,9 +189,9 @@ function Editor({ card }: { card: IdCardDetail }) {
               className="flex flex-col gap-6"
             >
               <CardHeader>
-                <CardTitle className="flex items-center gap-1.5">
+                <CardTitle>
                   {t("idCards.text")}
-                  <Hint>{t("idCards.textHint")}</Hint>
+                  <Hint className="ms-1">{t("idCards.textHint")}</Hint>
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -284,9 +284,9 @@ function Editor({ card }: { card: IdCardDetail }) {
 
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-1.5">
+              <CardTitle>
                 {t("idCards.print")}
-                <Hint>{t("idCards.printerHint")}</Hint>
+                <Hint className="ms-1">{t("idCards.printerHint")}</Hint>
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -330,7 +330,7 @@ function Editor({ card }: { card: IdCardDetail }) {
                     ) : card.ticketId ? (
                       <p className="text-muted-foreground">{t("idCards.awaitingConfirmation", { name: card.personName, ref: ref("ticket", card.ticketId) })}</p>
                     ) : (
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex flex-wrap items-center gap-1.5">
                         <Button variant="outline" disabled={handOver.isPending} onClick={() => handOver.mutate(undefined)}>
                           <HandHelping />
                           {t("idCards.markHandedOver")}
@@ -512,9 +512,9 @@ function PhotoDialog({ card, design, lines, onClose }: { card: IdCardDetail; des
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-1.5">
+          <DialogTitle>
             {card.hasPhoto ? t("changePhoto") : t("addPhoto")}
-            <Hint>{t("photoDialogHint")}</Hint>
+            <Hint className="ms-1">{t("photoDialogHint")}</Hint>
           </DialogTitle>
           <DialogDescription className="sr-only">{t("photoDialogHint")}</DialogDescription>
         </DialogHeader>

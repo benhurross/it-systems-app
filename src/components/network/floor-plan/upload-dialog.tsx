@@ -124,9 +124,9 @@ export function UploadDialog({ plan, onClose, onSaved }: { plan: FloorPlan | nul
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="sm:max-w-xl">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-1.5">
+          <DialogTitle>
             {plan ? t("replaceTitle", { name: plan.name }) : t("title")}
-            <Hint>{t("intro")}</Hint>
+            <Hint className="ms-1">{t("intro")}</Hint>
           </DialogTitle>
           <DialogDescription className="sr-only">{t("intro")}</DialogDescription>
         </DialogHeader>

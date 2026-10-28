@@ -78,9 +78,9 @@ export default function LabelPrinterSettings() {
       </SettingsCard>
       <Card className="max-w-2xl">
         <CardHeader>
-          <CardTitle className="flex items-center gap-1.5">
+          <CardTitle>
             {t("testTitle")}
-            <Hint>{t("testDescription")}</Hint>
+            <Hint className="ms-1">{t("testDescription")}</Hint>
           </CardTitle>
         </CardHeader>
         <CardContent>

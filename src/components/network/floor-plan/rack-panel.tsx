@@ -76,9 +76,9 @@ export function RackPanel({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-1.5 text-base">
+        <CardTitle className="text-base">
           {t("rack.title")}
-          <Hint>{t("rack.hint")}</Hint>
+          <Hint className="ms-1">{t("rack.hint")}</Hint>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">

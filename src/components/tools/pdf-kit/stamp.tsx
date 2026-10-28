@@ -10,7 +10,7 @@ import { FileProblems } from "@/components/tools/file-list";
 import { baseName, downloadBytes, FileDrop, type OnePdf, recordUse, useFileProblem, useOnePdf, useSizeLimit } from "@/components/tools/files";
 import { PdfThumb, usePdfDocument } from "@/components/tools/pdf-preview";
 import { Button } from "@/components/ui/button";
-import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field";
+import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -187,7 +187,6 @@ function StampPages({ pdf, onClear }: { pdf: OnePdf; onClear: () => void }) {
                     <Hint>{t("stamp.textHint")}</Hint>
                   </div>
                   <Input id={ids.text} value={text} maxLength={40} onChange={(e) => setText(e.target.value)} aria-invalid={textProblem !== null || undefined} dir="ltr" />
-                  <FieldDescription className="sr-only">{t("stamp.textHint")}</FieldDescription>
                   {textProblem && <FieldError>{t(`stamp.${textProblem}`)}</FieldError>}
                 </Field>
                 <Choices

@@ -28,9 +28,9 @@ export function ChartCard({
     <Card className="gap-4">
       <CardHeader className="flex flex-row items-start justify-between gap-2">
         <div className="min-w-0 space-y-1">
-          <CardTitle className="flex items-center gap-1.5">
-            <h2>{title}</h2>
-            {description && <Hint>{description}</Hint>}
+          <CardTitle>
+            <h2 className="inline">{title}</h2>
+            {description && <Hint className="ms-1">{description}</Hint>}
           </CardTitle>
         </div>
         <Button

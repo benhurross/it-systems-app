@@ -195,9 +195,9 @@ function People({ data }: { data: ToolsOverview | undefined }) {
     <Card className="max-w-3xl">
       <CardHeader className="flex flex-wrap items-start justify-between gap-3">
         <div className="space-y-1.5">
-          <CardTitle className="flex items-center gap-1.5">
+          <CardTitle>
             {t("settings.toolsAccess.people")}
-            <Hint>{t("settings.toolsAccess.peopleHint")}</Hint>
+            <Hint className="ms-1">{t("settings.toolsAccess.peopleHint")}</Hint>
           </CardTitle>
         </div>
         <Button size="sm" variant="outline" onClick={() => setAdding(true)}>

@@ -316,7 +316,7 @@ function PlanView({
           <div className="flex items-center gap-1">
             <Label htmlFor={searchId}>{t("search")}</Label>
             <Hint>{t("searchHint")}</Hint>
-            <span id={searchHint} className="sr-only">
+            <span id={searchHint} hidden>
               {t("searchHint")}
             </span>
             {query.trim() && (

@@ -44,9 +44,9 @@ export default function DailyChecksPage() {
         <Card>
           <CardHeader className="flex flex-row flex-wrap items-end justify-between gap-4">
             <div className="space-y-1">
-              <CardTitle className="flex items-center gap-1.5">
+              <CardTitle>
                 {format.date(date)}
-                <Hint>{t("intro")}</Hint>
+                <Hint className="ms-1">{t("intro")}</Hint>
               </CardTitle>
               <p className="text-sm text-muted-foreground">{t("progress", { done: format.number(done), total: format.number(total) })}</p>
             </div>

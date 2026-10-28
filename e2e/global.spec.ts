@@ -252,7 +252,7 @@ test("a tool that needs approval is asked for, granted by IT, and then opens", a
   await requests.getByRole("button", { name: "Grant" }).click();
   await expect(page.getByText("Access granted.")).toBeVisible();
   await expect(requests).toContainText("No requests waiting.");
-  const people = page.locator('[data-slot="card"]').filter({ hasText: "Allow or block one person" });
+  const people = page.locator('[data-slot="card"]').filter({ has: page.locator('[data-slot="card-title"]', { hasText: /^People/ }) });
   await expect(people).toContainText("Nora Al-Otaibi");
   await expect(people).toContainText("Allowed");
   const ticket = (await (await page.request.get(`/api/tickets/${ticketId}`)).json()) as { status: string; resolution: string };

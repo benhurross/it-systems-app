@@ -103,9 +103,9 @@ function TestEmail() {
   return (
     <Card className="max-w-2xl xl:max-w-none">
       <CardHeader>
-        <CardTitle className="flex items-center gap-1.5">
+        <CardTitle>
           {t("testTitle")}
-          <Hint>{t("testDescription")}</Hint>
+          <Hint className="ms-1">{t("testDescription")}</Hint>
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -144,9 +144,9 @@ function Outbox() {
   return (
     <Card className="xl:sticky xl:top-20">
       <CardHeader>
-        <CardTitle className="flex items-center gap-1.5">
+        <CardTitle>
           {t("settings.email.outbox")}
-          <Hint>{t("settings.email.outboxDescription")}</Hint>
+          <Hint className="ms-1">{t("settings.email.outboxDescription")}</Hint>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">

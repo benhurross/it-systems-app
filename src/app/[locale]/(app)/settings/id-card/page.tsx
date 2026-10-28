@@ -72,9 +72,9 @@ function DesignSide({ side, design, lines }: { side: CardSide; design: CardDesig
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-1.5">
+        <CardTitle>
           {t(side)}
-          {side === "front" && <Hint>{t("intro")}</Hint>}
+          {side === "front" && <Hint className="ms-1">{t("intro")}</Hint>}
         </CardTitle>
         <CardDescription>{current ? t("size", { width: current.width, height: current.height }) : t("none")}</CardDescription>
       </CardHeader>

@@ -10,7 +10,7 @@ import { EmptyState } from "@/components/empty-state";
 import { StatusBadge, type Tone } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
+import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -69,7 +69,6 @@ export default function DiscoveryPage() {
           </Hint>
           </div>
           <Input id="cidr" dir="ltr" placeholder="192.168.1.0/24" value={cidr} onChange={(e) => setCidr(e.target.value)} />
-          <FieldDescription className="sr-only">{t("discovery.cidrHint")}</FieldDescription>
         </Field>
         <Button type="submit" className="mb-7" disabled={start.isPending || run?.status === "running"}>
           <Radar />

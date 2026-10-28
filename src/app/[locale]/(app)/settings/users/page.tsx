@@ -201,7 +201,7 @@ function AddUserDialog({
       <TextField
         name="email"
         label={t("email")}
-        description={noEmail ? t("noEmailOnRecord") : undefined}
+        note={noEmail ? t("noEmailOnRecord") : undefined}
         type="email"
         dir="ltr"
         autoComplete="off"

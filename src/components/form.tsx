@@ -23,7 +23,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -59,13 +59,15 @@ export function Form<TIn extends FieldValues, TOut extends FieldValues = TIn>({
   );
 }
 
-type FieldProps = { name: string; label: string; description?: string; optional?: boolean };
+/** `description` is help, behind a question mark; `note` says something about this record now, in sight. */
+type FieldProps = { name: string; label: string; description?: string; note?: string; optional?: boolean };
 
 /** Label, control, hint and error for one field. Schema messages named `validation.*` are translated. */
 function Shell({
   name,
   label,
   description,
+  note,
   optional,
   horizontal,
   children,
@@ -88,6 +90,7 @@ function Shell({
         {description && <Hint>{description}</Hint>}
       </div>
       {!horizontal && children(id, !!message)}
+      {note && <FieldDescription>{note}</FieldDescription>}
       {text && <FieldError>{text}</FieldError>}
     </Field>
   );
@@ -364,9 +367,9 @@ export function FormDialog<TIn extends FieldValues, TOut extends FieldValues = T
         {...(description ? {} : { "aria-describedby": undefined })}
       >
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-1.5">
+          <DialogTitle>
             {title}
-            {description && <Hint>{description}</Hint>}
+            {description && <Hint className="ms-1">{description}</Hint>}
           </DialogTitle>
           {description && <DialogDescription className="sr-only">{description}</DialogDescription>}
         </DialogHeader>

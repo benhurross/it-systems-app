@@ -10,7 +10,7 @@ import { AssetsHeader } from "@/components/assets/assets-header";
 import { StatusBadge, type Tone } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
+import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -160,9 +160,9 @@ export default function AssetImportPage() {
       <div className="grid gap-6 lg:grid-cols-[minmax(0,24rem)_minmax(0,1fr)]">
         <Card className="h-fit">
           <CardHeader>
-            <CardTitle className="flex items-center gap-1.5">
+            <CardTitle>
               {t("assets.import.title")}
-              <Hint>{t("assets.import.intro")}</Hint>
+              <Hint className="ms-1">{t("assets.import.intro")}</Hint>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-5">
@@ -186,9 +186,9 @@ export default function AssetImportPage() {
                 disabled={load.isPending}
                 onChange={(e) => choose(e.target.files?.[0] ?? null)}
               />
-              <FieldDescription className="sr-only" id={hintId}>
+              <span id={hintId} hidden>
                 {t("assets.import.fileHint")}
-              </FieldDescription>
+              </span>
             </Field>
             {error && (
               <p role="alert" className="text-sm text-destructive">

@@ -12,7 +12,7 @@ import { baseName, downloadBytes, FileDrop, type OnePdf, recordUse, useFileProbl
 import { type Signature, SignatureMaker } from "@/components/tools/pdf-kit/signature-maker";
 import { PdfPage, usePdfDocument } from "@/components/tools/pdf-preview";
 import { Button } from "@/components/ui/button";
-import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field";
+import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -148,7 +148,6 @@ function SignFile({ pdf, onClear }: { pdf: OnePdf; onClear: () => void }) {
                   <Hint>{t("sign.dateHint")}</Hint>
                 </div>
                 <Input id={`${dateId}-text`} value={date} maxLength={30} dir="ltr" onChange={(e) => setDate(e.target.value)} aria-invalid={!!dateProblem || undefined} />
-                <FieldDescription className="sr-only">{t("sign.dateHint")}</FieldDescription>
                 {dateProblem && <FieldError>{t(dateProblem === "latinOnly" ? "stamp.latinOnly" : "sign.dateEmpty")}</FieldError>}
               </Field>
             )}

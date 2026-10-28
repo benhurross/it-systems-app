@@ -145,9 +145,9 @@ export default function HomePage() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-1.5">
+            <CardTitle>
               {t("devices")}
-              <Hint>{t("devicesHint")}</Hint>
+              <Hint className="ms-1">{t("devicesHint")}</Hint>
             </CardTitle>
           </CardHeader>
           <CardContent>

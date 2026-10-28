@@ -36,9 +36,9 @@ export function SettingsCard<TIn extends FieldValues, TOut extends FieldValues>(
   return (
     <Card className={cn("max-w-2xl", className)}>
       <CardHeader>
-        <CardTitle className="flex items-center gap-1.5">
+        <CardTitle>
           {title}
-          {description && <Hint>{description}</Hint>}
+          {description && <Hint className="ms-1">{description}</Hint>}
         </CardTitle>
       </CardHeader>
       <Form form={form} onSubmit={onSubmit}>
