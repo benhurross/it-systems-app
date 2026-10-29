@@ -1,6 +1,6 @@
 "use client";
 
-import { MoreHorizontal, PackagePlus, Plus } from "lucide-react";
+import { MoreHorizontal, PackagePlus, Plus, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -8,6 +8,7 @@ import { AssetDialog } from "@/components/assets/asset-dialog";
 import { AttachmentsButton, AttachmentsDialog } from "@/components/attachments";
 import { EnumBadge } from "@/components/badges";
 import { columnHelper, DataTable } from "@/components/data-table";
+import { DeleteRecord } from "@/components/delete-record";
 import { PurchaseDialog } from "@/components/finance/dialogs";
 import { FinanceHeader } from "@/components/finance/finance-header";
 import { Button } from "@/components/ui/button";
@@ -43,6 +44,8 @@ export default function PurchasesPage() {
   const [dialog, setDialog] = useState<{ kind: "new" } | { kind: "edit" | "inventory"; purchase: Purchase } | null>(null);
   const { data = [], isLoading } = useApi<Purchase[]>("/purchases");
   const { data: documents } = useApi<Record<number, number>>("/attachments/counts?entity=purchase");
+  // The purchase whose Delete was chosen in its menu, asked to confirm.
+  const [deleting, setDeleting] = useState<Purchase | null>(null);
   const [documentsFor, setDocumentsFor] = useState<{ id: number; name: string } | null>(null);
   const move = useApiMutation(
     async ({ purchase, status }: { purchase: Purchase; status: PurchaseStatus }) => {
@@ -106,7 +109,6 @@ export default function PurchasesPage() {
         const p = info.row.original;
         const next = nextPurchaseStatuses(p.status);
         const addable = p.hardware && p.status === "received" && p.inInventory < p.quantity;
-        if (next.length === 0 && !addable) return null;
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -132,6 +134,11 @@ export default function PurchasesPage() {
                   {t("finance.purchases.addToInventory")}
                 </DropdownMenuItem>
               )}
+              {(next.length > 0 || addable || p.status === "requested") && <DropdownMenuSeparator />}
+              <DropdownMenuItem variant="destructive" onSelect={() => setDeleting(p)}>
+                <Trash2 />
+                {t("common.delete")}
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         );
@@ -178,6 +185,16 @@ export default function PurchasesPage() {
           ],
         }}
       />
+      {deleting && (
+        <DeleteRecord
+          path={`/purchases/${deleting.id}`}
+          name={`${ref("purchase", deleting.id)} ${deleting.title}`}
+          detail={t("finance.purchases.deleteDetail")}
+          open
+          onOpenChange={(open) => !open && setDeleting(null)}
+          onDeleted={() => setDeleting(null)}
+        />
+      )}
       {dialog?.kind === "new" && <PurchaseDialog onClose={() => setDialog(null)} />}
       {dialog?.kind === "edit" && <PurchaseDialog purchase={dialog.purchase} onClose={() => setDialog(null)} />}
       {dialog?.kind === "inventory" && (

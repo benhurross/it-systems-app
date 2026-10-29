@@ -1301,7 +1301,8 @@
       "receive": "Mark as received",
       "moved": "{ref}: {status}",
       "addToInventory": "Add to inventory",
-      "inInventory": "In inventory: {count} of {quantity}"
+      "inInventory": "In inventory: {count} of {quantity}",
+      "deleteDetail": "Its documents go with it. Assets bought with it stay, no longer linked to it."
     },
     "contracts": {
       "ref": "Contract",
@@ -1317,7 +1318,8 @@
       "autoRenew": "Renews automatically",
       "state": "Renewal",
       "notes": "Notes",
-      "saved": "Contract saved."
+      "saved": "Contract saved.",
+      "deleteDetail": "Its documents go with it."
     },
     "vendors": {
       "add": "Add vendor",
@@ -1332,7 +1334,8 @@
       "status": "Status",
       "inactive": "Inactive",
       "notes": "Notes",
-      "saved": "Vendor saved."
+      "saved": "Vendor saved.",
+      "deleteDetail": "Its contracts, purchases and licences stay, no longer naming it."
     },
     "documents": "Documents"
   },

@@ -115,3 +115,38 @@ test("employees cannot delete what IT keep", async ({ browser }) => {
   expect(res.status()).toBe(403);
   await context.close();
 });
+
+test("a vendor, a contract and a purchase request are deleted", async ({ page }, info) => {
+  const console = watchConsole(page);
+  const vendor = unique(info, "Old demo vendor");
+  const vendorId = await make(page, "/vendors", { name: vendor, category: "hardware", active: true });
+  const contract = unique(info, "Old demo contract");
+  await make(page, "/contracts", { title: contract, vendorId, category: "services", startDate: "2026-01-01", endDate: "2026-12-31", annualCost: 100, autoRenew: false });
+  const purchase = unique(info, "Old demo purchase");
+  const purchaseId = await make(page, "/purchases", { title: purchase, category: "hardware", vendorId, quantity: 1, amount: 10, hardware: false });
+  // Rejected: no next step, but Delete is still in its menu.
+  expect((await page.request.post(`/api/purchases/${purchaseId}/status`, { data: { status: "rejected" } })).ok()).toBe(true);
+
+  await page.goto("/en/finance/purchases");
+  await page.getByRole("textbox", { name: "Filter rows" }).fill(purchase);
+  await page.getByRole("button", { name: `Actions for ${purchase}` }).click();
+  await page.getByRole("menuitem", { name: "Delete" }).click();
+  const ref = `PR-${String(purchaseId).padStart(3, "0")}`;
+  await expect(page.getByRole("alertdialog").getByRole("heading", { name: `Delete ${ref} ${purchase}?` })).toBeVisible();
+  await page.getByRole("alertdialog").getByRole("button", { name: "Delete", exact: true }).click();
+  await expect(page.getByText(`${ref} ${purchase} deleted.`)).toBeVisible();
+  await expect(page.getByRole("button", { name: `Actions for ${purchase}` })).toBeHidden();
+
+  await page.goto("/en/finance/contracts");
+  await page.getByRole("textbox", { name: "Filter rows" }).fill(contract);
+  await page.getByRole("button", { name: contract, exact: true }).click();
+  await deleteIt(page, contract);
+  await expect(page.getByRole("button", { name: contract, exact: true })).toBeHidden();
+
+  await page.goto("/en/finance/vendors");
+  await page.getByRole("textbox", { name: "Filter rows" }).fill(vendor);
+  await page.getByRole("button", { name: vendor, exact: true }).click();
+  await deleteIt(page, vendor);
+  await expect(page.getByRole("button", { name: vendor, exact: true })).toBeHidden();
+  console.assertClean();
+});

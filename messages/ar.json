@@ -1301,7 +1301,8 @@
       "receive": "تحديد كمستلم",
       "moved": "{ref}: {status}",
       "addToInventory": "إضافة إلى المخزون",
-      "inInventory": "في المخزون: {count} من {quantity}"
+      "inInventory": "في المخزون: {count} من {quantity}",
+      "deleteDetail": "تُحذف مستنداته معه. تبقى الأصول المشتراة به دون ربط به."
     },
     "contracts": {
       "ref": "العقد",
@@ -1317,7 +1318,8 @@
       "autoRenew": "يتجدد تلقائيًا",
       "state": "التجديد",
       "notes": "ملاحظات",
-      "saved": "تم حفظ العقد."
+      "saved": "تم حفظ العقد.",
+      "deleteDetail": "تُحذف مستنداته معه."
     },
     "vendors": {
       "add": "إضافة مورد",
@@ -1332,7 +1334,8 @@
       "status": "الحالة",
       "inactive": "غير نشط",
       "notes": "ملاحظات",
-      "saved": "تم حفظ المورد."
+      "saved": "تم حفظ المورد.",
+      "deleteDetail": "تبقى عقوده ومشترياته وتراخيصه دون ذكره."
     },
     "documents": "المستندات"
   },

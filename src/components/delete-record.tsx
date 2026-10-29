@@ -27,6 +27,8 @@ export function DeleteRecord({
   detail,
   onDeleted,
   labels,
+  open,
+  onOpenChange,
 }: {
   path: string;
   name: string;
@@ -34,10 +36,16 @@ export function DeleteRecord({
   onDeleted?: () => void;
   /** Other words for it, as Revoke for a key. */
   labels?: { action: string; confirm: string; done: string };
+  /** Asked from elsewhere (a menu's Delete, say): open or not, and no button of its own. */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }) {
   const t = useTranslations("common");
   const words = labels ?? { action: t("delete"), confirm: t("confirmDelete", { name }), done: t("deleted", { name }) };
-  const [asking, setAsking] = useState(false);
+  const [asked, setAsked] = useState(false);
+  const controlled = open !== undefined;
+  const asking = controlled ? open : asked;
+  const setAsking = (next: boolean) => (controlled ? onOpenChange?.(next) : setAsked(next));
   const remove = useApiMutation(() => api(path, { method: "DELETE" }), {
     success: words.done,
     gone: path,
@@ -48,10 +56,12 @@ export function DeleteRecord({
   });
   return (
     <>
-      <Button type="button" variant="outline" className="text-destructive hover:text-destructive" onClick={() => setAsking(true)}>
-        <Trash2 />
-        {words.action}
-      </Button>
+      {!controlled && (
+        <Button type="button" variant="outline" className="text-destructive hover:text-destructive" onClick={() => setAsking(true)}>
+          <Trash2 />
+          {words.action}
+        </Button>
+      )}
       <AlertDialog open={asking} onOpenChange={setAsking}>
         <AlertDialogContent>
           <AlertDialogHeader>

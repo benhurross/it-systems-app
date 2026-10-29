@@ -1,4 +1,4 @@
-import { asc, desc, eq, getTableColumns, sql } from "drizzle-orm";
+import { and, asc, desc, eq, getTableColumns, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import type { z } from "zod";
 import { isoDate } from "@/lib/dates";
@@ -8,7 +8,8 @@ import type { budgetInput, contractInput, purchaseInput, purchaseStatus, vendorI
 import { nextPurchaseStatuses } from "@/lib/workflows";
 import { audit, type Actor } from "../audit";
 import { db } from "../db";
-import { assets, budgets, contracts, employees, purchases, users, vendors } from "../db/schema";
+import { assets, attachments, budgets, contracts, employees, purchases, users, vendors } from "../db/schema";
+import { removeStoredFile } from "../files";
 import { badRequest, one } from "../http";
 import { getSetting } from "../settings";
 
@@ -27,6 +28,27 @@ export async function createVendor(input: z.infer<typeof vendorInput>, actor: Ac
 export async function updateVendor(id: number, input: z.infer<typeof vendorInput>, actor: Actor) {
   const row = one(await db.update(vendors).set(input).where(eq(vendors.id, id)).returning());
   await audit(actor, "update", "vendor", id, `Updated vendor ${row.name}`);
+  return row;
+}
+
+/** Deletes a vendor. Its contracts, purchases and licences stay, no longer naming it. */
+export async function deleteVendor(id: number, actor: Actor) {
+  const row = one(await db.delete(vendors).where(eq(vendors.id, id)).returning());
+  await audit(actor, "delete", "vendor", id, `Deleted vendor ${row.name}`);
+  return { id };
+}
+
+/** Deletes a contract or purchase with its documents, which are attached by kind and number. */
+async function deleteWithDocuments(entity: "contract" | "purchase", id: number) {
+  const table = entity === "contract" ? contracts : purchases;
+  const { row, files } = await db.transaction(async (tx) => {
+    const detached = await tx
+      .delete(attachments)
+      .where(and(eq(attachments.entity, entity), eq(attachments.entityId, id)))
+      .returning({ key: attachments.storageKey });
+    return { row: one(await tx.delete(table).where(eq(table.id, id)).returning({ title: table.title })), files: detached.map((d) => d.key) };
+  });
+  for (const key of files) await removeStoredFile(key);
   return row;
 }
 
@@ -50,6 +72,12 @@ export async function updateContract(id: number, input: z.infer<typeof contractI
   const row = one(await db.update(contracts).set(input).where(eq(contracts.id, id)).returning());
   await audit(actor, "update", "contract", id, `Updated ${ref("contract", id)}: ${row.title}`);
   return row;
+}
+
+export async function deleteContract(id: number, actor: Actor) {
+  const row = await deleteWithDocuments("contract", id);
+  await audit(actor, "delete", "contract", id, `Deleted ${ref("contract", id)}: ${row.title}`);
+  return { id };
 }
 
 // ---------------------------------------------------------------- purchases
@@ -88,6 +116,13 @@ export async function updatePurchase(id: number, input: z.infer<typeof purchaseI
   const row = one(await db.update(purchases).set(input).where(eq(purchases.id, id)).returning());
   await audit(actor, "update", "purchase", id, `Updated ${ref("purchase", id)}`);
   return row;
+}
+
+/** Deletes a purchase request with its documents. Assets bought with it stay, no longer linked to it. */
+export async function deletePurchase(id: number, actor: Actor) {
+  const row = await deleteWithDocuments("purchase", id);
+  await audit(actor, "delete", "purchase", id, `Deleted ${ref("purchase", id)}: ${row.title}`);
+  return { id };
 }
 
 export async function setPurchaseStatus(id: number, input: z.infer<typeof purchaseStatus>, actor: Actor) {

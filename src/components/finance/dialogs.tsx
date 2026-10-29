@@ -14,6 +14,7 @@ import {
   TextareaField,
   TextField,
 } from "@/components/form";
+import { DeleteRecord } from "@/components/delete-record";
 import { useApi, useApiMutation } from "@/hooks/use-api";
 import { useLookups } from "@/hooks/use-lookups";
 import { api } from "@/lib/api";
@@ -50,6 +51,7 @@ export function PurchaseDialog({ purchase, onClose }: { purchase?: Purchase; onC
       onSubmit={(values) => save.mutate(values)}
       pending={save.isPending}
       wide
+      extra={purchase && <DeleteRecord path={`/purchases/${purchase.id}`} name={purchase.title} detail={t("deleteDetail")} onDeleted={onClose} />}
     >
       <TextField name="title" label={t("item")} />
       <div className="grid gap-4 sm:grid-cols-2">
@@ -93,6 +95,7 @@ export function ContractDialog({ contract, onClose }: { contract?: Contract; onC
       onSubmit={(values) => save.mutate(values)}
       pending={save.isPending}
       wide
+      extra={contract && <DeleteRecord path={`/contracts/${contract.id}`} name={contract.title} detail={t("deleteDetail")} onDeleted={onClose} />}
     >
       <TextField name="title" label={t("name")} />
       <div className="grid gap-4 sm:grid-cols-2">
@@ -131,6 +134,7 @@ export function VendorDialog({ vendor, onClose }: { vendor?: Vendor; onClose: ()
       onSubmit={(values) => save.mutate(values)}
       pending={save.isPending}
       wide
+      extra={vendor && <DeleteRecord path={`/vendors/${vendor.id}`} name={vendor.name} detail={t("deleteDetail")} onDeleted={onClose} />}
     >
       <div className="grid gap-4 sm:grid-cols-2">
         <TextField name="name" label={t("name")} />

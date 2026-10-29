@@ -100,6 +100,17 @@ describe("create, read and update for every register", () => {
     expect((await finance.updatePurchase(purchase.id, { ...purchaseInput, quantity: 2 }, user)).quantity).toBe(2);
     expect((await finance.listPurchases()).find((p) => p.id === purchase.id)?.requestedByName).toBe("Omar Haddad");
     expect((await finance.budgetSummary()).fiscalYear).toBe(Number(new Date().toISOString().slice(0, 4)));
+
+    // Deleted: the purchase and the contract, then the vendor, whose other records stay.
+    const other = await finance.createPurchase({ ...purchaseInput, title: "Kept purchase" }, user);
+    await finance.deletePurchase(purchase.id, user);
+    expect((await finance.listPurchases()).some((p) => p.id === purchase.id)).toBe(false);
+    await finance.deleteContract(contract.id, user);
+    expect((await finance.listContracts()).some((c) => c.id === contract.id)).toBe(false);
+    await finance.deleteVendor(vendor.id, user);
+    expect((await finance.listVendors()).some((v) => v.id === vendor.id)).toBe(false);
+    expect((await finance.listPurchases()).find((p) => p.id === other.id)).toMatchObject({ vendorId: null });
+    await expect(finance.deleteVendor(vendor.id, user)).rejects.toThrow();
   });
 
   it("projects and tasks", async () => {
