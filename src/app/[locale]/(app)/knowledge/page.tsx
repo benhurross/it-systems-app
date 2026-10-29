@@ -1,5 +1,6 @@
 "use client";
 
+import { ArticleDialog } from "@/components/kb/article-dialog";
 import { BookOpen, Plus, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
@@ -24,6 +25,7 @@ import { can } from "@/lib/permissions";
 const ALL = "__all";
 
 export default function KnowledgePage() {
+  const [creating, setCreating] = useState(false);
   const t = useTranslations();
   const format = useFormat();
   const lookups = useLookups();
@@ -48,11 +50,9 @@ export default function KnowledgePage() {
         description={t("kb.description")}
         actions={
           it && (
-            <Button asChild>
-              <Link href="/knowledge/new">
-                <Plus />
-                {t("kb.new")}
-              </Link>
+            <Button onClick={() => setCreating(true)}>
+              <Plus />
+              {t("kb.new")}
             </Button>
           )
         }
@@ -111,6 +111,7 @@ export default function KnowledgePage() {
           ))}
         </div>
       )}
+      {creating && <ArticleDialog onClose={() => setCreating(false)} />}
     </>
   );
 }

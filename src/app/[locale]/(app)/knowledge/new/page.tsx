@@ -1,16 +1,17 @@
 "use client";
 
-import { useTranslations } from "next-intl";
 import { AreaGuard } from "@/components/app-shell/area-guard";
-import { ArticleForm } from "@/components/kb/article-form";
-import { PageHeader } from "@/components/page-header";
+import { ArticleDialog } from "@/components/kb/article-dialog";
+import { useRouter } from "@/i18n/navigation";
+import KnowledgePage from "../page";
 
+/** An address for a new article: the knowledge base, with the form open over it. */
 export default function NewArticlePage() {
-  const t = useTranslations("kb");
+  const router = useRouter();
   return (
     <AreaGuard area="it">
-      <PageHeader title={t("new")} />
-      <ArticleForm />
+      <KnowledgePage />
+      <ArticleDialog onClose={() => router.replace("/knowledge")} />
     </AreaGuard>
   );
 }

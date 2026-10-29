@@ -1,8 +1,9 @@
 "use client";
 
+import { ArticleDialog } from "@/components/kb/article-dialog";
 import { ArrowLeft, Pencil } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { use } from "react";
+import { use, useState } from "react";
 import { useCurrentUser } from "@/components/app-shell/current-user";
 import { EnumBadge } from "@/components/badges";
 import { StatusBadge } from "@/components/status-badge";
@@ -20,6 +21,7 @@ import { ref } from "@/lib/domain";
 import { can } from "@/lib/permissions";
 
 export default function ArticlePage({ params }: PageProps<"/[locale]/knowledge/[id]">) {
+  const [editing, setEditing] = useState(false);
   const { id } = use(params);
   const t = useTranslations();
   const router = useRouter();
@@ -54,11 +56,9 @@ export default function ArticlePage({ params }: PageProps<"/[locale]/knowledge/[
           <h1 className="text-2xl font-semibold tracking-tight">{article.title}</h1>
           {it && (
             <div className="flex flex-wrap gap-2">
-              <Button asChild variant="outline">
-                <Link href={`/knowledge/${article.id}/edit`}>
-                  <Pencil />
-                  {t("kb.edit")}
-                </Link>
+              <Button variant="outline" onClick={() => setEditing(true)}>
+                <Pencil />
+                {t("kb.edit")}
               </Button>
               <DeleteRecord path={`/kb/${article.id}`} name={article.title} detail={t("kb.deleteDetail")} onDeleted={() => router.push("/knowledge")} />
             </div>
@@ -78,6 +78,7 @@ export default function ArticlePage({ params }: PageProps<"/[locale]/knowledge/[
           <CardContent className="whitespace-pre-wrap leading-relaxed">{s.body}</CardContent>
         </Card>
       ))}
+      {editing && <ArticleDialog article={article} onClose={() => setEditing(false)} />}
     </article>
   );
 }

@@ -1,8 +1,10 @@
 "use client";
 
+import { NewRequestDialog, type MyDevice } from "@/components/requests/new-request-dialog";
 import { Hint } from "@/components/hint";
 import { CheckCircle2, Clock, IdCard, Inbox, Laptop, Plus, UserX } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { useState } from "react";
 import { useCurrentUser } from "@/components/app-shell/current-user";
 import { EnumBadge } from "@/components/badges";
 import { EmptyState } from "@/components/empty-state";
@@ -23,6 +25,8 @@ import { RECENT_CLOSED_DAYS } from "@/lib/self-service";
 
 /** A person's own start page: their requests at a glance and the devices assigned to them. */
 export default function HomePage() {
+  // The request form, open: about one of the person's devices, or not.
+  const [requesting, setRequesting] = useState<{ device?: MyDevice } | null>(null);
   const t = useTranslations("home");
   const tr = useTranslations("requests");
   const user = useCurrentUser();
@@ -39,11 +43,9 @@ export default function HomePage() {
           {t("idCard")}
         </Link>
       </Button>
-      <Button asChild>
-        <Link href="/requests/new">
-          <Plus />
-          {tr("new")}
-        </Link>
+      <Button onClick={() => setRequesting({})}>
+        <Plus />
+        {tr("new")}
       </Button>
     </>
   );
@@ -183,10 +185,8 @@ export default function HomePage() {
                           </p>
                         </div>
                       </div>
-                      <Button asChild variant="outline" size="sm" className="shrink-0">
-                        <Link href={`/requests/new?asset=${asset.id}`} aria-label={t("reportFor", { device: asset.name })}>
-                          {t("report")}
-                        </Link>
+                      <Button variant="outline" size="sm" className="shrink-0" aria-label={t("reportFor", { device: asset.name })} onClick={() => setRequesting({ device: asset })}>
+                        {t("report")}
                       </Button>
                     </li>
                   );
@@ -196,6 +196,7 @@ export default function HomePage() {
           </CardContent>
         </Card>
       </div>
+      {requesting && <NewRequestDialog device={requesting.device} onClose={() => setRequesting(null)} />}
     </>
   );
 }

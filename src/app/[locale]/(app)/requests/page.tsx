@@ -1,7 +1,9 @@
 "use client";
 
+import { NewRequestDialog } from "@/components/requests/new-request-dialog";
 import { Inbox, Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { useState } from "react";
 import { EnumBadge } from "@/components/badges";
 import { columnHelper, DataTable } from "@/components/data-table";
 import { EmptyState } from "@/components/empty-state";
@@ -17,17 +19,16 @@ import { ref } from "@/lib/domain";
 const col = columnHelper<Ticket>();
 
 export default function MyRequestsPage() {
+  const [creating, setCreating] = useState(false);
   const t = useTranslations();
   const format = useFormat();
   const lookups = useLookups();
   const { data = [], isLoading } = useApi<Ticket[]>("/tickets");
 
   const newRequest = (
-    <Button asChild>
-      <Link href="/requests/new">
-        <Plus />
-        {t("requests.new")}
-      </Link>
+    <Button onClick={() => setCreating(true)}>
+      <Plus />
+      {t("requests.new")}
     </Button>
   );
 
@@ -59,6 +60,7 @@ export default function MyRequestsPage() {
       ) : (
         <DataTable data={data} columns={columns} loading={isLoading} rowHref={(x) => `/requests/${x.id}`} />
       )}
+      {creating && <NewRequestDialog onClose={() => setCreating(false)} />}
     </>
   );
 }

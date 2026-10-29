@@ -1,5 +1,6 @@
 "use client";
 
+import { NewTicketDialog } from "@/components/tickets/new-ticket-dialog";
 import { Plus, Siren } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
@@ -20,6 +21,7 @@ const UNASSIGNED = "unassigned";
 const NOT_RECORDED = "not_recorded";
 
 export default function TicketsPage() {
+  const [creating, setCreating] = useState<"ticket" | "incident" | null>(null);
   const t = useTranslations();
   const format = useFormat();
   const lookups = useLookups();
@@ -100,17 +102,13 @@ export default function TicketsPage() {
         description={t("tickets.intro")}
         actions={
           <>
-            <Button asChild variant="outline">
-              <Link href="/tickets/new?type=incident">
-                <Siren />
-                {t("tickets.reportIncident")}
-              </Link>
+            <Button variant="outline" onClick={() => setCreating("incident")}>
+              <Siren />
+              {t("tickets.reportIncident")}
             </Button>
-            <Button asChild>
-              <Link href="/tickets/new">
-                <Plus />
-                {t("tickets.new")}
-              </Link>
+            <Button onClick={() => setCreating("ticket")}>
+              <Plus />
+              {t("tickets.new")}
             </Button>
           </>
         }
@@ -176,6 +174,7 @@ export default function TicketsPage() {
           />
         </TabsContent>
       </Tabs>
+      {creating && <NewTicketDialog incident={creating === "incident"} onClose={() => setCreating(null)} />}
     </>
   );
 }

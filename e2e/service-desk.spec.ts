@@ -18,8 +18,9 @@ test.describe("IT staff", () => {
     const console = watchConsole(page);
     const subject = unique(info, "Projector will not connect");
     await page.goto("/en/tickets");
-    await page.getByRole("link", { name: "New ticket" }).first().click();
-    await expect(page).toHaveURL(/\/en\/tickets\/new$/);
+    await page.getByRole("button", { name: "New ticket" }).last().click();
+    // A pop-up over the list.
+    await expect(page.getByRole("dialog", { name: "New ticket" })).toBeVisible();
 
     await page.getByRole("combobox", { name: "Requester" }).click();
     await page.getByPlaceholder("Search").fill("Nora");
@@ -86,8 +87,8 @@ test.describe("IT staff", () => {
 
   test("reporting an incident starts at high priority", async ({ page }) => {
     await page.goto("/en/tickets");
-    await page.getByRole("link", { name: "Report incident" }).click();
-    await expect(page.getByRole("heading", { name: "Report incident" })).toBeVisible();
+    await page.getByRole("button", { name: "Report incident" }).click();
+    await expect(page.getByRole("dialog", { name: "Report incident" })).toBeVisible();
     await expect(page.getByRole("combobox", { name: "Type", exact: true })).toContainText("Incident");
     await expect(page.getByRole("combobox", { name: "Priority" })).toContainText("High");
   });
@@ -144,7 +145,8 @@ test.describe("IT staff", () => {
   test("knowledge articles are written and published", async ({ page }, info) => {
     const title = unique(info, "Resetting the meeting room screen");
     await page.goto("/en/knowledge");
-    await page.getByRole("link", { name: "New article" }).click();
+    await page.getByRole("button", { name: "New article" }).click();
+    await expect(page.getByRole("dialog", { name: "New article" })).toBeVisible();
     await page.getByLabel("Title").fill(title);
     await choose(page, "Category", "Hardware");
     await choose(page, "Status", "Published");
@@ -165,7 +167,8 @@ test.describe("employees", () => {
     const console = watchConsole(page);
     const subject = unique(info, "Need a second monitor");
     await page.goto("/en/requests");
-    await page.getByRole("link", { name: "New request" }).first().click();
+    await page.getByRole("button", { name: "New request" }).last().click();
+    await expect(page.getByRole("dialog")).toBeVisible();
     await page.getByRole("radio", { name: /I need something/ }).click();
     await choose(page, "Issue type", "Other request");
     await choose(page, "Location", "Jeddah Head Office");
@@ -201,11 +204,11 @@ test.describe("employees", () => {
     await expect(page.getByRole("heading", { name: "My dashboard" })).toBeVisible();
     await expect(page.getByRole("link", { name: /Open requests/ })).toBeVisible();
 
-    const report = page.getByRole("link", { name: /^Report a problem with / }).first();
+    const report = page.getByRole("button", { name: /^Report a problem with / }).first();
     const device = (await report.getAttribute("aria-label"))!.replace("Report a problem with ", "");
     await report.click();
-    await expect(page).toHaveURL(/\/en\/requests\/new\?asset=\d+$/);
-    await expect(page.getByText(`${device} ·`)).toBeVisible();
+    await expect(page.getByRole("dialog")).toBeVisible();
+    await expect(page.getByRole("dialog").getByText(`${device} ·`)).toBeVisible();
     // The device's location is filled in; the rest is up to the person.
     await choose(page, "Issue type", "Hardware");
     await page.getByLabel("Subject").fill(subject);

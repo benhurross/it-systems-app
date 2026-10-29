@@ -1,22 +1,22 @@
 "use client";
 
-import { useTranslations } from "next-intl";
 import { use } from "react";
 import { AreaGuard } from "@/components/app-shell/area-guard";
-import { ArticleForm } from "@/components/kb/article-form";
-import { PageHeader } from "@/components/page-header";
-import { Skeleton } from "@/components/ui/skeleton";
+import { ArticleDialog } from "@/components/kb/article-dialog";
 import { useApi } from "@/hooks/use-api";
+import { useRouter } from "@/i18n/navigation";
 import type { Article } from "@/lib/api-types";
+import ArticlePage from "../page";
 
-export default function EditArticlePage({ params }: PageProps<"/[locale]/knowledge/[id]/edit">) {
-  const { id } = use(params);
-  const t = useTranslations("kb");
+/** An address for editing an article: the article, with the form open over it. */
+export default function EditArticlePage(props: PageProps<"/[locale]/knowledge/[id]/edit">) {
+  const { id } = use(props.params);
+  const router = useRouter();
   const { data: article } = useApi<Article>(`/kb/${id}`);
   return (
     <AreaGuard area="it">
-      <PageHeader title={t("edit")} />
-      {article ? <ArticleForm article={article} /> : <Skeleton className="h-96 max-w-3xl" />}
+      <ArticlePage params={props.params} searchParams={props.searchParams} />
+      {article && <ArticleDialog article={article} onClose={() => router.replace(`/knowledge/${id}`)} />}
     </AreaGuard>
   );
 }
