@@ -18,7 +18,7 @@ async function open(page: Page, path: string, { locale, colorScheme }: (typeof M
   await page.goto(`/${locale}${path === "/" ? "" : path}`);
   const html = expect(page.locator("html"));
   await (colorScheme === "dark" ? html.toHaveClass(/\bdark\b/) : html.not.toHaveClass(/\bdark\b/));
-  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1 }).or(page.getByRole("dialog").getByRole("heading")).first()).toBeVisible();
   await expect(page.locator('[data-slot="skeleton"]')).toHaveCount(0);
   await page.waitForLoadState("networkidle");
 }

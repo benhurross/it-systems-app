@@ -13,7 +13,8 @@ const LOCALES = [
   { locale: "ar", dir: "rtl", messages: ar },
 ] as const;
 
-const heading = (page: Page) => page.getByRole("heading", { level: 1 });
+// A page's title; on an address that opens a form over a page (/tickets/new), the form's, as the page behind it is hidden.
+const heading = (page: Page) => page.getByRole("heading", { level: 1 }).or(page.getByRole("dialog").getByRole("heading")).first();
 
 /** What the pages read from the API, by the area of the app allowed to read it. */
 const APIS = {

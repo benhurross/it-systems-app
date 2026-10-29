@@ -75,7 +75,7 @@ async function sweep(page: Page, path: string, then?: (page: Page) => Promise<vo
     await page.setViewportSize({ width, height: 900 });
     for (const locale of ["en", "ar"]) {
       await page.goto(`/${locale}${path === "/" ? "" : path}`);
-      await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+      await expect(page.getByRole("heading", { level: 1 }).or(page.getByRole("dialog").getByRole("heading")).first()).toBeVisible();
       await expect(page.locator('[data-slot="skeleton"]')).toHaveCount(0);
       await page.waitForLoadState("networkidle");
       expect(await page.evaluate(() => document.documentElement.style.fontSize)).toBe(`${LARGEST}%`);
