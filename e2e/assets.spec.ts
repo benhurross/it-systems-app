@@ -344,7 +344,11 @@ test("an asset shows its photo once one is uploaded, and a placeholder until the
   await page.goto(`/en/assets/${id}`);
   await expect(page.getByRole("img", { name: "No photo yet" })).toBeVisible();
   const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==", "base64");
-  const form = { entity: "asset", entityId: String(id), kind: "photo", file: { name: "router.png", mimeType: "image/png", buffer: png } };
+  // Choosing a picture among its documents sets the type to Photo.
+  await page.getByLabel("File", { exact: true }).setInputFiles({ name: "router.png", mimeType: "image/png", buffer: png });
+  await expect(page.getByRole("combobox", { name: "Type" })).toHaveText("Photo");
+  // A picture saved under another type still shows, there being no Photo.
+  const form = { entity: "asset", entityId: String(id), kind: "invoice", file: { name: "router.png", mimeType: "image/png", buffer: png } };
   const uploaded = await page.request.post("/api/attachments", { multipart: form });
   expect(uploaded.ok(), await uploaded.text()).toBe(true);
   await page.reload();

@@ -172,7 +172,10 @@ function UploadForm({ entity, entityId }: { entity: AttachmentEntity; entityId: 
             aria-invalid={error ? true : undefined}
             onChange={(e) => {
               setError(null);
-              setFile(e.target.files?.[0] ?? null);
+              const chosen = e.target.files?.[0] ?? null;
+              setFile(chosen);
+              // A picture is a photo, where the record takes photos (an asset): chosen for the person, who can still change it.
+              if (chosen?.type.startsWith("image/") && (options as readonly string[]).includes("photo")) setKind("photo" as AttachmentKind);
             }}
           />
         </div>
