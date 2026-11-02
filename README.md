@@ -188,6 +188,8 @@ The data moves with a backup: the database, the uploaded files and the settings.
 6. Set it up to keep running, with daily backups and the firewall rule: see [Keep it running](#keep-it-running).
 7. From another computer, open the app's address and sign in.
 
+Move the database with `npm run backup` and `npm run restore` only. A `pg_dump > file.sql` typed into PowerShell rewrites the file in the window's old character set and scrambles every Arabic letter; if that has happened, `npm run fix-arabic` mends it.
+
 **If the address changed:**
 - In **Settings → Email**, update **App address for links** if it is filled in. Emails use it for their links.
 - If Exchange accepts mail only from known computers (a relay connector restricted by IP address), ask for the new address to be added.
@@ -274,6 +276,7 @@ Keep the key in the other system's settings, not in a web page anyone can open. 
 | `npm run demo:clear` | Reports which made-up demo records (assets, software, vendors, finance, projects, risks, changes, knowledge articles) it would remove. Add `confirm` to back up and remove them. People, accounts and tickets stay. |
 | `npm run backup` | Makes a backup. |
 | `npm run restore -- latest` | Restores the newest backup (or give a backup folder). |
+| `npm run fix-arabic` | Reports Arabic text that reads as symbols (`╪¼╪»╪⌐` for `جدة`), scrambled by copying the database through a Windows command window. Add `-- --apply` to back up and mend it. |
 
 The staff list and the ticket log contain real people's details. They stay on this computer, and are never added to Git: `*.xlsx` is ignored.
 

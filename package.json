@@ -25,7 +25,8 @@
     "tickets:import": "tsx --env-file-if-exists=.env.local scripts/tickets-import.ts",
     "demo:clear": "tsx --env-file-if-exists=.env.local scripts/demo-clear.ts",
     "backup": "tsx --env-file-if-exists=.env.local scripts/backup.ts",
-    "restore": "tsx --env-file-if-exists=.env.local scripts/restore.ts"
+    "restore": "tsx --env-file-if-exists=.env.local scripts/restore.ts",
+    "fix-arabic": "tsx --env-file-if-exists=.env.local scripts/fix-arabic.ts"
   },
   "overrides": {
     "@swc/core": "1.16.2"
