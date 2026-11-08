@@ -3,6 +3,7 @@ import {
   AppWindow,
   BookOpen,
   ClipboardCheck,
+  FileText,
   FolderKanban,
   GitPullRequestArrow,
   Inbox,
@@ -30,6 +31,7 @@ export type NavItem = {
     | "knowledge"
     | "changes"
     | "workstationChecks"
+    | "itForms"
     | "assets"
     | "cmdb"
     | "software"
@@ -71,6 +73,7 @@ export const NAV: NavGroup[] = [
       { key: "knowledge", href: "/knowledge", icon: BookOpen },
       { key: "changes", href: "/changes", icon: GitPullRequestArrow },
       { key: "workstationChecks", href: "/workstation-checks", icon: ClipboardCheck },
+      { key: "itForms", href: "/it-forms", icon: FileText },
     ],
   },
   {

@@ -48,6 +48,7 @@ import type {
   VulnStatus,
 } from "@/lib/domain";
 import type { FontChoice } from "@/lib/id-card";
+import type { ItFormKind } from "@/lib/it-forms";
 import type { KpiFilter } from "@/lib/kpi-register";
 import type { LayerRole } from "@/lib/svg-plan";
 import type { ToolAccessState, ToolKey } from "@/lib/tools";
@@ -620,6 +621,30 @@ export const workstationChecks = pgTable(
     readOn: text(),
   },
   (t) => [index().on(t.employeeId), index().on(t.computerName), index().on(t.assetId)],
+);
+
+// ---------------------------------------------------------------- IT forms
+
+/**
+ * One of IT's paper forms as filled in the app (incident/repair, IT & ERP request, credentials,
+ * scheduled maintenance), kept to print again. `data` is the form's fields, checked by its schema
+ * in lib/it-forms; `employeeName` is who it is about, as the form names them.
+ */
+export const itForms = pgTable(
+  "it_forms",
+  {
+    id: id(),
+    kind: text().$type<ItFormKind>().notNull(),
+    employeeId: integer().references(() => employees.id, { onDelete: "set null" }),
+    employeeName: text().notNull().default(""),
+    assetId: integer().references(() => assets.id, { onDelete: "set null" }),
+    data: jsonb().$type<Record<string, unknown>>().notNull(),
+    createdBy: text().references(() => users.id, { onDelete: "set null" }),
+    createdByName: text().notNull(),
+    createdAt: createdAt(),
+    updatedAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index().on(t.employeeId), index().on(t.kind)],
 );
 
 // ---------------------------------------------------------------- floor plans

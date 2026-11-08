@@ -25,6 +25,7 @@ const APIS = {
     "/api/changes",
     "/api/workstation-checks",
     "/api/workstation-checks/checklist",
+    "/api/it-forms",
     "/api/assets",
     "/api/discovery",
     "/api/relationships",

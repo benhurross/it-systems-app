@@ -25,6 +25,7 @@ export const IT = [
   "/changes",
   "/changes/:change",
   "/workstation-checks",
+  "/it-forms",
   "/assets",
   "/assets/:asset",
   "/assets/inventory",

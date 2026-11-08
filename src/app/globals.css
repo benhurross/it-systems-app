@@ -345,3 +345,26 @@
   animation-duration: 0.7s;
   animation-timing-function: ease-in-out;
 }
+
+/* An IT form prints alone, on its A4 sheet, with its colours as on screen. */
+.it-form-sheet {
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+@media print {
+  @page {
+    size: A4;
+    margin: 0;
+  }
+  body:has(.it-form-sheet) * {
+    visibility: hidden;
+  }
+  body:has(.it-form-sheet) .it-form-sheet,
+  body:has(.it-form-sheet) .it-form-sheet * {
+    visibility: visible;
+  }
+  body:has(.it-form-sheet) .it-form-sheet {
+    position: fixed;
+    inset: 0 auto auto 0;
+  }
+}

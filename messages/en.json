@@ -58,6 +58,7 @@
     "knowledge": "Knowledge Base",
     "changes": "Changes",
     "workstationChecks": "Workstation checks",
+    "itForms": "IT forms",
     "assets": "Assets",
     "cmdb": "CMDB",
     "software": "Software",
@@ -971,6 +972,35 @@
       "read": "I've read it",
       "thanks": "Thank you."
     }
+  },
+  "itForms": {
+    "title": "IT forms",
+    "description": "IT's paper forms, filled in here: the employee's and the asset's details come from the app. Print the sheet, or save it as a PDF from the print window, and sign it by hand.",
+    "new": "New form",
+    "kinds": {
+      "incident_repair": "IT Incident / Repair Form",
+      "it_request": "IT Services & ERP Request Form",
+      "credentials": "Employee Credential Information",
+      "maintenance": "Scheduled Maintenance Report"
+    },
+    "editTitle": "Edit: {form}",
+    "save": "Save",
+    "cancel": "Cancel",
+    "saved": "Form saved.",
+    "employee": "Employee",
+    "employeeHint": "Choose someone from the directory to fill in their details; any field can then be corrected.",
+    "asset": "Asset",
+    "assetHint": "Choose the computer from the inventory to fill in its details.",
+    "date": "Date",
+    "form": "Form",
+    "filledBy": "Filled in by",
+    "none": "No forms yet.",
+    "back": "All IT forms",
+    "print": "Print",
+    "edit": "Edit",
+    "printHint": "Print sends the sheet alone to the printer. To keep a PDF, choose \"Save as PDF\" as the printer in the print window.",
+    "filled": "Filled in by {by}, {date}",
+    "clear": "Clear"
   },
   "assets": {
     "title": "Assets",

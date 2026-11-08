@@ -1,6 +1,7 @@
 "use client";
 
 import { WorkstationChecksCard } from "@/components/workstation/checks-card";
+import { ItFormsCard } from "@/components/it-forms/forms-card";
 import { ArrowLeft, IdCard, Mail, Pencil, Phone, Smartphone } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { use, useState } from "react";
@@ -134,7 +135,10 @@ export default function EmployeePage({ params }: PageProps<"/[locale]/people/dir
           </CardContent>
         </Card>
       </div>
-      <WorkstationChecksCard employeeId={person.id} />
+      <div className="grid gap-6 lg:grid-cols-2">
+        <WorkstationChecksCard employeeId={person.id} />
+        <ItFormsCard employeeId={person.id} />
+      </div>
       {dialog === "edit" && <EmployeeDialog employee={person} onClose={() => setDialog(null)} />}
       {dialog === "card" && <NewCardDialog employeeId={person.id} onClose={() => setDialog(null)} />}
     </div>
