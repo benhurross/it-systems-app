@@ -87,7 +87,7 @@ The tasks are named "AP IT System" and "AP IT System backup". You can see them i
 scripts\windows\update.cmd
 ```
 
-On Linux: `bash scripts/linux/update.sh`.
+On Linux: `bash scripts/linux/update.sh`. It gets the new version before stopping the app, reinstalls packages only when their list has changed, and shows how long each step took.
 
 The update script does the following, in order:
 1. Makes a backup.

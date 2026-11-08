@@ -89,7 +89,7 @@ For Podman or rootless Docker, use `systemctl --user` instead of `sudo systemctl
 bash scripts/linux/update.sh
 ```
 
-It makes a backup, stops the app, gets the new version (`git pull`), installs packages (`npm ci`), updates the database (`npm run db:migrate`), builds, and starts the app again. If any step fails, it stops there and says why.
+It makes a backup and gets the new version (`git pull`) while the app keeps running, then stops the app, installs packages (`npm ci`, only when the list of packages has changed since the last install), updates the database (`npm run db:migrate`), builds, and starts the app again. Each step shows how long it took. If any step fails, it stops there and says why.
 
 ## 5. Firewall and SELinux
 
