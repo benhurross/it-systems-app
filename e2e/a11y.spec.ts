@@ -133,8 +133,9 @@ test.describe("the display card", () => {
       for (const choice of mode.locale === "ar" ? ["فاتح", "داكن", "حسب النظام"] : ["Light", "Dark", "System"]) {
         await page.getByRole("radio", { name: choice }).click();
         await expect(page.getByRole("radio", { name: choice })).toHaveAttribute("aria-checked", "true");
-        // The page cross-fades between themes: its colours are checked once the fade is over.
-        await page.waitForFunction(() => !document.getAnimations().some((a) => a.playState === "running" && ((a.effect as KeyframeEffect | null)?.pseudoElement ?? "").startsWith("::view-transition")));
+        // The page cross-fades between themes, and its controls ease into their new colours: the colours
+        // are checked once every fade is over (looping animations, such as the background's glow, aside).
+        await page.waitForFunction(() => !document.getAnimations().some((a) => a.playState === "running" && a.effect?.getTiming().iterations !== Infinity));
         found.push(...(await problems(page, mode)));
       }
       await page.keyboard.press("Escape");
