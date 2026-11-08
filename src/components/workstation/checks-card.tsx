@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { EnumBadge } from "@/components/badges";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useApi } from "@/hooks/use-api";
 import { useFormat } from "@/hooks/use-format";
 import { Link } from "@/i18n/navigation";
@@ -22,14 +22,8 @@ export function WorkstationChecksCard({ assetId, employeeId }: { assetId?: numbe
   const { data } = useApi<WorkstationCheckRow[]>(`/workstation-checks?${query}`);
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between gap-2">
+      <CardHeader>
         <CardTitle>{t("title")}</CardTitle>
-        {assetId && (
-          <Button variant="outline" size="sm" onClick={() => setCreating(true)}>
-            <Plus />
-            {t("new")}
-          </Button>
-        )}
       </CardHeader>
       <CardContent>
         {!data ? null : data.length === 0 ? (
@@ -56,6 +50,14 @@ export function WorkstationChecksCard({ assetId, employeeId }: { assetId?: numbe
           </ul>
         )}
       </CardContent>
+      {assetId && (
+        <CardFooter>
+          <Button variant="outline" size="sm" onClick={() => setCreating(true)}>
+            <Plus />
+            {t("new")}
+          </Button>
+        </CardFooter>
+      )}
       {creating && assetId && <CheckDialog assetId={assetId} onClose={() => setCreating(false)} />}
     </Card>
   );
