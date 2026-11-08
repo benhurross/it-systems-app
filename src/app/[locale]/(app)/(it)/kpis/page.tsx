@@ -1,6 +1,6 @@
 "use client";
 
-import { Download, Info, Pencil, Plus, Upload } from "lucide-react";
+import { CalendarClock, Download, Info, Pencil, Plus, Upload } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Fragment, useMemo, useState } from "react";
 import { useCurrentUser } from "@/components/app-shell/current-user";
@@ -11,6 +11,7 @@ import { KpiDialog } from "@/components/kpis/kpi-dialog";
 import { showKpi } from "@/components/kpis/show";
 import { PageHeader } from "@/components/page-header";
 import { StatusBadge } from "@/components/status-badge";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -31,6 +32,7 @@ import { useApi } from "@/hooks/use-api";
 import { useFormat } from "@/hooks/use-format";
 import type { KpiRegister, KpiRow } from "@/lib/api-types";
 import type { KpiCell } from "@/lib/kpi-register";
+import { kpiFrequency } from "@/lib/kpis";
 import { can } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
 
@@ -328,10 +330,23 @@ export default function KpisPage() {
                                 >
                                   {nameOf(kpi)}
                                 </span>
-                                <span className="block text-xs text-muted-foreground">
-                                  {kpi.source === "manual"
-                                    ? t("kpis.entered")
-                                    : t("kpis.fromTickets")}
+                                <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+                                  <Badge
+                                    variant="outline"
+                                    className="font-normal text-muted-foreground"
+                                    title={t("kpis.frequencyLabel")}
+                                  >
+                                    <CalendarClock aria-hidden />
+                                    <span className="sr-only">
+                                      {t("kpis.frequencyLabel")}:{" "}
+                                    </span>
+                                    {kpiFrequency(kpi, locale)}
+                                  </Badge>
+                                  <span>
+                                    {kpi.source === "manual"
+                                      ? t("kpis.entered")
+                                      : t("kpis.fromTickets")}
+                                  </span>
                                 </span>
                               </span>
                               <KpiInfo kpi={kpi} />
