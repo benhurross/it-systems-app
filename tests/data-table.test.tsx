@@ -1,6 +1,6 @@
 import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { columnHelper, DataTable } from "@/components/data-table";
 import { renderWithProviders } from "./helpers/render";
 
@@ -33,6 +33,9 @@ const facets = [
 const bodyRows = () => within(screen.getAllByRole("rowgroup")[1]).getAllByRole("row");
 
 describe("DataTable", () => {
+  // The table keeps its state in the address, which the tests' one window shares.
+  beforeEach(() => window.history.replaceState(null, "", "/"));
+
   it("pages through rows and reports the range", async () => {
     const user = userEvent.setup();
     renderWithProviders(<DataTable data={assets} columns={columns} pageSize={10} />);
@@ -89,5 +92,20 @@ describe("DataTable", () => {
     expect(screen.getByRole("button", { name: "Audit report" })).toBeDisabled();
     rerender(<DataTable data={assets} columns={columns} csv={csv} />);
     expect(screen.getByRole("button", { name: "Audit report" })).toBeEnabled();
+  });
+
+  it("keeps its search, filters, sort and page in the address, and starts from it", async () => {
+    const user = userEvent.setup();
+    const { unmount } = renderWithProviders(<DataTable data={assets} columns={columns} facets={facets} pageSize={10} />);
+    await user.type(screen.getByRole("textbox", { name: "Filter rows" }), "Printer");
+    await user.click(screen.getAllByRole("button", { name: /Status/ })[0]);
+    await user.click(await screen.findByRole("menuitemcheckbox", { name: /In use/ }));
+    await user.keyboard("{Escape}");
+    expect(window.location.search).toBe("?q=Printer&f.status=in_use");
+    unmount();
+    // Coming back: the list is as it was left.
+    renderWithProviders(<DataTable data={assets} columns={columns} facets={facets} pageSize={10} />);
+    expect(await screen.findByDisplayValue("Printer")).toBeInTheDocument();
+    expect(bodyRows().every((r) => r.textContent!.includes("Printer") && r.textContent!.includes("in_use"))).toBe(true);
   });
 });
