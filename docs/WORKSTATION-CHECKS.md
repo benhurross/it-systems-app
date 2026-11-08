@@ -4,7 +4,9 @@ IT records each desk check in the app (**Service desk → Workstation checks**).
 the result once: in a window at their next Windows sign-in, and on their home page in the app,
 until they click **I've read it**. IT sees who has read theirs, and when, on the check's page.
 
-This guide sets up the Windows side: one PowerShell script, run at sign-in by Group Policy.
+This guide sets up the Windows side: one PowerShell script, run at sign-in by Group Policy. The
+same script also reports each PC to **Asset Discovery** (see below), so a PC that was renamed, moved
+to another address or never recorded shows up there.
 
 ## What the script does, and does not do
 
@@ -14,8 +16,26 @@ This guide sets up the Windows side: one PowerShell script, run at sign-in by Gr
   account (or this computer)?" If the app does not answer within 8 seconds, it gives up quietly.
 - It shows the result as plain text in a window (English and Arabic), and when the person clicks
   **I've read it** it tells the app. Closed any other way, the window shows again next sign-in.
+- The window's foot says which PC it is on: `This PC: FIN-PC-07 | 192.168.0.57`.
 - Problems (app off, network down, wrong key) are written to `%TEMP%\WorkstationMessage.log` on
   that PC, for IT, and nothing is shown to the user.
+
+## PCs seen at sign-in (Asset Discovery)
+
+At every sign-in, message or not, the script also sends the PC's Windows name, its serial number
+(from the BIOS) and the MAC of the network card it uses, with the account that signed in. The app
+adds the address the PC connected from.
+
+- **Asset Discovery → Seen at sign-in** lists every PC that has reported, matched to its asset by
+  serial number first (it survives a rename or a reinstall), then MAC, then name. Each is marked
+  **Matches**, **Name changed** ("the asset says DT-001, Windows says FIN-PC-07"), **IP changed**,
+  **MAC changed** or **Not in inventory**. **Update asset** takes the PC's name, address and MAC
+  into its asset (recorded in the audit log); **Add to inventory** opens a new asset with them filled in.
+- The asset's own page shows what its PC last reported, under **Seen at sign-in**.
+- Only the latest report of each PC is kept: no history of who signed in where.
+- The address comes from the connection to the app. Like the rest of the report, it could only be
+  falsified by an edited copy of the script, which is why the script lives on NETLOGON, where only
+  domain admins can change it, and is best signed (step 5).
 
 ## How the app knows who signed in
 

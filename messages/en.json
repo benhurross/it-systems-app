@@ -1191,7 +1191,37 @@
     "noRuns": "No scans yet. Enter a range to start.",
     "noHosts": "No devices answered in this range.",
     "startedBy": "Started by {name}",
-    "foundCount": "Devices found: {found}"
+    "foundCount": "Devices found: {found}",
+    "signIn": {
+      "title": "Seen at sign-in",
+      "hint": "Each time someone signs in to a domain PC, the sign-in script (see docs/WORKSTATION-CHECKS.md) reports the PC's Windows name, serial number and MAC, and the app notes the address it came from. Only the latest report of each PC is kept. PCs are matched to the inventory by serial number, then MAC, then name, so a PC that was renamed or moved still finds its asset.",
+      "toLookAt": "{count, plural, one {# to look at} other {# to look at}}",
+      "none": "No PC has reported yet. The sign-in script reports each PC once it is set up with Group Policy.",
+      "windowsName": "Windows name",
+      "asset": "Asset",
+      "ip": "IP address",
+      "lastSignIn": "Last sign-in",
+      "status": "Status",
+      "actions": "Actions",
+      "matchedBy": {
+        "serial": "matched by serial number",
+        "mac": "matched by MAC",
+        "name": "matched by name"
+      },
+      "notInInventory": "Not in inventory",
+      "nameChanged": "Name changed",
+      "ipChanged": "IP changed",
+      "macChanged": "MAC changed",
+      "matches": "Matches",
+      "add": "Add to inventory",
+      "update": "Update asset",
+      "updateLabel": "Update {asset} from what the PC reported",
+      "updated": "Asset updated from the PC's report.",
+      "cardTitle": "Seen at sign-in",
+      "signedIn": "Signed in",
+      "seen": "Last reported {when}",
+      "review": "Review in Asset Discovery"
+    }
   },
   "cmdb": {
     "title": "CMDB",

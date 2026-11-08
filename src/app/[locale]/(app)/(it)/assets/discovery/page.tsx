@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { useState, type FormEvent } from "react";
 import { AssetDialog, type AssetInput } from "@/components/assets/asset-dialog";
 import { AssetsHeader } from "@/components/assets/assets-header";
+import { SeenAtSignIn } from "@/components/assets/seen-at-sign-in";
 import { EmptyState } from "@/components/empty-state";
 import { StatusBadge, type Tone } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
@@ -175,6 +176,7 @@ export default function DiscoveryPage() {
           </CardContent>
         </Card>
       )}
+      <SeenAtSignIn />
       {adding && <AssetDialog initial={guess(adding)} onClose={() => setAdding(null)} />}
     </>
   );

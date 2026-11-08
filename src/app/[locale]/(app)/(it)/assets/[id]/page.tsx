@@ -6,6 +6,7 @@ import { use, useState, type ReactNode } from "react";
 import { AttachmentList, AttachmentsCard } from "@/components/attachments";
 import { AssetPhoto } from "@/components/assets/asset-photo";
 import { OnPlansCard } from "@/components/network/floor-plan/on-plans-card";
+import { SignInCard } from "@/components/assets/sign-in-card";
 import { WorkstationChecksCard } from "@/components/workstation/checks-card";
 import { AnydeskConnect } from "@/components/assets/anydesk-connect";
 import { AssetDialog, toAssetInput } from "@/components/assets/asset-dialog";
@@ -205,6 +206,7 @@ export default function AssetPage({ params }: PageProps<"/[locale]/assets/[id]">
             )}
           </AttachmentsCard>
           <OnPlansCard assetId={asset.id} />
+          <SignInCard asset={asset} />
           <WorkstationChecksCard assetId={asset.id} />
           <Card>
             <CardHeader>

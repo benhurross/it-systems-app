@@ -139,3 +139,55 @@ describe("in the app", () => {
     expect(await checks.getWorkstationCheck(unread.id)).toMatchObject({ readBy: employee.name, readOn: "app" });
   });
 });
+
+describe("PCs seen at sign-in", async () => {
+  const sightings = await import("@/server/services/device-sightings");
+  const signInAs = (body: object, ip = "192.168.0.57") =>
+    message.POST(
+      new Request("http://localhost/api/public/workstation/message", {
+        method: "POST",
+        headers: { "content-type": "application/json", authorization: `Bearer ${workstationKey}`, "x-forwarded-for": ip },
+        body: JSON.stringify(body),
+      }),
+      undefined,
+    );
+
+  it("are recorded at each sign-in, matched to their asset by serial, and the address handed back", async () => {
+    const [renamed] = await db.insert(assets).values({ name: "DT-RENAMED-01", serial: "5CD-TEST-001", category: "end_user", type: "desktop", location: "jeddah", status: "in_use", ipAddress: "192.168.0.10" }).returning({ id: assets.id });
+    const res = await signInAs({ upn: "employee@applus.test", user: "employee", computer: "FIN-PC-07", serial: "5CD-TEST-001", mac: "AA-BB-CC-00-00-07" });
+    expect(((await res.json()) as { device: unknown }).device).toEqual({ ip: "192.168.0.57", computer: "FIN-PC-07" });
+    const seen = (await sightings.listSightings()).find((s) => s.computerName === "FIN-PC-07")!;
+    expect(seen).toMatchObject({ assetId: renamed.id, matchedBy: "serial", ip: "192.168.0.57", mac: "aa:bb:cc:00:00:07", account: "employee@applus.test" });
+    expect(seen.changes).toEqual({ notInInventory: false, name: true, ip: true, mac: true });
+
+    // Signed in again from another address: the same row, the latest report.
+    await signInAs({ upn: "it@applus.test", user: "it", computer: "FIN-PC-07", serial: "5CD-TEST-001" }, "192.168.0.58");
+    const again = (await sightings.listSightings()).filter((s) => s.computerName === "FIN-PC-07");
+    expect(again).toHaveLength(1);
+    expect(again[0]).toMatchObject({ ip: "192.168.0.58", account: "it@applus.test" });
+
+    // IT takes the PC's name and address into the asset.
+    await sightings.applySighting(again[0].id, ["name", "ip"], admin);
+    const [asset] = await db.select().from(assets).where(eq(assets.id, renamed.id));
+    expect(asset).toMatchObject({ name: "FIN-PC-07", ipAddress: "192.168.0.58" });
+    expect((await sightings.sightingOfAsset(renamed.id))?.computerName).toBe("FIN-PC-07");
+  });
+
+  it("shows a PC the inventory does not have, and finds its asset once it is added", async () => {
+    await signInAs({ upn: "", user: "APPLUS\\temp", computer: "NEW-LAPTOP-9", serial: "To be filled by O.E.M.", mac: "AA-BB-CC-00-00-09" });
+    const fresh = (await sightings.listSightings()).find((s) => s.computerName === "NEW-LAPTOP-9")!;
+    expect(fresh).toMatchObject({ serial: null, assetId: null, deviceKey: "mac:aa:bb:cc:00:00:09" });
+    expect(fresh.changes.notInInventory).toBe(true);
+    await expect(sightings.applySighting(fresh.id, ["name"], admin)).rejects.toThrow();
+    await db.insert(assets).values({ name: "NEW-LAPTOP-9", category: "end_user", type: "laptop", location: "jeddah", status: "in_use", macAddress: "aa:bb:cc:00:00:09" });
+    const found = (await sightings.listSightings()).find((s) => s.computerName === "NEW-LAPTOP-9")!;
+    expect(found.matchedBy).toBe("mac");
+    expect(found.changes.notInInventory).toBe(false);
+  });
+
+  it("are not recorded without the workstation key", async () => {
+    const res = await message.POST(post("/api/public/workstation/message", null, { computer: "SNEAKY-PC" }), undefined);
+    expect(res.status).toBe(401);
+    expect((await sightings.listSightings()).some((s) => s.computerName === "SNEAKY-PC")).toBe(false);
+  });
+});

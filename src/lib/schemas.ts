@@ -130,6 +130,9 @@ export const workstationSignIn = z.object({
   upn: z.string().trim().max(200).default(""),
   user: z.string().trim().max(100).default(""),
   computer: z.string().trim().min(1).max(64),
+  /** The PC's serial number (from its BIOS) and MAC, for matching it to the inventory. */
+  serial: z.string().trim().max(100).optional(),
+  mac: z.string().trim().max(40).optional(),
 });
 
 export const workstationRead = workstationSignIn.extend({ code: z.string().min(16).max(100) });

@@ -1,4 +1,5 @@
 import { and, asc, desc, eq, getTableColumns, or } from "drizzle-orm";
+import { sightingOfAsset } from "./device-sightings";
 import { alias } from "drizzle-orm/pg-core";
 import type { z } from "zod";
 import { ref } from "@/lib/domain";
@@ -34,7 +35,7 @@ const toEmployee = alias(employees, "to_employee");
 /** One asset with its history, relations, installed software and tickets. */
 export async function getAsset(id: number) {
   const asset = one(await withHolder().where(eq(assets.id, id)));
-  const [movements, related, software, recentTickets] = await Promise.all([
+  const [movements, related, software, recentTickets, signIn] = await Promise.all([
     db
       .select({
         ...getTableColumns(assetMovements),
@@ -59,8 +60,9 @@ export async function getAsset(id: number) {
       .where(eq(tickets.assetId, id))
       .orderBy(desc(tickets.createdAt))
       .limit(10),
+    sightingOfAsset(id),
   ]);
-  return { ...asset, movements, relationships: related, software, tickets: recentTickets };
+  return { ...asset, movements, relationships: related, software, tickets: recentTickets, signIn };
 }
 
 export async function createAsset(input: z.infer<typeof assetInput>, actor: Actor) {

@@ -1,10 +1,11 @@
 ﻿<#
   AP Plus IT: workstation check message at Windows sign-in.
 
-  Runs as the signed-in user (no admin rights). It asks the IT app whether IT has a workstation
-  check result this person has not read yet; if so it shows it in a window, and "I've read it"
-  tells the app. Nothing is installed or kept on the PC. If the app does not answer within a few
-  seconds, it quietly does nothing.
+  Runs as the signed-in user (no admin rights). At each sign-in it tells the IT app this PC's name,
+  serial number and MAC (so Asset Discovery can match it to its asset, even when renamed), and asks
+  whether IT has a workstation check result this person has not read yet; if so it shows it in a
+  window, and "I've read it" tells the app. Nothing is installed or kept on the PC. If the app does
+  not answer within a few seconds, it quietly does nothing.
 
   Set up: see docs/WORKSTATION-CHECKS.md. Fill in the two values below first.
 #>
@@ -22,12 +23,22 @@ $WaitSeconds = 20
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version 2
 
-# Who signed in: the account's UPN (name@applus.com.sa), its short name, and the computer.
+# Who signed in: the account's UPN (name@applus.com.sa), its short name, and the computer, with
+# the PC's serial number (from its BIOS) and the MAC of the network card it uses.
 function Get-SignIn {
     $upn = ""
     try { $upn = (& whoami.exe /upn 2>$null | Out-String).Trim() } catch { $upn = "" }
     if ($upn -notmatch "@") { $upn = "" }
-    return @{ upn = $upn; user = "$env:USERDOMAIN\$env:USERNAME"; computer = $env:COMPUTERNAME }
+    $serial = ""
+    try { $serial = [string](Get-CimInstance -ClassName Win32_BIOS -ErrorAction Stop).SerialNumber } catch { $serial = "" }
+    $mac = ""
+    try {
+        # The card with a default gateway is the one on the office network.
+        $nic = Get-CimInstance -ClassName Win32_NetworkAdapterConfiguration -Filter "IPEnabled = TRUE" -ErrorAction Stop |
+            Where-Object { $_.DefaultIPGateway } | Select-Object -First 1
+        if ($nic) { $mac = [string]$nic.MACAddress }
+    } catch { $mac = "" }
+    return @{ upn = $upn; user = "$env:USERDOMAIN\$env:USERNAME"; computer = $env:COMPUTERNAME; serial = $serial.Trim(); mac = $mac }
 }
 
 # One call to the app. The reply is read as UTF-8 here, so Arabic arrives intact.
@@ -52,8 +63,8 @@ function New-Text([string]$Text, [double]$Size = 14, [string]$Weight = "Normal",
     return $block
 }
 
-# Shows one message; true when the person clicked "I've read it".
-function Show-Message($m) {
+# Shows one message; true when the person clicked "I've read it". $device: this PC as the app saw it.
+function Show-Message($m, $device) {
     $passed = $m.result -eq "passed"
     $accent = if ($passed) { "#046B5A" } else { "#B45309" }
     $soft = if ($passed) { "#E6F4F1" } else { "#FFF4E0" }
@@ -95,7 +106,15 @@ function Show-Message($m) {
     $button.IsDefault = $true
     $button.Background = $accent
     $button.Foreground = "White"
-    $footer.Child = $button
+    $foot = New-Object System.Windows.Controls.DockPanel
+    $here = New-Text ("This PC: " + $device.computer + $(if ($device.ip) { "  |  " + $device.ip } else { "" })) 12
+    $here.Foreground = "#4B5563"
+    $here.Margin = "0"
+    $here.VerticalAlignment = "Center"
+    [System.Windows.Controls.DockPanel]::SetDock($button, "Right")
+    [void]$foot.Children.Add($button)
+    [void]$foot.Children.Add($here)
+    $footer.Child = $foot
     [void]$outer.Children.Add($footer)
 
     $scroll = New-Object System.Windows.Controls.ScrollViewer
@@ -150,7 +169,7 @@ try {
         $reply = Invoke-App "/api/public/workstation/message" $signIn
         if (-not $reply.message) { break }
         $m = $reply.message
-        if (-not (Show-Message $m)) { break }
+        if (-not (Show-Message $m $reply.device)) { break }
         $ack = $signIn.Clone()
         $ack.code = $m.code
         [void](Invoke-App "/api/public/workstation/message/$($m.id)/read" $ack)

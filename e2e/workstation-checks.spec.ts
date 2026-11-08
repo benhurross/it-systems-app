@@ -112,3 +112,48 @@ test.describe("a check shown at Windows sign-in", () => {
     console.assertClean();
   });
 });
+
+test.describe("PCs seen at sign-in", () => {
+  test.use({ storageState: session("admin") });
+
+  test("a renamed PC shows in Asset Discovery, and its asset takes the new name", async ({ page }, info) => {
+    const console = watchConsole(page);
+    await page.goto("/en/settings/api");
+    await page.getByLabel("Name").fill(unique(info, "Sign-in script"));
+    await page.getByRole("combobox", { name: "Used for" }).click();
+    await page.getByRole("option", { name: "Workstation messages" }).click();
+    await page.getByRole("button", { name: "Make a key" }).click();
+    const key = (await page.getByRole("status").locator("code").textContent())!.trim();
+
+    const stamp = `${info.workerIndex}${Date.now() % 100_000}`;
+    const oldName = `DT-OLD-${stamp}`;
+    const newName = `FIN-PC-${stamp}`;
+    const res = await page.request.post("/api/assets", {
+      data: { name: oldName, serial: `SN-E2E-${stamp}`, category: "end_user", type: "desktop", status: "in_use", location: "jeddah", supportStatus: "supported", criticality: "medium", monitorMethod: "none" },
+    });
+    expect(res.ok(), await res.text()).toBe(true);
+    const assetId = ((await res.json()) as { id: number }).id;
+
+    const signIn = await page.request.post("/api/public/workstation/message", {
+      data: { upn: "employee@applus.test", user: "employee", computer: newName, serial: `SN-E2E-${stamp}`, mac: "AA-BB-CC-DD-EE-77" },
+      headers: { authorization: `Bearer ${key}` },
+    });
+    expect(signIn.ok(), await signIn.text()).toBe(true);
+    expect(((await signIn.json()) as { device: { computer: string } }).device.computer).toBe(newName);
+
+    await page.goto("/en/assets/discovery");
+    const row = page.getByRole("row").filter({ hasText: newName });
+    await expect(row).toContainText(oldName);
+    await expect(row).toContainText("Name changed");
+    await expect(row).toContainText("matched by serial number");
+    await row.getByRole("button", { name: `Update ${oldName} from what the PC reported` }).click();
+    await expect(page.getByText("Asset updated from the PC's report.")).toBeVisible();
+    await expect(page.getByRole("row").filter({ hasText: newName })).toContainText("Matches");
+
+    await page.goto(`/en/assets/${assetId}`);
+    await expect(page.getByRole("heading", { level: 1 })).toContainText(newName);
+    const card = page.locator("[data-slot='card']").filter({ has: page.locator("[data-slot='card-title']", { hasText: /^Seen at sign-in$/ }) });
+    await expect(card).toContainText("employee@applus.test");
+    console.assertClean();
+  });
+});

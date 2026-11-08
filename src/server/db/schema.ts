@@ -623,6 +623,32 @@ export const workstationChecks = pgTable(
   (t) => [index().on(t.employeeId), index().on(t.computerName), index().on(t.assetId)],
 );
 
+// ---------------------------------------------------------------- devices seen at sign-in
+
+/**
+ * The latest a Windows PC said of itself when someone signed in to it (the sign-in script): its
+ * name, serial number and MAC, the address it came from, and who signed in. One row per PC, kept
+ * by `deviceKey` (its serial, else its MAC, else its name), overwritten each time: no history.
+ * `assetId` is the inventory record it matched, by serial, then MAC, then name.
+ */
+export const deviceSightings = pgTable(
+  "device_sightings",
+  {
+    id: id(),
+    deviceKey: text().notNull().unique(),
+    computerName: text().notNull(),
+    serial: text(),
+    mac: text(),
+    ip: text(),
+    account: text().notNull().default(""),
+    assetId: integer().references(() => assets.id, { onDelete: "set null" }),
+    matchedBy: text().$type<"serial" | "mac" | "name">(),
+    firstSeenAt: createdAt(),
+    seenAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index().on(t.assetId)],
+);
+
 // ---------------------------------------------------------------- IT forms
 
 /**
