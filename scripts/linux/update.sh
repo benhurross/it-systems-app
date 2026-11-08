@@ -39,7 +39,7 @@ set -euo pipefail
   install_packages() {
     local want
     want="$(sha256sum package-lock.json | cut -d' ' -f1)"
-    if [ -d node_modules ] && [ "$(cat "$LOCK_STAMP" 2>/dev/null)" = "$want" ]; then
+    if [ "${1:-}" != force ] && [ -d node_modules ] && [ "$(cat "$LOCK_STAMP" 2>/dev/null)" = "$want" ]; then
       echo "   The packages have not changed: nothing to install."
       return 0
     fi
@@ -48,6 +48,15 @@ set -euo pipefail
   }
 
   started=$SECONDS
+  # An update stopped halfway through installing leaves the packages incomplete, and the backup
+  # needs them: they are put back first.
+  if [ ! -x node_modules/.bin/tsx ] || [ ! -x node_modules/.bin/next ]; then
+    echo "The packages are incomplete (an update stopped halfway?), so they are installed first."
+    step "Installing packages" install_packages force || {
+      echo "Installing the packages failed, so nothing was updated."
+      exit 1
+    }
+  fi
   if ! step "Making a backup first" npm run backup; then
     echo "The backup failed, so nothing was updated. The app is still running."
     exit 1
