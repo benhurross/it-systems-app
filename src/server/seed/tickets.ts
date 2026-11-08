@@ -391,34 +391,67 @@ const findPerson = (fix: PersonFix, people: Person[]) =>
 /** Who wrote a ticket's history when it came from the log. */
 const FROM_LOG = "Ticket log";
 
+/** How a log ticket loaded under another number says so in its history: "(from the ticket log as IT001636)". */
+const AS_IN_LOG = /\(from the ticket log as IT0*(\d+)\)/;
+
 /**
  * With `add`, the log's tickets are added to those in the app instead of replacing them: a ticket
- * the log has already loaded is brought up to date, and a ticket made in the app whose number the
- * log uses moves to a new number after the last, with its comments, emails and history.
+ * the log has already loaded is brought up to date. Where a ticket made in the app holds a number
+ * the log uses, either the app's ticket moves to a new number after the last, with its comments,
+ * emails and history (the default), or, with `renumberLog`, the app's ticket keeps its number (it
+ * may have been emailed to people) and the log's ticket takes a new number instead, remembered in
+ * its history so a later log does not load it twice.
  */
-async function addPlan(tickets: LoggedTicket[]) {
+async function addPlan(tickets: LoggedTicket[], renumberLog = false) {
   const numbers = tickets.map((t) => t.number);
-  const taken = numbers.length ? await db.select({ id: s.tickets.id }).from(s.tickets).where(inArray(s.tickets.id, numbers)) : [];
+  const taken = numbers.length ? await db.select({ id: s.tickets.id, subject: s.tickets.subject }).from(s.tickets).where(inArray(s.tickets.id, numbers)) : [];
   const ids = taken.map((t) => t.id);
   const logged = ids.length
     ? await db
-        .selectDistinct({ id: s.auditLog.entityId })
+        .selectDistinct({ id: s.auditLog.entityId, summary: s.auditLog.summary })
         .from(s.auditLog)
         .where(sql`${s.auditLog.entity} = 'ticket' AND ${s.auditLog.action} = 'create' AND ${s.auditLog.userName} = ${FROM_LOG} AND ${inArray(s.auditLog.entityId, ids.map(String))}`)
     : [];
-  const fromLog = new Set(logged.map((l) => Number(l.id)));
+  // Loaded from the log under its own number (not as another log number).
+  const fromLog = new Set(logged.filter((l) => !AS_IN_LOG.test(l.summary)).map((l) => Number(l.id)));
+  // Log tickets loaded before under a new number: the log's number → the app's.
+  const elsewhere = new Map(
+    (
+      await db
+        .select({ id: s.auditLog.entityId, summary: s.auditLog.summary })
+        .from(s.auditLog)
+        .where(sql`${s.auditLog.entity} = 'ticket' AND ${s.auditLog.action} = 'create' AND ${s.auditLog.userName} = ${FROM_LOG} AND ${s.auditLog.summary} LIKE '%(from the ticket log as IT%'`)
+    ).map((l) => [Number(AS_IN_LOG.exec(l.summary)![1]), Number(l.id)]),
+  );
   const [{ last }] = await db.select({ last: sql<number>`coalesce(max(${s.tickets.id}), 0)::int` }).from(s.tickets);
   let next = Math.max(last, ...numbers, 0);
-  const moves = ids
-    .filter((id) => !fromLog.has(id))
-    .sort((a, b) => a - b)
-    .map((from) => ({ from, to: ++next }));
-  return { updated: ids.filter((id) => fromLog.has(id)), moves };
+  const subjectOf = new Map(taken.map((t) => [t.id, t.subject]));
+  const updated: { number: number; id: number }[] = [];
+  const clashes: number[] = [];
+  for (const n of numbers) {
+    if (elsewhere.has(n)) updated.push({ number: n, id: elsewhere.get(n)! });
+    else if (fromLog.has(n)) updated.push({ number: n, id: n });
+    else if (subjectOf.has(n)) clashes.push(n);
+  }
+  clashes.sort((a, b) => a - b);
+  const logSubject = new Map(tickets.map((t) => [t.number, t.subject]));
+  const conflicts = clashes.map((n) => ({ number: n, app: subjectOf.get(n)!, log: logSubject.get(n)! }));
+  if (renumberLog) {
+    const renumbered = clashes.map((from) => ({ from, to: ++next }));
+    return { updated, moves: [], renumbered, conflicts };
+  }
+  return { updated, moves: clashes.map((from) => ({ from, to: ++next })), renumbered: [], conflicts };
 }
 
 export async function importTickets(
   tickets: LoggedTicket[],
-  { replace, add = false, plan: planAdd = add, people: fixes = [] }: { replace: boolean; add?: boolean; plan?: boolean; people?: PersonFix[] },
+  {
+    replace,
+    add = false,
+    plan: planAdd = add,
+    people: fixes = [],
+    renumberLog = false,
+  }: { replace: boolean; add?: boolean; plan?: boolean; people?: PersonFix[]; renumberLog?: boolean },
 ) {
   const [people, staffUsers, [{ n: existing }], sla] = await Promise.all([
     db.select({ id: s.employees.id, name: s.employees.name, email: s.employees.email }).from(s.employees),
@@ -472,6 +505,10 @@ export async function importTickets(
     /** With `add`: the log's tickets already loaded, brought up to date, and tickets made in the app that move. */
     updated: [] as number[],
     moved: [] as { from: number; to: number }[],
+    /** With `renumberLog`: the log's tickets that take a new number, as the app holds theirs. */
+    renumbered: [] as { from: number; to: number }[],
+    /** Numbers both the app and the log use for a ticket, with each one's subject, to check they differ. */
+    conflicts: [] as { number: number; app: string; log: string }[],
     channels: Object.entries(Object.groupBy(tickets, (t) => t.channel ?? "")).map(([channel, list]) => ({ channel: channel || null, tickets: list!.length })),
   };
   const added = new Map<string, (typeof report.added)[number] & { fix?: PersonFix }>();
@@ -496,10 +533,12 @@ export async function importTickets(
   }
   report.added = [...added.values()].sort((a, b) => b.tickets - a.tickets).map(({ name, kind, status, from, tickets: n }) => ({ name, kind, status, from, tickets: n }));
   // Worked out for a report too, to say what adding would do.
-  const plan = add || planAdd ? await addPlan(tickets) : null;
+  const plan = add || planAdd ? await addPlan(tickets, renumberLog) : null;
   if (plan) {
-    report.updated = plan.updated;
+    report.updated = plan.updated.map((u) => u.number);
     report.moved = plan.moves;
+    report.renumbered = plan.renumbered;
+    report.conflicts = plan.conflicts;
   }
   if (!replace && !add) return report;
 
@@ -568,16 +607,21 @@ export async function importTickets(
     };
   };
   // Each ticket's history: opened, reopened if it was, then closed by whoever closed it.
+  // A log ticket's number in the app: its own, unless it takes another (`renumberLog`) or did before.
+  const idOf = new Map<number, number>([...(plan?.updated ?? []).map((u) => [u.number, u.id] as const), ...(plan?.renumbered ?? []).map((r) => [r.from, r.to] as const)]);
+  const id = (t: LoggedTicket) => idOf.get(t.number) ?? t.number;
   const historyOf = (t: LoggedTicket): (typeof s.auditLog.$inferInsert)[] => {
     const closer = t.closedBy ? closers.get(t.closedBy) : null;
+    const n = id(t);
+    const source = n === t.number ? "(from the ticket log)" : `(from the ticket log as ${ref("ticket", t.number)})`;
     const entries: (typeof s.auditLog.$inferInsert)[] = [
-      { at: t.openedAt, userName: FROM_LOG, action: "create", entity: "ticket", entityId: String(t.number), summary: `Opened ${ref("ticket", t.number)}: ${t.subject} (from the ticket log)` },
+      { at: t.openedAt, userName: FROM_LOG, action: "create", entity: "ticket", entityId: String(n), summary: `Opened ${ref("ticket", n)}: ${t.subject} ${source}` },
     ];
     if (t.reopened && t.reopenedAt) {
-      entries.push({ at: t.reopenedAt, userName: FROM_LOG, action: "update", entity: "ticket", entityId: String(t.number), summary: `Updated ${ref("ticket", t.number)}: status open (reopened)` });
+      entries.push({ at: t.reopenedAt, userName: FROM_LOG, action: "update", entity: "ticket", entityId: String(n), summary: `Updated ${ref("ticket", n)}: status open (reopened)` });
     }
     if (t.closedAt && t.status === "closed") {
-      entries.push({ at: t.closedAt, userId: closer?.id ?? null, userName: closer?.name ?? t.closedBy ?? FROM_LOG, action: "update", entity: "ticket", entityId: String(t.number), summary: `Updated ${ref("ticket", t.number)}: status closed` });
+      entries.push({ at: t.closedAt, userId: closer?.id ?? null, userName: closer?.name ?? t.closedBy ?? FROM_LOG, action: "update", entity: "ticket", entityId: String(n), summary: `Updated ${ref("ticket", n)}: status closed` });
     }
     return entries;
   };
@@ -601,10 +645,10 @@ export async function importTickets(
         await tx.insert(s.auditLog).values({ userName: FROM_LOG, action: "update", entity: "ticket", entityId: String(to), summary: `Renumbered ${ref("ticket", from)} to ${ref("ticket", to)}: the ticket log uses ${ref("ticket", from)}` });
       }
       // The log's tickets already loaded are brought up to date, their comments kept.
-      const updated = new Set(plan.updated);
+      const updated = new Set(plan.updated.map((u) => u.number));
       for (const t of tickets.filter((t) => updated.has(t.number))) {
-        await tx.update(s.tickets).set(values(t)).where(eq(s.tickets.id, t.number));
-        await tx.delete(s.auditLog).where(sql`${s.auditLog.entity} = 'ticket' AND ${s.auditLog.entityId} = ${String(t.number)} AND ${s.auditLog.userName} = ${FROM_LOG}`);
+        await tx.update(s.tickets).set(values(t)).where(eq(s.tickets.id, id(t)));
+        await tx.delete(s.auditLog).where(sql`${s.auditLog.entity} = 'ticket' AND ${s.auditLog.entityId} = ${String(id(t))} AND ${s.auditLog.userName} = ${FROM_LOG}`);
         await tx.insert(s.auditLog).values(historyOf(t));
       }
       fresh = tickets.filter((t) => !updated.has(t.number));
@@ -612,7 +656,7 @@ export async function importTickets(
 
     for (let i = 0; i < fresh.length; i += CHUNK) {
       const chunk = fresh.slice(i, i + CHUNK);
-      await tx.insert(s.tickets).overridingSystemValue().values(chunk.map((t) => ({ id: t.number, ...values(t) })));
+      await tx.insert(s.tickets).overridingSystemValue().values(chunk.map((t) => ({ id: id(t), ...values(t) })));
       await tx.insert(s.auditLog).values(chunk.flatMap(historyOf));
     }
     // New tickets carry on from the last number.

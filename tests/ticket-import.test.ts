@@ -291,4 +291,31 @@ describe("loading the log", () => {
     expect(again).toMatchObject({ updated: [6, 7, 8], moved: [] });
     expect(await db.$count(s.tickets)).toBe(9);
   });
+
+  it("can keep the app's numbers instead, loading the log's clashing ticket under a new one, once", async () => {
+    // From the test before: the app's own ticket 10 ("Next"). The log goes on with its own 10 and 11.
+    const newest = cleanTickets(
+      [
+        HEADER,
+        ["IT000010", "06/05/2024 08:00:00", "Jeddah", null, "Email Issues", "Test Person", "Log ten", "Closed", "06/05/2024 09:00:00", "Helpdesk", null, null],
+        ["IT000011", "07/05/2024 08:00:00", "Jeddah", null, "Email Issues", "Test Person", "Log eleven", "Closed", "07/05/2024 09:00:00", "Helpdesk", null, null],
+      ],
+      lists,
+    ).tickets;
+    const dry = await importTickets(newest, { replace: false, plan: true, renumberLog: true });
+    expect(dry).toMatchObject({ moved: [], renumbered: [{ from: 10, to: 12 }], conflicts: [{ number: 10, app: "Next", log: "Log ten" }] });
+
+    const report = await importTickets(newest, { replace: false, add: true, renumberLog: true });
+    expect(report.renumbered).toEqual([{ from: 10, to: 12 }]);
+    const subjects = new Map((await db.select().from(s.tickets)).map((t) => [t.id, t.subject]));
+    expect([subjects.get(10), subjects.get(11), subjects.get(12)]).toEqual(["Next", "Log eleven", "Log ten"]);
+    const history = await db.select().from(s.auditLog).where(and(eq(s.auditLog.entity, "ticket"), eq(s.auditLog.entityId, "12")));
+    expect(history.map((h) => h.summary)).toContain("Opened IT000012: Log ten (from the ticket log as IT000010)");
+
+    // The same log again: the renumbered ticket is found under its new number, not loaded twice.
+    const count = await db.$count(s.tickets);
+    const again = await importTickets(newest, { replace: false, add: true, renumberLog: true });
+    expect(again).toMatchObject({ updated: [10, 11], renumbered: [], conflicts: [] });
+    expect(await db.$count(s.tickets)).toBe(count);
+  });
 });
