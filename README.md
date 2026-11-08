@@ -278,6 +278,7 @@ Keep the key in the other system's settings, not in a web page anyone can open. 
 | `npm run people:ids "<file.xlsx>"` | Fills in employee ID numbers from the staff list. |
 | `npm run tickets:import "<file.xlsx>"` | Reports what loading the ticket log would do. Add `add` to add its tickets to those in the app (a newer part of the log, say), or `replace` to load it in place of every ticket. |
 | `npm run demo:clear` | Reports which made-up demo records (assets, software, vendors, finance, projects, risks, changes, knowledge articles) it would remove. Add `confirm` to back up and remove them. People, accounts and tickets stay. |
+| `npm run assets:clear` | Reports what emptying the asset list would delete. Add `confirm` to back up and delete every asset, to enter the real inventory afresh. Tickets, changes, risks, workstation checks and IT forms stay, their link to the asset cleared. |
 | `npm run backup` | Makes a backup. |
 | `npm run restore -- latest` | Restores the newest backup (or give a backup folder). |
 | `npm run fix-arabic` | Reports Arabic text that reads as symbols (`╪¼╪»╪⌐` for `جدة`), scrambled by copying the database through a Windows command window. Add `-- --apply` to back up and mend it. |
