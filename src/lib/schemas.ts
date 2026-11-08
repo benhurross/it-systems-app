@@ -293,6 +293,14 @@ const employeeNumber = z
   .nullish()
   .transform((v) => v || null);
 
+/** A mobile number: digits, with + ( ) - and spaces as people write them; 7 to 15 digits. */
+const mobile = z
+  .string()
+  .trim()
+  .nullish()
+  .transform((v) => (v ? v.replace(/\s+/g, " ") : null))
+  .refine((v) => v === null || (/^\+?[\d\s()-]+$/.test(v) && v.replace(/\D/g, "").length >= 7 && v.replace(/\D/g, "").length <= 15), { message: "validation.mobile" });
+
 export const employeeInput = z.object({
   name,
   email: z.email(),
@@ -301,6 +309,7 @@ export const employeeInput = z.object({
   jobTitle: name,
   employeeNumber,
   phone: optionalText,
+  mobile,
   active: z.boolean(),
 });
 

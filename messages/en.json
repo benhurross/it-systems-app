@@ -487,7 +487,8 @@
     "printerAddress": "Use the printer's IP address or network name.",
     "anydeskId": "Use the 9- or 10-digit ID AnyDesk shows, or its alias (name@namespace).",
     "kpiCounts": "Enter both counts, the first no more than the second.",
-    "kpiCode": "Another KPI has this ID."
+    "kpiCode": "Another KPI has this ID.",
+    "mobile": "Enter a mobile number: digits, optionally starting with +, 7 to 15 digits."
   },
   "settings": {
     "title": "Settings",
@@ -1470,7 +1471,9 @@
     "department": "Department",
     "location": "Location",
     "jobTitle": "Job title",
+    "mobile": "Mobile",
     "phone": "Phone",
+    "phoneHint": "Desk phone or extension.",
     "status": "Status",
     "progress": "Progress",
     "directory": {

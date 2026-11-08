@@ -27,7 +27,7 @@ import {
 } from "@tanstack/react-table";
 import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeft, ChevronRight, Download, ListFilter, X } from "lucide-react";
 import { useTranslations } from "next-intl";
-import type { ReactNode } from "react";
+import { useEffect, useEffectEvent, useRef, type ReactNode } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -44,6 +44,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useFormat } from "@/hooks/use-format";
 import { useRouter } from "@/i18n/navigation";
 import { downloadCsv, toCsv, type CsvColumn } from "@/lib/csv";
+import { readTableUrl, writeTableUrl } from "@/lib/table-url";
 import { type DateRange, inDateRange, isEmptyRange } from "@/lib/date-range";
 import { DateRangeFilter } from "./date-range-filter";
 
@@ -116,6 +117,8 @@ export function DataTable<T extends RowData>({
       pagination: { pageIndex: 0, pageSize },
     },
   });
+
+  useTableInAddress(table, data.length, facets, dateFilter, initialSort);
 
   const filtered = table.getPrePaginatedRowModel().rows;
   const { pageIndex } = table.state.pagination;
@@ -311,4 +314,60 @@ function FacetFilter<T extends RowData>({ facet, column }: { facet: Facet; colum
       </DropdownMenuContent>
     </DropdownMenu>
   );
+}
+
+/**
+ * Keeps the list's search, filters, sort and page in the page's address, so Back (or a reload)
+ * brings the list back as it was left. Read once the page is up, since the server does not see
+ * the address's state; the page is set once the rows are there, as loading them goes to page one.
+ */
+function useTableInAddress<T extends RowData>(table: ReturnType<typeof useTable<Features, T>>, rows: number, facets: Facet[], dateFilter: { column: string } | undefined, initialSort?: { id: string; desc: boolean }) {
+  // "start": not read yet; "skip": read, and the state it set not drawn yet; "on": written as it changes.
+  const phase = useRef<"start" | "skip" | "on">("start");
+  const pendingPage = useRef(0);
+
+  const restore = useEffectEvent(() => {
+    const search = window.location.search;
+    const saved = readTableUrl(search, {
+      facets: facets.map((f) => f.column),
+      date: dateFilter?.column,
+      sortable: (id) => !!table.getAllLeafColumns().find((c) => c.id === id)?.getCanSort(),
+    });
+    if (saved.q) table.setGlobalFilter(saved.q);
+    const filters = [...Object.entries(saved.facets), ...Object.entries(saved.dates)].map(([id, value]) => ({ id, value }));
+    if (filters.length) table.setColumnFilters(filters);
+    if (saved.sort) table.setSorting([saved.sort]);
+    else if (new URLSearchParams(search).get("sort") === "none") table.setSorting([]);
+    pendingPage.current = saved.page;
+    phase.current = "skip";
+  });
+  useEffect(() => restore(), []);
+
+  const showPage = useEffectEvent(() => {
+    if (pendingPage.current > 0 && pendingPage.current < table.getPageCount()) table.setPageIndex(pendingPage.current);
+    pendingPage.current = 0;
+  });
+  useEffect(() => {
+    if (rows > 0) showPage();
+  }, [rows]);
+
+  const { globalFilter, columnFilters, sorting, pagination } = table.state;
+  const save = useEffectEvent(() => {
+    if (phase.current !== "on") {
+      if (phase.current === "skip") phase.current = "on";
+      return;
+    }
+    const facetIds = new Set(facets.map((f) => f.column));
+    const state = {
+      q: (globalFilter as string | undefined) ?? "",
+      facets: Object.fromEntries(columnFilters.filter((f) => facetIds.has(f.id)).map((f) => [f.id, f.value as string[]])),
+      dates: Object.fromEntries(columnFilters.filter((f) => f.id === dateFilter?.column).map((f) => [f.id, f.value as DateRange])),
+      sort: sorting[0] ? { id: sorting[0].id, desc: sorting[0].desc } : null,
+      // While the rows load, the page asked for is still to come.
+      page: pendingPage.current || pagination.pageIndex,
+    };
+    const query = writeTableUrl(window.location.search, state, initialSort);
+    if (query !== window.location.search) window.history.replaceState(null, "", `${window.location.pathname}${query}${window.location.hash}`);
+  });
+  useEffect(() => save(), [globalFilter, columnFilters, sorting, pagination]);
 }

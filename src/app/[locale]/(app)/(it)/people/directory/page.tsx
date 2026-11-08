@@ -60,6 +60,7 @@ export default function DirectoryPage() {
       cell: (info) => lookups.label("location", info.getValue()),
     }),
     col.accessor("email", { header: t("email"), cell: (info) => <span dir="ltr">{info.getValue()}</span> }),
+    col.accessor("mobile", { header: t("mobile"), cell: (info) => (info.getValue() ? <span dir="ltr">{info.getValue()}</span> : "—") }),
     col.accessor("phone", { header: t("phone"), cell: (info) => (info.getValue() ? <span dir="ltr">{info.getValue()}</span> : "—") }),
     col.accessor((e) => (e.active ? "current" : "left"), {
       id: "status",
@@ -110,6 +111,7 @@ export default function DirectoryPage() {
             { header: "Department", value: (e) => lookups.label("department", e.department) },
             { header: "Location", value: (e) => lookups.label("location", e.location) },
             { header: "Email", value: (e) => e.email },
+            { header: "Mobile", value: (e) => e.mobile },
             { header: "Phone", value: (e) => e.phone },
             { header: "Status", value: (e) => (e.active ? "current" : "left") },
           ],

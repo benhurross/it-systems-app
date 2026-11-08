@@ -1,7 +1,7 @@
 "use client";
 
 import { WorkstationChecksCard } from "@/components/workstation/checks-card";
-import { ArrowLeft, IdCard, Mail, Pencil, Phone } from "lucide-react";
+import { ArrowLeft, IdCard, Mail, Pencil, Phone, Smartphone } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { use, useState } from "react";
 import { EnumBadge } from "@/components/badges";
@@ -57,6 +57,13 @@ export default function EmployeePage({ params }: PageProps<"/[locale]/people/dir
               <Mail className="size-4" />
               {person.email}
             </a>
+            {person.mobile && (
+              <a href={`tel:${person.mobile.replace(/[^\d+]/g, "")}`} className="inline-flex items-center gap-1.5 text-primary hover:underline" dir="ltr">
+                <Smartphone className="size-4" aria-hidden />
+                <span className="sr-only">{t("people.mobile")}: </span>
+                {person.mobile}
+              </a>
+            )}
             {person.phone && (
               <span className="inline-flex items-center gap-1.5" dir="ltr">
                 <Phone className="size-4 text-muted-foreground" />

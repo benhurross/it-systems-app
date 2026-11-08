@@ -114,6 +114,8 @@ export const employees = pgTable("employees", {
   /** The company ID number printed on the ID card. Not unique: old lists hold duplicates to correct. */
   employeeNumber: text(),
   phone: text(),
+  /** Their mobile number, as written (+966 5x xxx xxxx). */
+  mobile: text(),
   active: boolean().notNull().default(true),
   createdAt: createdAt(),
   updatedAt: updatedAt(),

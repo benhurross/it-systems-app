@@ -17,6 +17,7 @@ export type Person = {
   /** The ID number on their card; none for people who have left. */
   employeeNumber: string | null;
   phone: string | null;
+  mobile: string | null;
   active: boolean;
   /** The account to create for them; null for no account. */
   role: Role | null;
@@ -42,7 +43,8 @@ const COLUMNS = {
   department: ["department", "dept"],
   location: ["location", "office", "branch"],
   jobTitle: ["designation", "jobtitle", "title", "position"],
-  phone: ["phone", "mobile", "extension", "ext"],
+  phone: ["phone", "extension", "ext", "officephone", "telephone"],
+  mobile: ["mobile", "mobilenumber", "mobileno", "cell", "cellphone", "mobilephone"],
   role: ["role", "accountrole", "access"],
   active: ["active", "status"],
 } as const;
@@ -194,7 +196,7 @@ export function cleanPeople(sheet: Cell[][]): { people: Person[]; notes: string[
       employeeNumber = null;
     }
 
-    people.push({ name, email, department: dept, location: loc, jobTitle, employeeNumber, phone: get("phone") || null, active, role, placeholderEmail });
+    people.push({ name, email, department: dept, location: loc, jobTitle, employeeNumber, phone: get("phone") || null, mobile: get("mobile") || null, active, role, placeholderEmail });
   });
 
   const byNumber = new Map<string, Person[]>();

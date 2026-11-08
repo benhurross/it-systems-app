@@ -103,8 +103,9 @@ export function TextField({
   type = "text",
   dir,
   autoComplete,
+  placeholder,
   ...props
-}: FieldProps & { type?: "text" | "email" | "password" | "url"; dir?: "ltr"; autoComplete?: string }) {
+}: FieldProps & { type?: "text" | "email" | "password" | "url" | "tel"; dir?: "ltr"; autoComplete?: string; placeholder?: string }) {
   const { register } = useFormContext();
   return (
     <Shell {...props}>
@@ -114,6 +115,7 @@ export function TextField({
           type={type}
           dir={dir}
           autoComplete={autoComplete}
+          placeholder={placeholder}
           aria-invalid={invalid}
           {...register(props.name, { setValueAs: (v) => (v === "" ? emptyTo(props.optional) : v) })}
         />

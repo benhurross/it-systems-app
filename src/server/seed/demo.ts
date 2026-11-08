@@ -241,7 +241,7 @@ export async function seedDemo(now = new Date(), options: { people?: Person[] } 
   const people: (typeof s.employees.$inferInsert)[] = [];
   if (options.people) {
     people.push(
-      ...options.people.map(({ name, email, department, location, jobTitle, employeeNumber, phone, active }) => ({
+      ...options.people.map(({ name, email, department, location, jobTitle, employeeNumber, phone, mobile, active }) => ({
         name,
         email,
         department,
@@ -249,6 +249,7 @@ export async function seedDemo(now = new Date(), options: { people?: Person[] } 
         jobTitle,
         employeeNumber,
         phone,
+        mobile,
         active,
       })),
     );

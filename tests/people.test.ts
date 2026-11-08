@@ -26,6 +26,7 @@ describe("staff list loader", () => {
         jobTitle: "Accountant",
         employeeNumber: "1000",
         phone: null,
+        mobile: null,
         active: true,
         role: null,
         placeholderEmail: false,
@@ -57,8 +58,8 @@ describe("staff list loader", () => {
 
   it("finds columns under other spellings and orders, and builds the name from its parts", () => {
     const { people } = cleanPeople([
-      ["E-mail", "Surname", "First Name", "Job Title", "DEPT", "Office", "Mobile", "Status"],
-      ["B.Omar@Example.test ", "Omar", "Bilal", "Clerk", "sales", "Riyadh Branch", "0500", "no"],
+      ["E-mail", "Surname", "First Name", "Job Title", "DEPT", "Office", "Mobile", "Ext", "Status"],
+      ["B.Omar@Example.test ", "Omar", "Bilal", "Clerk", "sales", "Riyadh Branch", "0551234567", "214", "no"],
     ]);
     expect(people[0]).toMatchObject({
       name: "Bilal Omar",
@@ -66,7 +67,9 @@ describe("staff list loader", () => {
       department: "sales",
       location: "riyadh",
       jobTitle: "Clerk",
-      phone: "0500",
+      // A mobile number is its own field; the desk extension is the phone.
+      mobile: "0551234567",
+      phone: "214",
       active: false,
     });
   });

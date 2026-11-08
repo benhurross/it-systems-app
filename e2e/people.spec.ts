@@ -67,6 +67,7 @@ test("offboarding counts down mail forwarding and marks the person as left", asy
   await expect(row).toContainText("Completed");
 
   await page.getByRole("link", { name: "Directory" }).click();
+  await expect(page).toHaveURL(/\/people\/directory$/);
   await page.getByRole("textbox", { name: "Filter rows" }).fill(person);
   await expect(page.getByRole("row").filter({ hasText: person })).toContainText("Left");
 });
@@ -111,4 +112,52 @@ test("ID numbers show in the directory, are edited there, and one held twice is 
   await expect(rows).toHaveCount(2);
   await expect(rows.first()).toContainText("Duplicate");
   await expect(rows.last()).toContainText("Duplicate");
+});
+
+test("the directory's search and filters are still there after opening someone and going Back", async ({ page }) => {
+  const console = watchConsole(page);
+  await page.goto("/en/people/directory");
+  await page.getByRole("textbox", { name: "Filter rows" }).fill("Nora");
+  await page.getByRole("button", { name: "Department" }).first().click();
+  await page.getByRole("menuitemcheckbox", { name: /Finance/ }).click();
+  await page.keyboard.press("Escape");
+  await expect(page).toHaveURL(/q=Nora/);
+  await expect(page).toHaveURL(/f\.department=finance/);
+  await page.getByRole("link", { name: "Nora Al-Otaibi" }).click();
+  await expect(page.getByRole("heading", { name: "Nora Al-Otaibi" })).toBeVisible();
+
+  await page.goBack();
+  await expect(page.getByRole("textbox", { name: "Filter rows" })).toHaveValue("Nora");
+  await expect(page.getByRole("button", { name: "Department" }).first()).toContainText("1");
+  await expect(page.getByRole("link", { name: "Nora Al-Otaibi" })).toBeVisible();
+  // And after a reload.
+  await page.reload();
+  await expect(page.getByRole("textbox", { name: "Filter rows" })).toHaveValue("Nora");
+  // Cleared, the address is plain again.
+  await page.getByRole("button", { name: "Clear filters" }).click();
+  await expect(page).not.toHaveURL(/q=|f\./);
+  console.assertClean();
+});
+
+test("an employee's mobile number is added, checked, and shown in the directory", async ({ page }, info) => {
+  const console = watchConsole(page);
+  const name = unique(info, "Mobile Person");
+  const made = await page.request.post("/api/employees", {
+    data: { name, email: `mobile.${info.project.name}.${Date.now()}@applus.test`, department: "sales", location: "jeddah", jobTitle: "Account Manager", employeeNumber: null, phone: null, active: true },
+  });
+  expect(made.ok(), await made.text()).toBe(true);
+  const id = ((await made.json()) as { id: number }).id;
+  await page.goto(`/en/people/directory/${id}`);
+  await page.getByRole("button", { name: "Edit" }).click();
+  const dialog = page.getByRole("dialog");
+  await dialog.getByLabel("Mobile").fill("12ab");
+  await dialog.getByRole("button", { name: "Save" }).click();
+  await expect(dialog.getByText(/Enter a mobile number/)).toBeVisible();
+  await dialog.getByLabel("Mobile").fill("+966 55 123 4567");
+  await dialog.getByRole("button", { name: "Save" }).click();
+  await expect(dialog).toBeHidden();
+  await expect(page.getByRole("link", { name: /\+966 55 123 4567/ })).toHaveAttribute("href", "tel:+966551234567");
+  await page.goto(`/en/people/directory?q=${encodeURIComponent(name)}`);
+  await expect(page.getByRole("row").filter({ hasText: name })).toContainText("+966 55 123 4567");
+  console.assertClean();
 });
