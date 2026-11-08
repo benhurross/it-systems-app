@@ -32,9 +32,18 @@ import { useApi } from "@/hooks/use-api";
 import { useFormat } from "@/hooks/use-format";
 import type { KpiRegister, KpiRow } from "@/lib/api-types";
 import type { KpiCell } from "@/lib/kpi-register";
-import { kpiFrequency } from "@/lib/kpis";
+import { kpiFrequency, kpiFrequencyTone, type FrequencyTone } from "@/lib/kpis";
 import { can } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
+
+/** Each frequency's badge colour, readable in light and dark. */
+const FREQUENCY_TONE: Record<FrequencyTone, string> = {
+  monthly: "border-sky-300 bg-sky-100 text-sky-800 dark:border-sky-800 dark:bg-sky-950 dark:text-sky-300",
+  quarterly: "border-violet-300 bg-violet-100 text-violet-800 dark:border-violet-800 dark:bg-violet-950 dark:text-violet-300",
+  yearly: "border-amber-300 bg-amber-100 text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-300",
+  frequent: "border-teal-300 bg-teal-100 text-teal-800 dark:border-teal-800 dark:bg-teal-950 dark:text-teal-300",
+  other: "border-slate-300 bg-slate-100 text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300",
+};
 
 const thisYear = new Date().getFullYear();
 const ALL = "all";
@@ -333,7 +342,7 @@ export default function KpisPage() {
                                 <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
                                   <Badge
                                     variant="outline"
-                                    className="font-normal text-muted-foreground"
+                                    className={FREQUENCY_TONE[kpiFrequencyTone(kpi)]}
                                     title={t("kpis.frequencyLabel")}
                                   >
                                     <CalendarClock aria-hidden />

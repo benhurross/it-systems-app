@@ -29,3 +29,15 @@ export function kpiFrequency(kpi: { frequency: string; period: "month" | "quarte
   if (locale !== "ar") return words;
   return words.replace(/[A-Za-z][A-Za-z-]*/g, (w) => FREQUENCY_AR[w.toLowerCase()] ?? w);
 }
+
+export type FrequencyTone = "monthly" | "quarterly" | "yearly" | "frequent" | "other";
+
+/** The colour a KPI's frequency badge takes, from the first measure its wording names. */
+export function kpiFrequencyTone(kpi: { frequency: string; period: "month" | "quarter" }): FrequencyTone {
+  const words = kpi.frequency.trim().toLowerCase() || (kpi.period === "quarter" ? "quarterly" : "monthly");
+  const first = /daily|weekly|monthly|quarterly|semi-annual|half-yearly|yearly|annual/.exec(words)?.[0];
+  if (!first) return "other";
+  if (first === "daily" || first === "weekly") return "frequent";
+  if (first === "monthly" || first === "quarterly") return first;
+  return "yearly";
+}
