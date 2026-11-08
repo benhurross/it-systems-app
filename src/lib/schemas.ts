@@ -31,6 +31,7 @@ import {
   TICKET_STATUSES,
   TICKET_TYPES,
   VULN_STATUSES,
+  WORKSTATION_ITEM_STATES,
 } from "./domain";
 import { ROLES } from "./permissions";
 import { LABEL_DPIS } from "./label-sizes";
@@ -104,6 +105,34 @@ export const changeInput = z.object({
   ticketId: optionalId,
   notes: optionalText,
 });
+
+/** A workstation check as IT records it: the items as found; the result follows from them. */
+export const workstationCheckInput = z.object({
+  assetId: id,
+  employeeId: optionalId,
+  items: z
+    .array(z.object({ code, state: z.enum(WORKSTATION_ITEM_STATES), note: z.string().trim().max(500).default("") }))
+    .min(1)
+    .max(100),
+  message: z
+    .string()
+    .trim()
+    .max(2000)
+    .nullish()
+    .transform((v) => v ?? ""),
+});
+
+/**
+ * Who has signed in to Windows, as the logon script reports it: the account's UPN
+ * (someone@applus.com.sa), its short name, and the computer's name.
+ */
+export const workstationSignIn = z.object({
+  upn: z.string().trim().max(200).default(""),
+  user: z.string().trim().max(100).default(""),
+  computer: z.string().trim().min(1).max(64),
+});
+
+export const workstationRead = workstationSignIn.extend({ code: z.string().min(16).max(100) });
 
 export const changeDecision = z
   .object({ status: z.enum(CHANGE_STATUSES), result: z.enum(CHANGE_RESULTS).nullish() })

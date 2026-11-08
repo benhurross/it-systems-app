@@ -137,6 +137,21 @@ export const REFERENCE: Record<LookupList, Entry[]> = {
     ["whatsapp", "WhatsApp", "واتساب"],
     ["in_person", "In person", "حضورياً"],
   ],
+  // What IT looks at in a desk check against the IT standard (Workstation checks).
+  workstation_check: [
+    ["screen_lock", "Screen locks when away (Win+L; auto-lock after 5–10 minutes)", "تُقفل الشاشة عند الابتعاد (Win+L، والقفل التلقائي بعد 5–10 دقائق)"],
+    ["no_written_passwords", "No passwords written down (sticky notes, under the keyboard, on the monitor)", "لا كلمات مرور مكتوبة (أوراق لاصقة، تحت لوحة المفاتيح، على الشاشة)"],
+    ["antivirus", "Antivirus running and up to date", "برنامج مكافحة الفيروسات يعمل ومحدّث"],
+    ["windows_updates", "Windows updates installed (no restart pending for more than a week)", "تحديثات Windows مثبّتة (لا إعادة تشغيل معلّقة لأكثر من أسبوع)"],
+    ["approved_software", "No unapproved software or browser extensions", "لا برامج أو إضافات متصفح غير معتمدة"],
+    ["no_usb", "No personal USB drives or unknown devices connected", "لا أجهزة USB شخصية أو أجهزة غير معروفة موصولة"],
+    ["files_on_server", "Company files saved on the server / OneDrive, not only the desktop", "ملفات الشركة محفوظة على الخادم أو OneDrive وليس على سطح المكتب فقط"],
+    ["clean_desk", "No confidential papers left on the desk (clean desk)", "لا أوراق سرية متروكة على المكتب (مكتب نظيف)"],
+    ["asset_tag", "Asset tag present and readable", "ملصق الأصل موجود وواضح"],
+    ["cables", "Cables tidy and safe (no trip hazards, no damaged cables)", "الكابلات مرتبة وآمنة (لا خطر تعثّر ولا كابلات تالفة)"],
+    ["clean_equipment", "Equipment clean; no food or drink near the computer", "الأجهزة نظيفة، ولا طعام أو شراب قرب الحاسوب"],
+    ["good_condition", "PC and monitors in good condition (no damage, vents clear)", "الحاسوب والشاشات بحالة جيدة (لا أضرار، وفتحات التهوية غير مسدودة)"],
+  ],
 };
 
 /** Adds any missing reference values. Existing rows are left alone, so an admin's edits survive a re-run. */

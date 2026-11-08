@@ -234,6 +234,10 @@ Upload the plan as an **SVG** (exported from the CAD drawing) instead of a PDF a
 
 The plan is kept in the app's uploads folder, so backups include it.
 
+## Workstation checks
+
+IT records desk checks against the IT standard under **Service desk → Workstation checks** (the checklist itself is in **Settings → Lists → Workstation checklist**). Each employee sees their result once, at their next Windows sign-in and on their home page in the app, until they click **I've read it**; IT sees who has read theirs. Setting up the Windows side, a PowerShell script run at sign-in by Group Policy: [docs/WORKSTATION-CHECKS.md](docs/WORKSTATION-CHECKS.md).
+
 ## KPIs
 
 **KPIs** is the IT KPI register: each KPI grouped by role (IT department, IT Manager, Cyber Security Officer, IT Officer…), month by month or quarter by quarter, against the baseline, target and weight set for the year, with the year so far, a status (on target, improving, off target) and each role's weighted score.

@@ -24,6 +24,7 @@ export const IT = [
   "/knowledge/:article/edit",
   "/changes",
   "/changes/:change",
+  "/workstation-checks",
   "/assets",
   "/assets/:asset",
   "/assets/inventory",

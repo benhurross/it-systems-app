@@ -2,6 +2,7 @@ import {
   Activity,
   AppWindow,
   BookOpen,
+  ClipboardCheck,
   FolderKanban,
   GitPullRequestArrow,
   Inbox,
@@ -28,6 +29,7 @@ export type NavItem = {
     | "tickets"
     | "knowledge"
     | "changes"
+    | "workstationChecks"
     | "assets"
     | "cmdb"
     | "software"
@@ -68,6 +70,7 @@ export const NAV: NavGroup[] = [
       { key: "tickets", href: "/tickets", icon: Ticket },
       { key: "knowledge", href: "/knowledge", icon: BookOpen },
       { key: "changes", href: "/changes", icon: GitPullRequestArrow },
+      { key: "workstationChecks", href: "/workstation-checks", icon: ClipboardCheck },
     ],
   },
   {

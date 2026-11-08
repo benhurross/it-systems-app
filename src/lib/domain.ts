@@ -47,6 +47,7 @@ export const LOOKUP_LISTS = [
   "budget_category",
   "risk_category",
   "channel",
+  "workstation_check",
 ] as const;
 
 /** The workbook's new-joiner checklist (IT_New_Joinee), in its three phases. */
@@ -101,7 +102,7 @@ export const EMAIL_KINDS = ["test", "resolution", "new_request", "assigned"] as 
 export const EMAIL_STATUSES = ["pending", "sending", "sent", "held", "failed"] as const;
 export const SMTP_SECURITY = ["starttls", "tls", "none"] as const;
 
-export const ATTACHMENT_ENTITIES = ["asset", "purchase", "contract"] as const;
+export const ATTACHMENT_ENTITIES = ["asset", "purchase", "contract", "workstation_check"] as const;
 export const ATTACHMENT_KINDS = [
   "invoice",
   "warranty",
@@ -118,7 +119,15 @@ export const ATTACHMENT_KINDS_FOR = {
   asset: ["invoice", "warranty", "delivery_note", "photo", "other"],
   purchase: ["quotation", "purchase_order", "invoice", "delivery_note", "other"],
   contract: ["contract", "renewal_quote", "invoice", "other"],
+  workstation_check: ["photo", "other"],
 } as const satisfies Record<(typeof ATTACHMENT_ENTITIES)[number], readonly (typeof ATTACHMENT_KINDS)[number][]>;
+
+/** A workstation check's outcome: every item OK (or not applying), or something to fix. */
+export const WORKSTATION_RESULTS = ["passed", "attention"] as const;
+/** How each checklist item was found. */
+export const WORKSTATION_ITEM_STATES = ["ok", "not_ok", "na"] as const;
+/** What an API key may reach: the KPIs, or only the workstation messages shown at Windows sign-in. */
+export const API_TOKEN_SCOPES = ["kpis", "workstation"] as const;
 
 export const ID_CARD_REASONS = ["lost", "damaged", "details_changed", "new_joiner", "other"] as const;
 /** requested: waiting for IT; printed: done. */
@@ -166,6 +175,9 @@ export type DailyCheck = (typeof DAILY_CHECKS)[number];
 export type EmailKind = (typeof EMAIL_KINDS)[number];
 export type EmailStatus = (typeof EMAIL_STATUSES)[number];
 export type SmtpSecurity = (typeof SMTP_SECURITY)[number];
+export type WorkstationResult = (typeof WORKSTATION_RESULTS)[number];
+export type WorkstationItemState = (typeof WORKSTATION_ITEM_STATES)[number];
+export type ApiTokenScope = (typeof API_TOKEN_SCOPES)[number];
 export type AttachmentEntity = (typeof ATTACHMENT_ENTITIES)[number];
 export type AttachmentKind = (typeof ATTACHMENT_KINDS)[number];
 export type IdCardReason = (typeof ID_CARD_REASONS)[number];

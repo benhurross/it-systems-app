@@ -3,11 +3,11 @@ import { ATTACHMENT_KINDS_FOR, type AttachmentEntity, type AttachmentKind } from
 import { cleanFileName, MAX_UPLOAD_BYTES, sniffType } from "@/lib/files";
 import { audit, type Actor } from "../audit";
 import { db } from "../db";
-import { assets, attachments, contracts, purchases } from "../db/schema";
+import { assets, attachments, contracts, purchases, workstationChecks } from "../db/schema";
 import { badRequest, notFound, one } from "../http";
 import { readStoredFile, removeStoredFile, storeFile } from "../files";
 
-const PARENTS = { asset: assets, purchase: purchases, contract: contracts } as const;
+const PARENTS = { asset: assets, purchase: purchases, contract: contracts, workstation_check: workstationChecks } as const;
 
 async function parentExists(entity: AttachmentEntity, id: number) {
   const table = PARENTS[entity];

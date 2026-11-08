@@ -9,6 +9,7 @@ import { useCurrentUser } from "@/components/app-shell/current-user";
 import { EnumBadge } from "@/components/badges";
 import { EmptyState } from "@/components/empty-state";
 import { MyIdCard } from "@/components/id-cards/my-card";
+import { MyWorkstationChecks } from "@/components/workstation/my-checks";
 import { PageHeader } from "@/components/page-header";
 import { StatCard } from "@/components/stat-card";
 import { Button } from "@/components/ui/button";
@@ -91,6 +92,7 @@ export default function HomePage() {
       </div>
 
       <MyIdCard />
+      <MyWorkstationChecks />
       {data.awaiting.length > 0 && (
         <Card className="mb-6 border-warning/50">
           <CardHeader>

@@ -41,10 +41,10 @@ const COMPRESS_FROM = 8 * 1024;
 async function json(req: Request, value: unknown) {
   const text = JSON.stringify(value ?? null);
   if (text.length < COMPRESS_FROM || !/\bgzip\b/.test(req.headers.get("accept-encoding") ?? "")) {
-    return new Response(text, { headers: { "content-type": "application/json" } });
+    return new Response(text, { headers: { "content-type": "application/json; charset=utf-8" } });
   }
   return new Response(new Uint8Array(await gzip(text)), {
-    headers: { "content-type": "application/json", "content-encoding": "gzip", vary: "Accept-Encoding" },
+    headers: { "content-type": "application/json; charset=utf-8", "content-encoding": "gzip", vary: "Accept-Encoding" },
   });
 }
 

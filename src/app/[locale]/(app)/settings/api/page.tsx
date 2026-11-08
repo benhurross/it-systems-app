@@ -11,12 +11,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useApi, useApiMutation } from "@/hooks/use-api";
 import { useFormat } from "@/hooks/use-format";
 import { api } from "@/lib/api";
 import type { Json } from "@/lib/api-types";
+import { API_TOKEN_SCOPES, type ApiTokenScope } from "@/lib/domain";
 import type * as tokens from "@/server/services/api-tokens";
 
 type Token = Json<Awaited<ReturnType<typeof tokens.listApiTokens>>>[number];
@@ -27,10 +29,12 @@ export default function ApiAccessSettings() {
   const t = useTranslations("settings.api");
   const format = useFormat();
   const nameId = useId();
+  const scopeId = useId();
   const [name, setName] = useState("");
+  const [scope, setScope] = useState<ApiTokenScope>("kpis");
   const [made, setMade] = useState<Made | null>(null);
   const { data: list } = useApi<Token[]>("/settings/api-tokens");
-  const create = useApiMutation((n: string) => api<Made>("/settings/api-tokens", { body: { name: n } }), {
+  const create = useApiMutation((n: string) => api<Made>("/settings/api-tokens", { body: { name: n, scope } }), {
     onSuccess: (m) => {
       setMade(m);
       setName("");
@@ -65,6 +69,24 @@ export default function ApiAccessSettings() {
               </div>
               <Input id={nameId} value={name} onChange={(e) => setName(e.target.value)} placeholder={t("namePlaceholder")} maxLength={100} />
             </Field>
+            <Field className="w-full sm:w-56">
+              <div className="flex items-center gap-1">
+                <FieldLabel htmlFor={scopeId}>{t("scope")}</FieldLabel>
+                <Hint>{t("scopeHint")}</Hint>
+              </div>
+              <Select value={scope} onValueChange={(v) => setScope(v as ApiTokenScope)}>
+                <SelectTrigger id={scopeId} className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {API_TOKEN_SCOPES.map((s) => (
+                    <SelectItem key={s} value={s}>
+                      {t(`scopes.${s}`)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Field>
             <Button type="submit" className="mb-7" disabled={!name.trim() || create.isPending}>
               <Plus />
               {t("create")}
@@ -74,6 +96,7 @@ export default function ApiAccessSettings() {
             <div role="status" className="space-y-2 rounded-lg border border-warning/50 bg-warning-soft p-3 text-sm">
               <p className="font-medium">{t("madeTitle", { name: made.name })}</p>
               <p>{t("madeHint")}</p>
+              {made.scope === "workstation" && <p>{t("madeWorkstation")}</p>}
               <div className="flex items-center gap-2">
                 <code className="min-w-0 flex-1 break-all rounded bg-background px-2 py-1 font-mono text-xs" dir="ltr">
                   {made.token}
@@ -94,6 +117,7 @@ export default function ApiAccessSettings() {
               <TableHeader>
                 <TableRow>
                   <TableHead>{t("name")}</TableHead>
+                  <TableHead>{t("scope")}</TableHead>
                   <TableHead>{t("key")}</TableHead>
                   <TableHead>{t("lastUsed")}</TableHead>
                   <TableHead>
@@ -111,6 +135,7 @@ export default function ApiAccessSettings() {
                       </span>
                       <span className="block text-xs text-muted-foreground">{t("made", { by: k.createdBy ?? "—", date: format.date(k.createdAt) })}</span>
                     </TableCell>
+                    <TableCell>{t(`scopes.${k.scope}`)}</TableCell>
                     <TableCell className="font-mono text-xs" dir="ltr">
                       {k.prefix}…
                     </TableCell>

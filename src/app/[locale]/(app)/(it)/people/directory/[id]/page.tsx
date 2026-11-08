@@ -1,5 +1,6 @@
 "use client";
 
+import { WorkstationChecksCard } from "@/components/workstation/checks-card";
 import { ArrowLeft, IdCard, Mail, Pencil, Phone } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { use, useState } from "react";
@@ -126,6 +127,7 @@ export default function EmployeePage({ params }: PageProps<"/[locale]/people/dir
           </CardContent>
         </Card>
       </div>
+      <WorkstationChecksCard employeeId={person.id} />
       {dialog === "edit" && <EmployeeDialog employee={person} onClose={() => setDialog(null)} />}
       {dialog === "card" && <NewCardDialog employeeId={person.id} onClose={() => setDialog(null)} />}
     </div>

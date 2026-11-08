@@ -14,7 +14,7 @@ const CORS = { "access-control-allow-origin": "*", "access-control-allow-headers
 export const OPTIONS = async () => new Response(null, { status: 204, headers: CORS });
 
 export const GET = handler(async (req) => {
-  if (!(await apiTokenOf(req))) {
+  if (!(await apiTokenOf(req, "kpis"))) {
     return Response.json({ error: "A valid API key is needed: Authorization: Bearer <key>" }, { status: 401, headers: { ...CORS, "www-authenticate": "Bearer" } });
   }
   const year = yearParam(req);

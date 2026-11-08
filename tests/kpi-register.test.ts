@@ -131,7 +131,10 @@ describe("the KPIs for other systems", () => {
   it("answers only with a key in use, and stops when it is revoked", async () => {
     expect((await publicKpis.GET(ask(), undefined)).status).toBe(401);
     expect((await publicKpis.GET(ask("apit_made-up"), undefined)).status).toBe(401);
-    const made = await tokens.createApiToken("Board dashboard", admin);
+    // A key for the workstation messages does not read the KPIs.
+    const workstation = await tokens.createApiToken("Sign-in script", "workstation", admin);
+    expect((await publicKpis.GET(ask(workstation.token), undefined)).status).toBe(401);
+    const made = await tokens.createApiToken("Board dashboard", "kpis", admin);
     expect(made.token).toMatch(/^apit_/);
     const res = await publicKpis.GET(ask(made.token), undefined);
     expect(res.status).toBe(200);
@@ -150,8 +153,8 @@ describe("the KPIs for other systems", () => {
     expect(training.quarters).toEqual([expect.objectContaining({ quarter: 3, value: 45 })]);
     expect(training.figures.map((f) => f.period)).toEqual([3]);
     // Only the hash is kept; the list shows the start of the key and when it was last used.
-    const [listed] = await tokens.listApiTokens();
-    expect(listed).toMatchObject({ name: "Board dashboard", prefix: made.prefix, revokedAt: null });
+    const listed = (await tokens.listApiTokens()).find((k) => k.id === made.id)!;
+    expect(listed).toMatchObject({ name: "Board dashboard", prefix: made.prefix, scope: "kpis", revokedAt: null });
     expect(listed.lastUsedAt).not.toBeNull();
     expect(JSON.stringify(listed)).not.toContain(made.token);
     await tokens.revokeApiToken(made.id, admin);

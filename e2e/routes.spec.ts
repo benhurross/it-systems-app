@@ -18,11 +18,13 @@ const heading = (page: Page) => page.getByRole("heading", { level: 1 }).or(page.
 
 /** What the pages read from the API, by the area of the app allowed to read it. */
 const APIS = {
-  request: ["/api/me", "/api/tickets", "/api/kb", "/api/lookups", "/api/id-cards/request", "/api/id-cards/design", "/api/id-cards/mine", "/api/tools"],
+  request: ["/api/me", "/api/me/workstation-checks", "/api/tickets", "/api/kb", "/api/lookups", "/api/id-cards/request", "/api/id-cards/design", "/api/id-cards/mine", "/api/tools"],
   it: [
     "/api/dashboard",
     "/api/kpis",
     "/api/changes",
+    "/api/workstation-checks",
+    "/api/workstation-checks/checklist",
     "/api/assets",
     "/api/discovery",
     "/api/relationships",

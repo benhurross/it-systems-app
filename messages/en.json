@@ -57,6 +57,7 @@
     "tickets": "Tickets",
     "knowledge": "Knowledge Base",
     "changes": "Changes",
+    "workstationChecks": "Workstation checks",
     "assets": "Assets",
     "cmdb": "CMDB",
     "software": "Software",
@@ -466,6 +467,10 @@
       "requested": "To print",
       "printed": "Ready to collect",
       "handed_over": "Handed over"
+    },
+    "workstationResult": {
+      "passed": "Passed",
+      "attention": "Needs attention"
     }
   },
   "validation": {
@@ -548,7 +553,8 @@
         "vendor_category": "Vendor categories",
         "budget_category": "Budget categories",
         "risk_category": "Risk categories",
-        "channel": "Received by"
+        "channel": "Received by",
+        "workstation_check": "Workstation checklist"
       }
     },
     "sla": {
@@ -752,7 +758,14 @@
       "howIntro": "The other system asks for a year's register with the key in its Authorization header:",
       "howShares": "Shares are fractions: 0.95 is 95%. Targets, baselines and weights are the year's.",
       "howPeriods": "Figures are by month (1 to 12) or quarter (1 to 4), as each KPI is kept, with where each came from.",
-      "howReadOnly": "It only reads, and gives the KPIs and each role's score as JSON."
+      "howReadOnly": "It only reads, and gives the KPIs and each role's score as JSON.",
+      "scope": "Used for",
+      "scopeHint": "A key reaches only what it is for: a KPI key cannot fetch workstation messages, and a workstation key cannot read the KPIs.",
+      "scopes": {
+        "kpis": "KPIs",
+        "workstation": "Workstation messages"
+      },
+      "madeWorkstation": "Put this key in the Windows sign-in script, WorkstationMessage.ps1, as the guide docs/WORKSTATION-CHECKS.md describes."
     }
   },
   "months": {
@@ -908,6 +921,55 @@
     "back": "All changes",
     "closedNote": "This change is closed and can no longer be edited.",
     "deleteDetail": "The ticket and asset it names stay."
+  },
+  "workstation": {
+    "title": "Workstation checks",
+    "description": "Desk checks against the IT standard. Each employee sees their result once, at their next Windows sign-in or on their home page in the app, until they say they have read it.",
+    "new": "New check",
+    "newHint": "Mark each item as you find it. Any item marked Not OK makes the result Needs attention; the employee sees what to fix.",
+    "saved": "Check saved. The employee will see it at their next sign-in.",
+    "computer": "Computer",
+    "employee": "Employee",
+    "assignedTo": "Assigned: {name}",
+    "nobody": "No one assigned",
+    "employeeHint": "Leave empty for the person the computer is assigned to.",
+    "message": "Message to the employee",
+    "messageHint": "A personal word, shown with the result: \"Very tidy desk, thank you!\" or \"Please remove the note by Sunday.\"",
+    "checklist": "Checklist",
+    "resultSoFar": "Result:",
+    "states": {
+      "ok": "OK",
+      "not_ok": "Not OK",
+      "na": "N/A"
+    },
+    "noteFor": "What to fix: {item}",
+    "notePlaceholder": "What to fix (optional)",
+    "none": "No checks yet.",
+    "readOn": "Read {date}",
+    "notRead": "Not read yet",
+    "date": "Date",
+    "result": "Result",
+    "toFix": "To fix",
+    "read": "Read",
+    "readFilter": {
+      "unread": "Not read yet",
+      "read": "Read"
+    },
+    "checkedBy": "Checked by",
+    "back": "All workstation checks",
+    "checkOf": "Check of {computer}, {date}",
+    "readBy": "{who}, {where}, {date}",
+    "inApp": "in the app",
+    "mine": {
+      "title": "Your workstation checks",
+      "passedTitle": "Good job!",
+      "attentionTitle": "Your workstation needs attention",
+      "checked": "{computer}, checked {date} by {by}",
+      "passedText": "Your workstation meets the IT standard. Thank you for keeping it that way.",
+      "attentionText": "Please fix the following. If you need help, contact IT.",
+      "read": "I've read it",
+      "thanks": "Thank you."
+    }
   },
   "assets": {
     "title": "Assets",

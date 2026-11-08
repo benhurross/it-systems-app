@@ -26,6 +26,7 @@ import type * as risk from "@/server/services/risk";
 import type * as tickets from "@/server/services/tickets";
 import type * as tools from "@/server/services/tools";
 import type * as users from "@/server/services/users";
+import type * as workstationChecks from "@/server/services/workstation-checks";
 
 export type Json<T> = T extends Date
   ? string
@@ -93,3 +94,8 @@ export type FloorPlanSummary = Item<typeof floorPlans.listPlans>;
 export type FloorPlan = Result<typeof floorPlans.getPlan>;
 export type Outlet = FloorPlan["outlets"][number];
 export type AssetOnPlans = Result<typeof floorPlans.assetOnPlans>;
+
+export type WorkstationCheckRow = Item<typeof workstationChecks.listWorkstationChecks>;
+export type WorkstationCheck = Result<typeof workstationChecks.getWorkstationCheck>;
+export type MyWorkstationCheck = Item<typeof workstationChecks.myWorkstationChecks>;
+export type ChecklistItem = Item<typeof workstationChecks.workstationChecklist>;

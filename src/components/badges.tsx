@@ -32,6 +32,7 @@ const TONES = {
   rag: { green: "success", amber: "warning", red: "danger", none: "neutral" },
   emailStatus: { pending: "info", sending: "info", sent: "success", held: "neutral", failed: "danger" },
   idCardStage: { requested: "warning", printed: "info", handed_over: "success" },
+  workstationResult: { passed: "success", attention: "warning" },
 } satisfies Record<string, Record<string, Tone>>;
 
 type Kind = keyof typeof TONES;

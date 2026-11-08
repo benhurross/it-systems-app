@@ -31,6 +31,9 @@ import type {
   KpiUnit,
   LicenseType,
   LookupList,
+  ApiTokenScope,
+  WorkstationItemState,
+  WorkstationResult,
   MonitorMethod,
   Priority,
   ProjectStatus,
@@ -582,6 +585,41 @@ export const dailyChecks = pgTable(
   (t) => [unique().on(t.date, t.item)],
 );
 
+// ---------------------------------------------------------------- workstation checks
+
+/** One checklist item as it was found, its wording kept as it stood on the day. */
+export type WorkstationItem = { code: string; labelEn: string; labelAr: string; state: WorkstationItemState; note: string };
+
+/**
+ * IT's check of a desk against the IT standard. The employee sees it once, at their next Windows
+ * sign-in (or in the app), until they say they have read it. `readCodeHash` is the hash of the code
+ * sent with the message last shown: only whoever was shown it can mark it read.
+ */
+export const workstationChecks = pgTable(
+  "workstation_checks",
+  {
+    id: id(),
+    assetId: integer().references(() => assets.id, { onDelete: "set null" }),
+    /** The computer's name, as Windows gives it: messages for people the app cannot match go by it. */
+    computerName: text().notNull(),
+    employeeId: integer().references(() => employees.id, { onDelete: "set null" }),
+    employeeName: text(),
+    result: text().$type<WorkstationResult>().notNull(),
+    items: jsonb().$type<WorkstationItem[]>().notNull(),
+    message: text().notNull().default(""),
+    checkedBy: text().references(() => users.id, { onDelete: "set null" }),
+    checkedByName: text().notNull(),
+    checkedAt: createdAt(),
+    readCodeHash: text(),
+    readAt: timestamp({ withTimezone: true }),
+    /** Who said they read it: the Windows account, or the app's user. */
+    readBy: text(),
+    /** Where: the computer's name, or "app". */
+    readOn: text(),
+  },
+  (t) => [index().on(t.employeeId), index().on(t.computerName), index().on(t.assetId)],
+);
+
 // ---------------------------------------------------------------- floor plans
 
 /**
@@ -743,6 +781,8 @@ export const apiTokens = pgTable("api_tokens", {
   /** SHA-256 of the key; the first characters are kept to tell keys apart. */
   hash: text().notNull().unique(),
   prefix: text().notNull(),
+  /** What it reaches: the KPIs, or only the workstation messages shown at Windows sign-in. */
+  scope: text().$type<ApiTokenScope>().notNull().default("kpis"),
   createdBy: text(),
   createdAt: createdAt(),
   lastUsedAt: timestamp({ withTimezone: true }),

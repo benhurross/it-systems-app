@@ -1,6 +1,6 @@
 # Plan: workstation checks, shown at Windows sign-in
 
-Status: **agreed, not started** (put on hold for other work; pick up from here).
+Status: **built**. Set-up on Windows: [docs/WORKSTATION-CHECKS.md](../WORKSTATION-CHECKS.md). Not built yet: the optional email copy.
 
 IT's regular desk checks (the "ocular check" against the IT standard) are today printed on paper:
 a "good job" note or a warning. This moves them into the app and shows each employee their result
