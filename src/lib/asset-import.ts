@@ -1,13 +1,13 @@
 import type { z } from "zod";
 import { ASSET_STATUSES, CRITICALITIES, SUPPORT_STATUSES } from "./domain";
 import { assetSpecs, pruneSpecs } from "./asset-specs";
-import { readSpecs } from "./asset-sheet-specs";
+import { readSpecs, type NewListValue } from "./asset-sheet-specs";
 import { assetInput } from "./schemas";
 
 /** The hardware columns, as the template and the inventory export name them. */
 export const HARDWARE_HEADERS = [
   "Processor", "vCPUs", "RAM (GB)", "Storage size", "Storage type", "Storage 2 size", "Storage 2 type",
-  "Ports", "Operating system", "Screen (inches)", "Port count",
+  "Operating system", "Screen (inches)", "Port count",
 ] as const;
 
 /**
@@ -42,18 +42,13 @@ const COLUMNS = {
   macAddress: ["macaddress", "mac"],
   anydeskId: ["anydeskid", "anydesk"],
   os: ["os", "operatingsystem", "operatingsystemorfirmware", "firmware"],
-  osVersion: ["osversion", "operatingsystemversion"],
-  processor: ["processor", "cpu"],
-  cpuBrand: ["processorbrand", "cpubrand", "cpumake"],
-  cpuFamily: ["processorfamily", "cpufamily", "processorseries"],
-  cpuModel: ["processormodel", "cpumodel"],
+  processor: ["processor", "cpu", "processortype"],
   vcpus: ["vcpus", "virtualcpus", "vcpu"],
   ramGb: ["ramgb", "ram", "memory", "memorygb", "memoryramgb"],
   drive1: ["storagesize", "storage", "storage1size", "storage1", "disksize", "disk", "drive1"],
   drive1Type: ["storagetype", "storage1type", "disktype", "drivetype", "drive1type"],
   drive2: ["storage2size", "storage2", "seconddrivesize", "seconddrive", "drive2"],
   drive2Type: ["storage2type", "seconddrivetype", "drive2type"],
-  ports: ["ports"],
   screen: ["screeninches", "screen", "screensize", "screensizeinches"],
   portCount: ["portcount", "numberofports"],
   notes: ["notes", "remarks", "comments"],
@@ -106,7 +101,7 @@ export type PlannedRow = {
 };
 
 export type ImportContext = {
-  lookups: { list: string; code: string; labelEn: string; labelAr: string }[];
+  lookups: { list: string; code: string; labelEn: string; labelAr: string; sortOrder?: number }[];
   employees: { id: number; name: string; email: string | null; number: string | null; active: boolean }[];
   assets: (AssetInput & { id: number })[];
 };
@@ -153,9 +148,14 @@ export function readAssetSheet(sheet: Cell[][]) {
 }
 
 /** What loading the sheet would do, row by row, against what is registered. */
-export function planImport(sheet: Cell[][], ctx: ImportContext): { rows: PlannedRow[]; unused: string[]; problem: Problem | null } {
+export function planImport(
+  sheet: Cell[][],
+  ctx: ImportContext,
+): { rows: PlannedRow[]; unused: string[]; problem: Problem | null; added: NewListValue[] } {
   const { headerAt, columns, unused, rows } = readAssetSheet(sheet);
-  if (headerAt < 0) return { rows: [], unused: [], problem: { code: "noHeader" } };
+  if (headerAt < 0) return { rows: [], unused: [], problem: { code: "noHeader" }, added: [] };
+  // Processors, storage types and systems the lists do not have yet, added when the sheet is loaded.
+  const added: NewListValue[] = [];
   const list = (name: string) => ctx.lookups.filter((l) => l.list === name);
   const byId = new Map(ctx.assets.map((a) => [a.id, a]));
   const bySerial = new Map(ctx.assets.filter((a) => a.serial).map((a) => [key(a.serial!), a]));
@@ -240,11 +240,10 @@ export function planImport(sheet: Cell[][], ctx: ImportContext): { rows: Planned
     for (const field of ["name", "model", "serial", "ipAddress", "macAddress", "anydeskId", "notes"] as const) {
       if (raw(field)) values[field] = raw(field);
     }
-    // The hardware, over what the asset has; a system the list does not know stays as written.
-    const read = readSpecs((f) => raw(f as ImportField), assetSpecs.parse(existing?.specs ?? {}), ctx.lookups);
+    // The hardware, over what the asset has; a processor or system its list lacks is added to it.
+    const read = readSpecs((f) => raw(f as ImportField), assetSpecs.parse(existing?.specs ?? {}), ctx.lookups, added);
     for (const p of read.problems) problems.push({ code: "unknown", field: p.field as ImportField, value: p.value });
     values.specs = read.specs;
-    if (read.osText) values.os = read.osText;
 
     // Updates start from what is there; new assets from sensible defaults.
     const base: Partial<AssetInput> = existing ?? {
@@ -276,7 +275,6 @@ export function planImport(sheet: Cell[][], ctx: ImportContext): { rows: Planned
     if (existing && input) {
       const specsNow = JSON.stringify(pruneSpecs(input.specs, input.type, input.category));
       if (specsNow !== JSON.stringify(pruneSpecs(assetSpecs.parse(existing.specs ?? {}), existing.type, existing.category))) changes.push("specs");
-      if (read.osText && !same(input.os, existing.os)) changes.push("os");
     }
     return {
       line,
@@ -288,7 +286,9 @@ export function planImport(sheet: Cell[][], ctx: ImportContext): { rows: Planned
       input: problems.length ? null : input,
     };
   });
-  return { rows: planned, unused, problem: null };
+  // Only what a row being loaded uses is added.
+  const used = new Set(planned.filter((r) => r.input).flatMap((r) => [`processor:${r.input!.specs.cpu}`, `operating_system:${r.input!.specs.os}`, ...r.input!.specs.drives.map((d) => `storage_type:${d.type}`)]));
+  return { rows: planned, unused, problem: null, added: added.filter((a) => used.has(`${a.list}:${a.code}`)) };
 }
 
 const same = (a: unknown, b: unknown) => (a ?? null) === (b ?? null) || String(a) === String(b);

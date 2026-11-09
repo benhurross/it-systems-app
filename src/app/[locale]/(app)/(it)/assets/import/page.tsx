@@ -63,17 +63,12 @@ async function send(file: File, apply: boolean): Promise<Result> {
 /** The hardware columns' names, as the asset form words them. */
 const HARDWARE_LABEL = {
   processor: "processor",
-  cpuBrand: "cpuBrand",
-  cpuFamily: "processor",
-  cpuModel: "processor",
   vcpus: "vcpus",
   ramGb: "ram",
   drive1: "storageSize",
   drive1Type: "storageType",
   drive2: "storageSize2",
   drive2Type: "storageType",
-  ports: "ports",
-  osVersion: "os",
   screen: "screen",
   portCount: "portCount",
 } as const;
@@ -271,6 +266,13 @@ export default function AssetImportPage() {
                     ),
                   )}
                 </div>
+                {result.added.length > 0 && (
+                  <p className="text-sm text-muted-foreground">
+                    {t(result.applied ? "assets.import.addedToLists" : "assets.import.toAddToLists", {
+                      values: result.added.map((a) => `${a.label} (${t(`settings.lists.names.${a.list}`)})`).join(", "),
+                    })}
+                  </p>
+                )}
                 {result.unused.length > 0 && (
                   <p className="text-sm text-muted-foreground">
                     {t("assets.import.unused", {

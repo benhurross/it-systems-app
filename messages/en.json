@@ -557,9 +557,8 @@
         "risk_category": "Risk categories",
         "channel": "Received by",
         "workstation_check": "Workstation checklist",
-        "cpu_intel": "Intel processors",
-        "cpu_amd": "AMD processors",
-        "cpu_apple": "Apple processors",
+        "processor": "Processors",
+        "storage_type": "Storage types",
         "operating_system": "Operating systems"
       }
     },
@@ -1061,12 +1060,6 @@
     "specs": "Specification",
     "hardware": {
       "title": "Hardware",
-      "cpuBrand": "Processor",
-      "brands": {
-        "intel": "Intel",
-        "amd": "AMD",
-        "apple": "Apple (MacBook / iMac)"
-      },
       "vcpus": "Virtual CPUs",
       "ram": "Memory (RAM, GB)",
       "screen": "Screen size (inches)",
@@ -1076,37 +1069,8 @@
       "storageSize2": "Second drive size",
       "unit": "Unit",
       "storageType": "Storage type",
-      "storageTypes": {
-        "ssd_nvme": "SSD (NVMe)",
-        "ssd_sata": "SSD (SATA)",
-        "hdd": "HDD"
-      },
       "addDrive": "Add a second drive",
       "removeDrive": "Remove the second drive",
-      "ports": "Ports",
-      "portNames": {
-        "ethernet": "Network (RJ-45)",
-        "usb_a": "USB-A",
-        "usb_c": "USB-C",
-        "thunderbolt": "Thunderbolt",
-        "usb_b": "USB-B",
-        "hdmi": "HDMI",
-        "displayport": "DisplayPort",
-        "mini_displayport": "Mini DisplayPort",
-        "vga": "VGA",
-        "dvi": "DVI",
-        "audio": "Audio jack (3.5 mm)",
-        "sd_card": "SD card reader",
-        "microsd": "microSD reader",
-        "serial": "Serial (COM)",
-        "docking": "Docking connector",
-        "kensington": "Kensington lock",
-        "sim": "SIM card slot",
-        "sfp": "SFP / fibre",
-        "console": "Console port",
-        "wifi": "Wi-Fi",
-        "bluetooth": "Bluetooth"
-      },
       "storage": "Storage",
       "processor": "Processor",
       "none": "No hardware details recorded."
@@ -1172,7 +1136,7 @@
       "columnTag": "Tag (AST-0042) or Serial: a row naming an asset already registered updates it, and its empty cells leave what is there. Any other row adds an asset.",
       "columnPerson": "Assigned to: the person's employee number, email or full name. A change of place or holder goes in the movement history.",
       "columnDates": "Dates: 2026-03-31 or 31/03/2026 (day first).",
-      "columnHardware": "Hardware: processor as the Lists sheet has it (Intel Core i5), RAM (GB), storage (512 GB, SSD (NVMe)), ports separated by commas, operating system. The template's Lists sheet has the values each column takes.",
+      "columnHardware": "Hardware: processor (Intel Core i5), RAM (GB), storage (512 GB, SSD (NVMe)), operating system. The template's Lists sheet has the values already in the app; a value not there yet is added to its list when imported.",
       "resultTitle": "What loading {file} will do",
       "loadedTitle": "{file} is loaded",
       "counts": {
@@ -1217,7 +1181,9 @@
         "fileEmpty": "Choose a file first.",
         "tooManyRows": "The file has more than 5,000 rows. Load it in parts.",
         "generic": "The file could not be read. Try again."
-      }
+      },
+      "addedToLists": "Added to the lists: {values}",
+      "toAddToLists": "New values, added to the lists when loaded: {values}"
     },
     "deleteDetail": "Its movement history, CMDB links, installed software, monitoring and documents go with it, and tickets that named it lose the link. To keep its history, retire it instead.",
     "noPhoto": "No photo yet",
@@ -1235,6 +1201,13 @@
       "noteBy": "Confirmed by {by}, {date}",
       "clear": "Not beyond repair",
       "cleared": "No longer marked beyond repair."
+    },
+    "listField": {
+      "searchOrAdd": "Search, or type a new one…",
+      "noneFound": "Not in the list yet.",
+      "add": "Add “{value}”",
+      "added": "Added to the list.",
+      "edit": "Edit list"
     }
   },
   "discovery": {

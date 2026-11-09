@@ -48,9 +48,8 @@ export const LOOKUP_LISTS = [
   "risk_category",
   "channel",
   "workstation_check",
-  "cpu_intel",
-  "cpu_amd",
-  "cpu_apple",
+  "processor",
+  "storage_type",
   "operating_system",
 ] as const;
 

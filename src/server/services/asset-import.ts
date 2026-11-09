@@ -1,6 +1,7 @@
 import { inArray } from "drizzle-orm";
 import { readSheet } from "read-excel-file/node";
 import { type Cell, planImport, type ImportContext } from "@/lib/asset-import";
+import { HARDWARE_LISTS } from "@/lib/asset-specs";
 import { parseCsv } from "@/lib/csv";
 import { MAX_UPLOAD_BYTES } from "@/lib/files";
 import { assetInput } from "@/lib/schemas";
@@ -28,7 +29,7 @@ async function readFile(name: string, bytes: Uint8Array): Promise<Cell[][]> {
 
 async function context(): Promise<ImportContext> {
   const [lists, people, assets] = await Promise.all([
-    db.select().from(lookups).where(inArray(lookups.list, ["asset_category", "asset_type", "location", "manufacturer"])),
+    db.select().from(lookups).where(inArray(lookups.list, ["asset_category", "asset_type", "location", "manufacturer", ...HARDWARE_LISTS])),
     db.select({ id: employees.id, name: employees.name, email: employees.email, number: employees.employeeNumber, active: employees.active }).from(employees),
     listAssets(),
   ]);
@@ -54,6 +55,15 @@ export async function importAssets(file: { name: string; bytes: Uint8Array }, ap
 
   if (apply && !plan.problem) {
     const reason = `Imported from ${file.name}`;
+    for (const value of plan.added) {
+      const order = Math.max(-1, ...ctx.lookups.filter((l) => l.list === value.list).map((l) => l.sortOrder ?? 0)) + 1;
+      const [row] = await db
+        .insert(lookups)
+        .values({ list: value.list, code: value.code, labelEn: value.label, labelAr: value.label, sortOrder: order })
+        .onConflictDoNothing()
+        .returning();
+      if (row) await audit(actor, "create", "lookup", row.id, `Added "${row.labelEn}" to ${row.list}, ${reason.toLowerCase()}`);
+    }
     for (const row of plan.rows) {
       if (row.action === "add") {
         row.assetId = (await createAsset(row.input!, actor)).id;
@@ -72,6 +82,7 @@ export async function importAssets(file: { name: string; bytes: Uint8Array }, ap
     applied: apply && !plan.problem,
     problem: plan.problem,
     unused: plan.unused,
+    added: plan.added,
     counts,
     // What each row would be saved as stays here.
     rows: plan.rows.map((row) => ({ ...row, input: undefined })),

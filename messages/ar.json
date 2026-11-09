@@ -557,9 +557,8 @@
         "risk_category": "فئات المخاطر",
         "channel": "وسيلة الاستلام",
         "workstation_check": "قائمة فحص محطات العمل",
-        "cpu_intel": "معالجات Intel",
-        "cpu_amd": "معالجات AMD",
-        "cpu_apple": "معالجات Apple",
+        "processor": "المعالجات",
+        "storage_type": "أنواع التخزين",
         "operating_system": "أنظمة التشغيل"
       }
     },
@@ -1061,12 +1060,6 @@
     "specs": "المواصفات",
     "hardware": {
       "title": "العتاد",
-      "cpuBrand": "المعالج",
-      "brands": {
-        "intel": "Intel",
-        "amd": "AMD",
-        "apple": "Apple (MacBook / iMac)"
-      },
       "vcpus": "المعالجات الافتراضية",
       "ram": "الذاكرة (RAM، جيجابايت)",
       "screen": "حجم الشاشة (بوصة)",
@@ -1076,37 +1069,8 @@
       "storageSize2": "سعة القرص الثاني",
       "unit": "الوحدة",
       "storageType": "نوع التخزين",
-      "storageTypes": {
-        "ssd_nvme": "SSD (NVMe)",
-        "ssd_sata": "SSD (SATA)",
-        "hdd": "HDD"
-      },
       "addDrive": "إضافة قرص ثانٍ",
       "removeDrive": "إزالة القرص الثاني",
-      "ports": "المنافذ",
-      "portNames": {
-        "ethernet": "شبكة (RJ-45)",
-        "usb_a": "USB-A",
-        "usb_c": "USB-C",
-        "thunderbolt": "Thunderbolt",
-        "usb_b": "USB-B",
-        "hdmi": "HDMI",
-        "displayport": "DisplayPort",
-        "mini_displayport": "Mini DisplayPort",
-        "vga": "VGA",
-        "dvi": "DVI",
-        "audio": "منفذ صوت (3.5 مم)",
-        "sd_card": "قارئ بطاقات SD",
-        "microsd": "قارئ microSD",
-        "serial": "منفذ تسلسلي (COM)",
-        "docking": "موصل الإرساء",
-        "kensington": "قفل Kensington",
-        "sim": "منفذ شريحة SIM",
-        "sfp": "SFP / ألياف",
-        "console": "منفذ Console",
-        "wifi": "Wi-Fi",
-        "bluetooth": "Bluetooth"
-      },
       "storage": "التخزين",
       "processor": "المعالج",
       "none": "لا تفاصيل عتاد مسجلة."
@@ -1172,7 +1136,7 @@
       "columnTag": "الرمز (AST-0042) أو الرقم التسلسلي: الصف الذي يذكر أصلاً مسجلاً يحدّثه، وخلاياه الفارغة تُبقي ما هو موجود. وأي صف آخر يضيف أصلاً.",
       "columnPerson": "مسند إلى: الرقم الوظيفي للشخص أو بريده أو اسمه الكامل. ويُسجَّل تغيير المكان أو الحائز في سجل الحركة.",
       "columnDates": "التواريخ: 2026-03-31 أو 31/03/2026 (اليوم أولاً).",
-      "columnHardware": "العتاد: المعالج كما في ورقة Lists (Intel Core i5)، والذاكرة (جيجابايت)، والتخزين (512 GB، SSD (NVMe))، والمنافذ مفصولة بفواصل، ونظام التشغيل. في ورقة Lists بالقالب القيم التي يقبلها كل عمود.",
+      "columnHardware": "العتاد: المعالج (Intel Core i5)، والذاكرة (جيجابايت)، والتخزين (512 GB، SSD (NVMe))، ونظام التشغيل. في ورقة Lists بالقالب القيم الموجودة في التطبيق، وأي قيمة غير موجودة تُضاف إلى قائمتها عند الاستيراد.",
       "resultTitle": "ما سيفعله تحميل {file}",
       "loadedTitle": "تم تحميل {file}",
       "counts": {
@@ -1217,7 +1181,9 @@
         "fileEmpty": "اختر ملفاً أولاً.",
         "tooManyRows": "في الملف أكثر من 5,000 صف. حمّله على أجزاء.",
         "generic": "تعذّرت قراءة الملف. حاول مرة أخرى."
-      }
+      },
+      "addedToLists": "أُضيفت إلى القوائم: {values}",
+      "toAddToLists": "قيم جديدة تُضاف إلى القوائم عند التحميل: {values}"
     },
     "deleteDetail": "يُحذف معه سجل حركته وروابطه في قاعدة بيانات التهيئة والبرامج المثبتة والمراقبة والمستندات، وتفقد التذاكر التي ذكرته الرابط إليه. للإبقاء على سجله، استبعده بدلاً من ذلك.",
     "noPhoto": "لا توجد صورة بعد",
@@ -1235,6 +1201,13 @@
       "noteBy": "أكّده {by}، {date}",
       "clear": "قابل للإصلاح",
       "cleared": "أُلغي تحديده كغير قابل للإصلاح."
+    },
+    "listField": {
+      "searchOrAdd": "ابحث، أو اكتب قيمة جديدة…",
+      "noneFound": "غير موجودة في القائمة بعد.",
+      "add": "إضافة «{value}»",
+      "added": "أُضيفت إلى القائمة.",
+      "edit": "تعديل القائمة"
     }
   },
   "discovery": {

@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -23,7 +24,9 @@ type Input = z.output<typeof lookupInput>;
 
 export default function ListsPage() {
   const t = useTranslations("settings.lists");
-  const [list, setList] = useState<LookupList>("location");
+  // "Edit list" beside a dropdown opens its list: ?list=processor.
+  const asked = useSearchParams().get("list");
+  const [list, setList] = useState<LookupList>(() => (LOOKUP_LISTS.includes(asked as LookupList) ? (asked as LookupList) : "location"));
   const [editing, setEditing] = useState<Lookup | "new" | null>(null);
   const { data = [], isLoading } = useApi<Lookup[]>("/settings/lists");
   const rows = data.filter((l) => l.list === list);

@@ -13,7 +13,7 @@ import { useApi, useApiMutation } from "@/hooks/use-api";
 import { useLookups } from "@/hooks/use-lookups";
 import { useRouter } from "@/i18n/navigation";
 import { api } from "@/lib/api";
-import { assetSpecs, CPU_BRAND_LABELS, CPU_LIST, driveSize } from "@/lib/asset-specs";
+import { assetSpecs, driveSize } from "@/lib/asset-specs";
 import type { Asset, Employee, ItFormRecord } from "@/lib/api-types";
 import { isoDate } from "@/lib/dates";
 import {
@@ -175,11 +175,11 @@ function IncidentRepairFields() {
     // The hardware recorded for it: first drive, memory, processor, screen.
     const specs = assetSpecs.parse(a.specs ?? {});
     const drive = specs.drives[0];
-    if (drive?.type) set("diskType", drive.type === "hdd" ? "HDD" : "SSD");
+    // The form ticks SSD or HDD; the storage types list may hold others ("SSD (NVMe)").
+    if (drive?.type) set("diskType", /hdd|hard/i.test(`${drive.type} ${lookups.label("storage_type", drive.type)}`) ? "HDD" : "SSD");
     if (drive?.size) set("diskSize", driveSize(drive));
     if (specs.ramGb) set("ram", `${specs.ramGb} GB`);
-    const cpu = specs.cpuBrand ? [CPU_BRAND_LABELS[specs.cpuBrand], specs.cpuFamily ? lookups.label(CPU_LIST[specs.cpuBrand], specs.cpuFamily) : ""].filter(Boolean).join(" ") : "";
-    if (cpu) set("processor", cpu);
+    if (specs.cpu) set("processor", lookups.label("processor", specs.cpu));
     if (specs.screenInches) set("screen", `${specs.screenInches}"`);
   };
   return (

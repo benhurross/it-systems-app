@@ -372,8 +372,13 @@ test("an asset's hardware: the form shows what its type has, and the page shows 
   await pick(/^Category$/, "End-User Devices");
   await pick(/^Type$/, "Laptop");
   await pick(/^Location$/, "Jeddah Head Office");
-  // One list of processors, brand and family together.
-  await pick(/^Processor/, "AMD Ryzen 5");
+  // A processor not in the list yet is typed, and added to it on the spot.
+  const cpu = `AMD Ryzen 5 PRO ${info.workerIndex}${Date.now() % 100_000}`;
+  await dialog.getByRole("combobox", { name: /^Processor/ }).click();
+  await page.getByPlaceholder("Search, or type a new one…").fill(cpu);
+  await page.getByRole("option", { name: `Add “${cpu}”` }).click();
+  await expect(page.getByText("Added to the list.")).toBeVisible();
+  await expect(dialog.getByRole("combobox", { name: /^Processor/ })).toHaveText(cpu);
   await dialog.getByLabel(/Memory/).fill("16");
   await dialog.getByLabel(/Screen size/).fill("14");
   await dialog.getByLabel(/^Storage size/).fill("512");
@@ -382,27 +387,46 @@ test("an asset's hardware: the form shows what its type has, and the page shows 
   await dialog.getByLabel(/Second drive size/).fill("1");
   await dialog.getByRole("combobox", { name: /^Unit$/ }).nth(1).click();
   await page.getByRole("option", { name: "TB", exact: true }).click();
-  await dialog.getByLabel("USB-C").check();
-  await dialog.getByLabel("HDMI").check();
   await pick(/^Operating system/, "Windows 11 Pro");
+  // No ports to tick any more.
+  await expect(dialog.getByLabel("USB-C")).toHaveCount(0);
 
-  // Another type, other fields: a monitor has no processor, memory or system, but a screen and its ports.
+  // Another type, other fields: a monitor has no processor, memory or system, but a screen.
   await pick(/^Type$/, "Monitor");
   await expect(dialog.getByRole("combobox", { name: /^Processor/ })).toHaveCount(0);
   await expect(dialog.getByLabel(/Memory/)).toHaveCount(0);
   await expect(dialog.getByLabel(/Screen size/)).toBeVisible();
-  await expect(dialog.getByLabel("Kensington lock")).toHaveCount(0);
   await pick(/^Type$/, "Laptop");
   await dialog.getByRole("button", { name: "Save" }).click();
 
   await expect(page).toHaveURL(/\/en\/assets\/\d+$/);
   const spec = page.locator("[data-slot='card']").filter({ has: page.locator("[data-slot='card-title']", { hasText: /^Specification$/ }) });
-  await expect(spec).toContainText("AMD Ryzen 5");
+  await expect(spec).toContainText(cpu);
   await expect(spec).toContainText("512 GB SSD (NVMe)");
   await expect(spec).toContainText("1 TB");
   await expect(spec).toContainText("Windows 11 Pro");
-  await expect(spec).toContainText("USB-C, HDMI");
+
+  // From then on the processor is offered in the list, as any other.
+  const lists = (await (await page.request.get("/api/lookups")).json()) as { list: string; labelEn: string }[];
+  expect(lists.filter((l) => l.list === "processor" && l.labelEn === cpu)).toHaveLength(1);
   console.assertClean();
+});
+
+test("an admin opens a dropdown's list in Settings from the asset form", async ({ browser }) => {
+  const admin = await browser.newContext({ storageState: session("admin") });
+  const page = await admin.newPage();
+  const console = watchConsole(page);
+  await page.goto("/en/assets/inventory");
+  await page.getByRole("button", { name: "Add asset" }).click();
+  const dialog = page.getByRole("dialog", { name: "Add asset" });
+  await dialog.getByRole("combobox", { name: /^Type$/ }).click();
+  await page.getByRole("option", { name: "Laptop", exact: true }).click();
+  await dialog.getByRole("group").filter({ hasText: /^Operating system/ }).getByRole("link", { name: "Edit list" }).click();
+  await expect(page).toHaveURL(/\/en\/settings\/lists\?list=operating_system/);
+  await expect(page.getByRole("combobox", { name: "List" })).toHaveText("Operating systems");
+  await expect(page.getByRole("row").filter({ hasText: "Windows 11 Pro" }).first()).toBeVisible();
+  console.assertClean();
+  await admin.close();
 });
 
 test("an asset is due for replacement only once marked beyond repair, shown as a glowing icon with its issues", async ({ page }, info) => {

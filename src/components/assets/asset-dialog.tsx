@@ -27,6 +27,7 @@ import {
 } from "@/lib/domain";
 import { assetInput } from "@/lib/schemas";
 import { assetSpecs, PROFILES, profileOf } from "@/lib/asset-specs";
+import { ListField } from "./list-field";
 import { HardwareFields } from "./hardware-fields";
 
 export type AssetInput = z.output<typeof assetInput>;
@@ -138,12 +139,7 @@ export function AssetDialog({
           label={t("assets.type")}
           options={lookups.options("asset_type")}
         />
-        <SelectField
-          name="manufacturer"
-          label={t("assets.manufacturer")}
-          options={lookups.options("manufacturer")}
-          optional
-        />
+        <ListField name="manufacturer" label={t("assets.manufacturer")} list="manufacturer" empty={null} />
         <TextField name="model" label={t("assets.model")} optional />
         <TextField
           name="serial"

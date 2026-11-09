@@ -27,7 +27,7 @@ import { Link, useRouter } from "@/i18n/navigation";
 import { formatAnydeskId } from "@/lib/anydesk";
 import { api } from "@/lib/api";
 import type { AssetDetail } from "@/lib/api-types";
-import { assetSpecs, CPU_BRAND_LABELS, CPU_LIST, driveSize } from "@/lib/asset-specs";
+import { assetSpecs, driveSize } from "@/lib/asset-specs";
 import { isoDate } from "@/lib/dates";
 import { ref } from "@/lib/domain";
 import { assetFlags, type AssetFlags } from "@/lib/lifecycle";
@@ -301,8 +301,8 @@ function HardwareRows({ asset }: { asset: AssetDetail }) {
   const t = useTranslations("assets.hardware");
   const lookups = useLookups();
   const specs = assetSpecs.parse(asset.specs ?? {});
-  const cpu = specs.cpuBrand ? [CPU_BRAND_LABELS[specs.cpuBrand], specs.cpuFamily ? lookups.label(CPU_LIST[specs.cpuBrand], specs.cpuFamily) : ""].filter(Boolean).join(" ") : "";
-  const drives = specs.drives.map((d) => [driveSize(d), d.type ? t(`storageTypes.${d.type}`) : ""].filter(Boolean).join(" ")).filter(Boolean);
+  const cpu = lookups.label("processor", specs.cpu);
+  const drives = specs.drives.map((d) => [driveSize(d), lookups.label("storage_type", d.type)].filter(Boolean).join(" ")).filter(Boolean);
   return (
     <>
       {cpu && <Row label={t("processor")}>{cpu}</Row>}
@@ -311,7 +311,6 @@ function HardwareRows({ asset }: { asset: AssetDetail }) {
       {drives.length > 0 && <Row label={t("storage")}>{drives.join(" + ")}</Row>}
       {specs.screenInches && <Row label={t("screen")}>{specs.screenInches}″</Row>}
       {specs.portCount && <Row label={t("portCount")}>{specs.portCount}</Row>}
-      {specs.ports.length > 0 && <Row label={t("ports")}>{specs.ports.map((p) => t(`portNames.${p}`)).join(", ")}</Row>}
     </>
   );
 }

@@ -24,16 +24,17 @@ describe("the asset import template", () => {
     const column = (name: string) => lists.slice(1).map((r) => r[lists[0].indexOf(name)]).filter(Boolean);
     expect(column("Type")).toContain("Laptop");
     expect(column("Processor")).toEqual(expect.arrayContaining(["Intel Core i7", "AMD Ryzen 5", "Apple M2"]));
-    expect(column("Processor")).toHaveLength(12);
     expect(column("Operating system")).toContain("Windows 11 Pro");
-    expect(column("Ports")).toContain("USB-C");
+    expect(column("Storage type")).toEqual(expect.arrayContaining(["SSD (NVMe)", "HDD"]));
+    expect(lists[0]).not.toContain("Ports");
 
     // The example on "How to fill", put on the Assets sheet, loads without a problem.
     const at = how.findIndex((r) => r[0] === "Tag");
     const ctx = { lookups: await db.select().from(lookups), employees: [{ id: 1, name: "Test Person", email: "employee@applus.com.sa", number: null, active: true }], assets: [] };
-    const { rows, unused } = planImport([how[at], how[at + 1]], ctx);
+    const { rows, unused, added } = planImport([how[at], how[at + 1]], ctx);
     expect(unused).toEqual([]);
+    expect(added).toEqual([]);
     expect(rows[0]).toMatchObject({ action: "add", problems: [] });
-    expect(rows[0].input!.specs).toMatchObject({ cpuBrand: "intel", cpuFamily: "core_i7", ramGb: 16, os: "win11_pro" });
+    expect(rows[0].input!.specs).toMatchObject({ cpu: "intel_core_i7", ramGb: 16, os: "win11_pro", drives: [{ size: 512, unit: "GB", type: "ssd_nvme" }] });
   });
 });

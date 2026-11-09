@@ -152,24 +152,25 @@ export const REFERENCE: Record<LookupList, Entry[]> = {
     ["clean_equipment", "Equipment clean; no food or drink near the computer", "الأجهزة نظيفة، ولا طعام أو شراب قرب الحاسوب"],
     ["good_condition", "PC and monitors in good condition (no damage, vents clear)", "الحاسوب والشاشات بحالة جيدة (لا أضرار، وفتحات التهوية غير مسدودة)"],
   ],
-  // Processor families by brand, and operating systems, for the asset form's hardware details.
-  cpu_intel: [
-    ["core_i3", "Core i3", "Core i3"],
-    ["core_i5", "Core i5", "Core i5"],
-    ["core_i7", "Core i7", "Core i7"],
-    ["core_i9", "Core i9", "Core i9"],
+  // The asset form's hardware dropdowns: processors, storage types and operating systems.
+  processor: [
+    ["intel_core_i3", "Intel Core i3", "Intel Core i3"],
+    ["intel_core_i5", "Intel Core i5", "Intel Core i5"],
+    ["intel_core_i7", "Intel Core i7", "Intel Core i7"],
+    ["intel_core_i9", "Intel Core i9", "Intel Core i9"],
+    ["amd_ryzen_3", "AMD Ryzen 3", "AMD Ryzen 3"],
+    ["amd_ryzen_5", "AMD Ryzen 5", "AMD Ryzen 5"],
+    ["amd_ryzen_7", "AMD Ryzen 7", "AMD Ryzen 7"],
+    ["amd_ryzen_9", "AMD Ryzen 9", "AMD Ryzen 9"],
+    ["apple_m1", "Apple M1", "Apple M1"],
+    ["apple_m2", "Apple M2", "Apple M2"],
+    ["apple_m3", "Apple M3", "Apple M3"],
+    ["apple_m4", "Apple M4", "Apple M4"],
   ],
-  cpu_amd: [
-    ["ryzen_3", "Ryzen 3", "Ryzen 3"],
-    ["ryzen_5", "Ryzen 5", "Ryzen 5"],
-    ["ryzen_7", "Ryzen 7", "Ryzen 7"],
-    ["ryzen_9", "Ryzen 9", "Ryzen 9"],
-  ],
-  cpu_apple: [
-    ["m1", "M1", "M1"],
-    ["m2", "M2", "M2"],
-    ["m3", "M3", "M3"],
-    ["m4", "M4", "M4"],
+  storage_type: [
+    ["ssd_nvme", "SSD (NVMe)", "SSD (NVMe)"],
+    ["ssd_sata", "SSD (SATA)", "SSD (SATA)"],
+    ["hdd", "HDD", "HDD"],
   ],
   operating_system: [
     ["win11_pro", "Windows 11 Pro", "Windows 11 Pro"],

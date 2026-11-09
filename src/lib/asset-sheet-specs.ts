@@ -1,33 +1,23 @@
-import {
-  assetSpecs,
-  CPU_BRAND_LABELS,
-  CPU_BRANDS,
-  CPU_LIST,
-  driveSize,
-  PORT_LABELS,
-  PORTS,
-  STORAGE_LABELS,
-  STORAGE_TYPES,
-  type AssetSpecs,
-  type CpuBrand,
-  type Port,
-} from "./asset-specs";
+import { assetSpecs, codeOf, driveSize, HARDWARE_LISTS, type AssetSpecs } from "./asset-specs";
 
 /**
- * Reading an inventory sheet's hardware columns: processor (brand, family and model, or all in one
- * "Intel Core i5-1135G7"), memory, drives ("512 GB", "1TB"), ports ("USB-C, HDMI"), operating system
- * ("Windows 11 Pro 23H2"), screen. Values are matched to the app's lists by name or code, loosely.
+ * Reading an inventory sheet's hardware columns: processor ("Intel Core i5-1135G7"), memory, drives
+ * ("512 GB", "1TB", "SSD (NVMe)"), operating system ("Windows 11 Pro"), screen. The processor, storage
+ * type and system are matched to their lists (Settings → Lists) by name or code, loosely; a value
+ * none matches is added to its list, as IT would add it from the asset form.
  */
 
 type Lookup = { list: string; code: string; labelEn: string; labelAr: string };
+export type HardwareList = (typeof HARDWARE_LISTS)[number];
+/** A value a sheet names that its list does not have yet: added when the sheet is loaded. */
+export type NewListValue = { list: HardwareList; code: string; label: string };
+
 const key = (v: string) => v.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, "");
 
 export type SpecProblem = { field: string; value: string };
 
 /** "512", "512 GB", "1TB", "1.5 TB": a size and its unit; null for anything else. */
-export function readSize(
-  value: string,
-): { size: number; unit: "GB" | "TB" } | null {
+export function readSize(value: string): { size: number; unit: "GB" | "TB" } | null {
   const m = /^(\d+(?:[.,]\d+)?)\s*(gb|g|tb|t)?$/i.exec(value.trim());
   if (!m) return null;
   const size = Number(m[1].replace(",", "."));
@@ -35,153 +25,54 @@ export function readSize(
   return { size, unit: m[2] && /^t/i.test(m[2]) ? "TB" : "GB" };
 }
 
-/** "SSD (NVMe)", "NVMe", "SSD", "HDD", or the code. A plain SSD is taken as SATA. */
-export function readStorageType(
-  value: string,
-): (typeof STORAGE_TYPES)[number] | null {
+/** The entry of a list a value names: by name or code, else the longest name it contains or starts with. */
+export function findInList(list: HardwareList, value: string, lookups: Lookup[]): Lookup | null {
   const k = key(value);
   if (!k) return null;
-  const byName = STORAGE_TYPES.find(
-    (t) => key(t) === k || key(STORAGE_LABELS[t]) === k,
-  );
-  if (byName) return byName;
-  if (k.includes("nvme") || k.includes("m2")) return "ssd_nvme";
-  if (k.includes("ssd") || k.includes("sata")) return "ssd_sata";
-  if (k.includes("hdd") || k.includes("harddisk")) return "hdd";
-  return null;
-}
-
-/** "USB-C, HDMI; Network (RJ-45)": the ports named, and any not known. */
-export function readPorts(value: string): { ports: Port[]; unknown: string[] } {
-  const ports: Port[] = [];
-  const unknown: string[] = [];
-  for (const part of value
-    .split(/[,;|\n]+/)
-    .map((p) => p.trim())
-    .filter(Boolean)) {
-    const k = key(part);
-    const found =
-      PORTS.find((p) => key(p) === k || key(PORT_LABELS[p]) === k) ??
-      (k === "rj45" || k === "lan"
-        ? "ethernet"
-        : k === "wifi"
-          ? "wifi"
-          : undefined);
-    if (found) {
-      if (!ports.includes(found)) ports.push(found);
-    } else unknown.push(part);
+  const entries = lookups.filter((l) => l.list === list);
+  const exact = entries.find((l) => key(l.code) === k || key(l.labelEn) === k || key(l.labelAr) === k);
+  if (exact) return exact;
+  const longest = (found: Lookup[]) => found.sort((a, b) => b.labelEn.length - a.labelEn.length)[0] ?? null;
+  if (list === "operating_system") return longest(entries.filter((l) => k.startsWith(key(l.labelEn))));
+  if (list === "processor") {
+    // "Intel Core i5-1135G7" is an Intel Core i5; "Core i5" too.
+    return longest(entries.filter((l) => k.includes(key(l.labelEn)))) ?? longest(entries.filter((l) => k.length >= 4 && key(l.labelEn).endsWith(k)));
   }
-  return { ports, unknown };
+  // Storage: "NVMe" or "M.2" is an NVMe SSD, a plain "SSD" a SATA one, "Hard disk" an HDD.
+  const like = k.includes("nvme") || k.includes("m2") ? "nvme" : k.includes("ssd") || k.includes("sata") ? "sata" : k.includes("hdd") || k.includes("harddisk") ? "hdd" : null;
+  return like ? (entries.find((l) => key(l.code).includes(like) || key(l.labelEn).includes(like)) ?? null) : null;
 }
 
-const brandOf = (value: string): CpuBrand | null => {
-  const k = key(value);
-  return CPU_BRANDS.find((b) => k === b || k.startsWith(b)) ?? null;
-};
-
-/** A family in a brand's list, by name or code; with no brand given, the brand it is in. */
-function familyOf(value: string, brand: CpuBrand | null, lookups: Lookup[]) {
-  const k = key(value);
-  for (const b of brand ? [brand] : CPU_BRANDS) {
-    const found = lookups
-      .filter((l) => l.list === CPU_LIST[b])
-      .find((l) => key(l.code) === k || key(l.labelEn) === k);
-    if (found) return { brand: b, family: found.code };
-  }
-  return null;
-}
-
-/** "Intel Core i5-1135G7", "AMD Ryzen 7 5700U", "Apple M2 Pro": brand, the longest family named, and the rest. */
-export function readProcessor(value: string, lookups: Lookup[]) {
-  const text = value.trim();
-  let brand = brandOf(text.split(/\s+/)[0] ?? "");
-  const lower = text.toLowerCase();
-  let best: { brand: CpuBrand; code: string; label: string } | null = null;
-  for (const b of brand ? [brand] : CPU_BRANDS) {
-    for (const l of lookups.filter((x) => x.list === CPU_LIST[b])) {
-      if (
-        lower.includes(l.labelEn.toLowerCase()) &&
-        (!best || l.labelEn.length > best.label.length)
-      )
-        best = { brand: b, code: l.code, label: l.labelEn };
-    }
-  }
-  brand ??= best?.brand ?? null;
-  let model = text;
-  if (brand) model = model.replace(new RegExp(`^${brand}\\b`, "i"), "");
-  if (best)
-    model = model.replace(
-      new RegExp(best.label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i"),
-      "",
-    );
-  return {
-    brand,
-    family: best?.code ?? "",
-    model: model.replace(/^[\s\-–]+|[\s\-–]+$/g, ""),
-  };
-}
-
-/** "Windows 11 Pro 23H2": the system in the list it starts with (the longest), and the version after it. */
-export function readOs(value: string, lookups: Lookup[]) {
-  const text = value.trim();
-  const lower = text.toLowerCase();
-  const found = lookups
-    .filter((l) => l.list === "operating_system")
-    .filter(
-      (l) =>
-        lower.startsWith(l.labelEn.toLowerCase()) || key(l.code) === key(text),
-    )
-    .sort((a, b) => b.labelEn.length - a.labelEn.length)[0];
-  if (!found) return null;
-  return {
-    os: found.code,
-    version:
-      key(found.code) === key(text)
-        ? ""
-        : text.slice(found.labelEn.length).trim(),
-  };
+/**
+ * The code a value takes in its list: its entry's, or a new one, recorded in `added`, which a whole
+ * sheet shares so a value named on many rows is added once.
+ */
+export function listCode(list: HardwareList, value: string, lookups: Lookup[], added: NewListValue[]): string {
+  const found = findInList(list, value, lookups);
+  if (found) return found.code;
+  const label = value.trim().slice(0, 100);
+  const again = added.find((a) => a.list === list && key(a.label) === key(label));
+  if (again) return again.code;
+  const taken = new Set([...lookups.filter((l) => l.list === list).map((l) => l.code), ...added.filter((a) => a.list === list).map((a) => a.code)]);
+  const base = codeOf(label);
+  let code = base;
+  for (let n = 2; taken.has(code); n++) code = `${base}_${n}`;
+  added.push({ list, code, label });
+  return code;
 }
 
 type Raw = (field: string) => string;
 
 /**
  * The hardware a row gives, laid over what the asset has (an update leaves what the sheet does not
- * say), and the values that could not be read.
+ * say), and the values that could not be read. Values new to a list go in `added`.
  */
-export function readSpecs(raw: Raw, base: AssetSpecs, lookups: Lookup[]) {
-  const specs: AssetSpecs = {
-    ...base,
-    drives: [...base.drives],
-    ports: [...base.ports],
-  };
+export function readSpecs(raw: Raw, base: AssetSpecs, lookups: Lookup[], added: NewListValue[] = []) {
+  const specs: AssetSpecs = { ...base, drives: [...base.drives] };
   const problems: SpecProblem[] = [];
-  let osText: string | null = null;
 
-  if (raw("processor") && !raw("cpuBrand") && !raw("cpuFamily")) {
-    const p = readProcessor(raw("processor"), lookups);
-    if (p.brand) {
-      specs.cpuBrand = p.brand;
-      specs.cpuFamily = p.family;
-      specs.cpuModel = p.model;
-    } else problems.push({ field: "processor", value: raw("processor") });
-  }
-  if (raw("cpuBrand")) {
-    const b = brandOf(raw("cpuBrand"));
-    if (b) specs.cpuBrand = b;
-    else problems.push({ field: "cpuBrand", value: raw("cpuBrand") });
-  }
-  if (raw("cpuFamily")) {
-    const f = familyOf(
-      raw("cpuFamily"),
-      raw("cpuBrand") ? specs.cpuBrand || null : null,
-      lookups,
-    );
-    if (f) {
-      specs.cpuBrand = f.brand;
-      specs.cpuFamily = f.family;
-    } else problems.push({ field: "cpuFamily", value: raw("cpuFamily") });
-  }
-  if (raw("cpuModel")) specs.cpuModel = raw("cpuModel");
+  if (raw("processor")) specs.cpu = listCode("processor", raw("processor"), lookups, added);
+  if (raw("os")) specs.os = listCode("operating_system", raw("os"), lookups, added);
 
   for (const [field, set] of [
     ["vcpus", (n: number) => (specs.vcpus = Math.round(n))],
@@ -203,69 +94,36 @@ export function readSpecs(raw: Raw, base: AssetSpecs, lookups: Lookup[]) {
     const sizeText = raw(sizeField);
     const typeText = raw(typeField);
     if (!sizeText && !typeText) continue;
-    const drive = {
-      ...(specs.drives[i] ?? {
-        size: null,
-        unit: "GB" as const,
-        type: "" as const,
-      }),
-    };
+    const drive = { ...(specs.drives[i] ?? { size: null, unit: "GB" as const, type: "" }) };
     if (sizeText) {
       const s = readSize(sizeText);
       if (s) Object.assign(drive, s);
       else problems.push({ field: sizeField, value: sizeText });
     }
-    if (typeText) {
-      const t = readStorageType(typeText);
-      if (t) drive.type = t;
-      else problems.push({ field: typeField, value: typeText });
-    }
-    while (specs.drives.length < i)
-      specs.drives.push({ size: null, unit: "GB", type: "" });
+    if (typeText) drive.type = listCode("storage_type", typeText, lookups, added);
+    while (specs.drives.length < i) specs.drives.push({ size: null, unit: "GB", type: "" });
     specs.drives[i] = drive;
   }
-
-  if (raw("ports")) {
-    const { ports, unknown } = readPorts(raw("ports"));
-    specs.ports = ports;
-    for (const u of unknown) problems.push({ field: "ports", value: u });
-  }
-
-  if (raw("os")) {
-    const o = readOs(raw("os"), lookups);
-    if (o) {
-      specs.os = o.os;
-      specs.osVersion = raw("osVersion") || o.version;
-    } else osText = raw("os");
-  }
-  if (raw("osVersion") && !raw("os")) specs.osVersion = raw("osVersion");
-  return { specs, problems, osText };
+  return { specs, problems };
 }
 
 /**
  * The hardware columns of an inventory export, named as the template names them (HARDWARE_HEADERS),
  * so an export, filled in, loads back. `label` gives a list value's name.
  */
-export function hardwareColumns(label: (list: "cpu_intel" | "cpu_amd" | "cpu_apple" | "operating_system", code: string) => string) {
+export function hardwareColumns(label: (list: HardwareList, code: string) => string) {
   type A = { specs?: unknown; os?: string | null };
   const s = (a: A) => assetSpecs.parse(a.specs ?? {});
   const drive = (a: A, i: number) => s(a).drives[i];
-  const kind = (a: A, i: number) => (drive(a, i)?.type ? STORAGE_LABELS[drive(a, i).type as keyof typeof STORAGE_LABELS] : "");
+  const kind = (a: A, i: number) => (drive(a, i)?.type ? label("storage_type", drive(a, i).type) : "");
   return [
-    {
-      header: "Processor",
-      value: (a: A) => {
-        const x = s(a);
-        return x.cpuBrand ? [CPU_BRAND_LABELS[x.cpuBrand], x.cpuFamily ? label(CPU_LIST[x.cpuBrand], x.cpuFamily) : ""].filter(Boolean).join(" ") : "";
-      },
-    },
+    { header: "Processor", value: (a: A) => (s(a).cpu ? label("processor", s(a).cpu) : "") },
     { header: "vCPUs", value: (a: A) => s(a).vcpus },
     { header: "RAM (GB)", value: (a: A) => s(a).ramGb },
     { header: "Storage size", value: (a: A) => (drive(a, 0) ? driveSize(drive(a, 0)) : "") },
     { header: "Storage type", value: (a: A) => kind(a, 0) },
     { header: "Storage 2 size", value: (a: A) => (drive(a, 1) ? driveSize(drive(a, 1)) : "") },
     { header: "Storage 2 type", value: (a: A) => kind(a, 1) },
-    { header: "Ports", value: (a: A) => s(a).ports.map((p) => PORT_LABELS[p]).join(", ") },
     { header: "Operating system", value: (a: A) => (s(a).os ? label("operating_system", s(a).os) : (a.os ?? "")) },
     { header: "Screen (inches)", value: (a: A) => s(a).screenInches },
     { header: "Port count", value: (a: A) => s(a).portCount },
