@@ -20,7 +20,8 @@ test.describe("inventory", () => {
 
     await page.getByRole("switch", { name: "Needs attention only" }).click();
     await expect(rows.first()).toBeVisible();
-    await expect(rows.filter({ hasNotText: /Warranty ends soon|Warranty expired|Unsupported|Due for replacement/ })).toHaveCount(0);
+    // Each one shows the warning icon, which names its issues.
+    await expect(rows.filter({ hasNot: page.getByRole("button", { name: /^Needs attention: (Warranty ends soon|Warranty expired|Unsupported|Due for replacement)/ }) })).toHaveCount(0);
   });
 
   test("register, move and retire an asset", async ({ page }, info) => {
@@ -371,11 +372,8 @@ test("an asset's hardware: the form shows what its type has, and the page shows 
   await pick(/^Category$/, "End-User Devices");
   await pick(/^Type$/, "Laptop");
   await pick(/^Location$/, "Jeddah Head Office");
-  // A brand's own list of processors appears once the brand is chosen.
-  await expect(dialog.getByRole("combobox", { name: /AMD processor/ })).toHaveCount(0);
-  await pick(/^Processor/, "AMD");
-  await pick(/AMD processor/, "Ryzen 5");
-  await dialog.getByLabel(/Processor model/).fill("5600U");
+  // One list of processors, brand and family together.
+  await pick(/^Processor/, "AMD Ryzen 5");
   await dialog.getByLabel(/Memory/).fill("16");
   await dialog.getByLabel(/Screen size/).fill("14");
   await dialog.getByLabel(/^Storage size/).fill("512");
@@ -387,7 +385,6 @@ test("an asset's hardware: the form shows what its type has, and the page shows 
   await dialog.getByLabel("USB-C").check();
   await dialog.getByLabel("HDMI").check();
   await pick(/^Operating system/, "Windows 11 Pro");
-  await dialog.getByLabel(/^Version/).fill("23H2");
 
   // Another type, other fields: a monitor has no processor, memory or system, but a screen and its ports.
   await pick(/^Type$/, "Monitor");
@@ -400,10 +397,10 @@ test("an asset's hardware: the form shows what its type has, and the page shows 
 
   await expect(page).toHaveURL(/\/en\/assets\/\d+$/);
   const spec = page.locator("[data-slot='card']").filter({ has: page.locator("[data-slot='card-title']", { hasText: /^Specification$/ }) });
-  await expect(spec).toContainText("AMD Ryzen 5 5600U");
+  await expect(spec).toContainText("AMD Ryzen 5");
   await expect(spec).toContainText("512 GB SSD (NVMe)");
   await expect(spec).toContainText("1 TB");
-  await expect(spec).toContainText("Windows 11 Pro 23H2");
+  await expect(spec).toContainText("Windows 11 Pro");
   await expect(spec).toContainText("USB-C, HDMI");
   console.assertClean();
 });

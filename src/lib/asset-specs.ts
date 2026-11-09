@@ -114,13 +114,14 @@ export function pruneSpecs(specs: AssetSpecs, type: string, category?: string | 
   return {
     cpuBrand: cpu ? specs.cpuBrand : "",
     cpuFamily: cpu && specs.cpuBrand ? specs.cpuFamily : "",
-    cpuModel: cpu ? specs.cpuModel : "",
+    // The model (1255U) and the system's version (23H2) are no longer recorded.
+    cpuModel: "",
     vcpus: has("vcpus") ? specs.vcpus : null,
     ramGb: has("ram") ? specs.ramGb : null,
     drives: has("storage") ? specs.drives.slice(0, p.drives).filter((d) => d.size || d.type) : [],
     ports: has("ports") ? specs.ports.filter((x) => p.ports.includes(x)) : [],
     os: has("os") ? specs.os : "",
-    osVersion: has("os") ? specs.osVersion : "",
+    osVersion: "",
     screenInches: has("screen") ? specs.screenInches : null,
     portCount: has("portCount") ? specs.portCount : null,
   };
@@ -155,3 +156,11 @@ export const PORT_LABELS: Record<Port, string> = {
 };
 export const STORAGE_LABELS: Record<(typeof STORAGE_TYPES)[number], string> = { ssd_nvme: "SSD (NVMe)", ssd_sata: "SSD (SATA)", hdd: "HDD" };
 export const CPU_BRAND_LABELS: Record<CpuBrand, string> = { intel: "Intel", amd: "AMD", apple: "Apple" };
+
+/**
+ * Every processor as one list, "Intel Core i5", "AMD Ryzen 5", "Apple M2", from each brand's list
+ * (Settings → Lists); the value is the brand and the family, "intel:core_i5".
+ */
+export function processorOptions(lookups: { options: (list: (typeof CPU_LIST)[CpuBrand]) => { value: string; label: string }[] }) {
+  return CPU_BRANDS.flatMap((b) => lookups.options(CPU_LIST[b]).map((o) => ({ value: `${b}:${o.value}`, label: `${CPU_BRAND_LABELS[b]} ${o.label}` })));
+}

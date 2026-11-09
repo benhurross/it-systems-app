@@ -42,15 +42,15 @@ describe("reading hardware from a sheet", () => {
     const row = Object.fromEntries(header.map((h) => [h, ""])) as Record<string, string>;
     Object.assign(row, {
       "Asset Name / Workstation Name": "FIN-PC-07", Type: "Laptop", Location: "Jeddah Head Office",
-      "Processor brand": "Intel", "Processor family": "Core i7", "Processor model": "1355U", "RAM (GB)": "16",
+      Processor: "Intel Core i7", "RAM (GB)": "16",
       "Storage size": "512 GB", "Storage type": "SSD (NVMe)", "Storage 2 size": "1 TB", "Storage 2 type": "HDD",
-      Ports: "USB-C, HDMI, Wi-Fi", "Operating system": "Windows 11 Pro", "OS version": "23H2", "Screen (inches)": "15.6",
+      Ports: "USB-C, HDMI, Wi-Fi", "Operating system": "Windows 11 Pro", "Screen (inches)": "15.6",
     });
     const { rows, unused } = planImport([header, header.map((h) => row[h])], ctx);
     expect(unused).toEqual([]);
     expect(rows[0]).toMatchObject({ action: "add", problems: [] });
     expect(rows[0].input!.specs).toMatchObject({
-      cpuBrand: "intel", cpuFamily: "core_i7", cpuModel: "1355U", ramGb: 16, screenInches: 15.6, os: "win11_pro", osVersion: "23H2", ports: ["usb_c", "hdmi", "wifi"],
+      cpuBrand: "intel", cpuFamily: "core_i7", ramGb: 16, screenInches: 15.6, os: "win11_pro", ports: ["usb_c", "hdmi", "wifi"],
       drives: [{ size: 512, unit: "GB", type: "ssd_nvme" }, { size: 1, unit: "TB", type: "hdd" }],
     });
   });

@@ -52,7 +52,7 @@ describe("create, read and update for every register", () => {
     };
     const created = await assets.createAsset(input, user);
     // Saved as its type has it, the operating system written out for lists and exports.
-    expect(created.os).toBe("Windows 11 Pro 23H2");
+    expect(created.os).toBe("Windows 11 Pro");
     expect(created.specs).toMatchObject({ cpuBrand: "intel", cpuFamily: "core_i5", ramGb: 16 });
     const updated = await assets.updateAsset(created.id, { ...input, notes: "Spare" }, user);
     expect(updated.notes).toBe("Spare");

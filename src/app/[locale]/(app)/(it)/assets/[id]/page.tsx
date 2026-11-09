@@ -27,7 +27,7 @@ import { Link, useRouter } from "@/i18n/navigation";
 import { formatAnydeskId } from "@/lib/anydesk";
 import { api } from "@/lib/api";
 import type { AssetDetail } from "@/lib/api-types";
-import { assetSpecs, CPU_LIST, driveSize } from "@/lib/asset-specs";
+import { assetSpecs, CPU_BRAND_LABELS, CPU_LIST, driveSize } from "@/lib/asset-specs";
 import { isoDate } from "@/lib/dates";
 import { ref } from "@/lib/domain";
 import { assetFlags, type AssetFlags } from "@/lib/lifecycle";
@@ -301,8 +301,7 @@ function HardwareRows({ asset }: { asset: AssetDetail }) {
   const t = useTranslations("assets.hardware");
   const lookups = useLookups();
   const specs = assetSpecs.parse(asset.specs ?? {});
-  const brand = specs.cpuBrand ? t(`brands.${specs.cpuBrand}`).replace(/ \(.*\)$/, "") : "";
-  const cpu = [brand, specs.cpuBrand && specs.cpuFamily ? lookups.label(CPU_LIST[specs.cpuBrand], specs.cpuFamily) : "", specs.cpuModel].filter(Boolean).join(" ");
+  const cpu = specs.cpuBrand ? [CPU_BRAND_LABELS[specs.cpuBrand], specs.cpuFamily ? lookups.label(CPU_LIST[specs.cpuBrand], specs.cpuFamily) : ""].filter(Boolean).join(" ") : "";
   const drives = specs.drives.map((d) => [driveSize(d), d.type ? t(`storageTypes.${d.type}`) : ""].filter(Boolean).join(" ")).filter(Boolean);
   return (
     <>

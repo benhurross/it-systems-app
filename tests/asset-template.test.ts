@@ -23,7 +23,8 @@ describe("the asset import template", () => {
     expect(assets).toHaveLength(1);
     const column = (name: string) => lists.slice(1).map((r) => r[lists[0].indexOf(name)]).filter(Boolean);
     expect(column("Type")).toContain("Laptop");
-    expect(column("Intel families")).toContain("Core i7");
+    expect(column("Processor")).toEqual(expect.arrayContaining(["Intel Core i7", "AMD Ryzen 5", "Apple M2"]));
+    expect(column("Processor")).toHaveLength(12);
     expect(column("Operating system")).toContain("Windows 11 Pro");
     expect(column("Ports")).toContain("USB-C");
 

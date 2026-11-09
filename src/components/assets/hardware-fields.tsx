@@ -4,13 +4,14 @@ import { Plus, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { Controller, useFormContext, useWatch } from "react-hook-form";
-import { NumberField, SelectField, TextField } from "@/components/form";
+import { NumberField, SelectField } from "@/components/form";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { FieldSeparator } from "@/components/ui/field";
 import { Label } from "@/components/ui/label";
 import { useLookups } from "@/hooks/use-lookups";
-import { CPU_BRANDS, CPU_LIST, profileOf, STORAGE_TYPES, STORAGE_UNITS, type AssetSpecs, type CpuBrand, type Port } from "@/lib/asset-specs";
+import { processorOptions, profileOf, STORAGE_TYPES, STORAGE_UNITS, type AssetSpecs, type CpuBrand, type Port } from "@/lib/asset-specs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 /**
  * The asset's hardware, as its type has it: a laptop's processor, memory, drives, ports, system and
@@ -20,7 +21,7 @@ export function HardwareFields() {
   const t = useTranslations("assets.hardware");
   const lookups = useLookups();
   const { control } = useFormContext();
-  const [type, category, brand, drives] = useWatch({ control, name: ["type", "category", "specs.cpuBrand", "specs.drives"] }) as [string, string, CpuBrand | "", AssetSpecs["drives"] | undefined];
+  const [type, category, drives] = useWatch({ control, name: ["type", "category", "specs.drives"] }) as [string, string, AssetSpecs["drives"] | undefined];
   const profile = profileOf(type, category);
   const has = (f: (typeof profile.fields)[number]) => profile.fields.includes(f);
   // The second drive's row shows once added, or when one is recorded.
@@ -49,27 +50,12 @@ export function HardwareFields() {
     <>
       <FieldSeparator>{t("title")}</FieldSeparator>
       <div className="grid gap-4 sm:grid-cols-2">
-        {has("cpu") && (
-          <>
-            <SelectField name="specs.cpuBrand" label={t("cpuBrand")} options={CPU_BRANDS.map((b) => ({ value: b, label: t(`brands.${b}`) }))} optional />
-            {brand ? (
-              <SelectField name="specs.cpuFamily" label={t("cpuFamily", { brand: t(`brands.${brand}`) })} options={lookups.options(CPU_LIST[brand])} optional />
-            ) : (
-              <div className="hidden sm:block" />
-            )}
-            <TextField name="specs.cpuModel" label={t("cpuModel")} description={t("cpuModelHint")} dir="ltr" optional />
-          </>
-        )}
+        {has("cpu") && <ProcessorField />}
         {has("vcpus") && <NumberField name="specs.vcpus" label={t("vcpus")} min={1} step={1} optional />}
         {has("ram") && <NumberField name="specs.ramGb" label={t("ram")} min={0} optional />}
         {has("screen") && <NumberField name="specs.screenInches" label={t("screen")} min={0} optional />}
         {has("portCount") && <NumberField name="specs.portCount" label={t("portCount")} min={1} step={1} optional />}
-        {has("os") && (
-          <>
-            <SelectField name="specs.os" label={t("os")} options={lookups.options("operating_system")} optional />
-            <TextField name="specs.osVersion" label={t("osVersion")} description={t("osVersionHint")} dir="ltr" optional />
-          </>
-        )}
+        {has("os") && <SelectField name="specs.os" label={t("os")} options={lookups.options("operating_system")} optional />}
         {has("storage") && (
           <>
             {drive(0)}
@@ -118,3 +104,43 @@ function Ports({ ports }: { ports: readonly Port[] }) {
     />
   );
 }
+
+/** One list of processors, "Intel Core i5" or "Apple M2", from each brand's list in Settings → Lists. */
+function ProcessorField() {
+  const t = useTranslations("assets.hardware");
+  const tc = useTranslations("common");
+  const lookups = useLookups();
+  const { control, setValue } = useFormContext();
+  const [brand, family] = useWatch({ control, name: ["specs.cpuBrand", "specs.cpuFamily"] }) as [CpuBrand | "", string];
+  const options = processorOptions(lookups);
+  const id = "processor";
+  return (
+    <div className="space-y-1.5">
+      <Label htmlFor={id}>
+        {t("processor")} <span className="font-normal text-muted-foreground">{tc("optional")}</span>
+      </Label>
+      <Select
+        value={brand && family ? `${brand}:${family}` : NONE}
+        onValueChange={(v) => {
+          const [b, f] = v === NONE ? ["", ""] : v.split(":");
+          setValue("specs.cpuBrand", b, { shouldDirty: true });
+          setValue("specs.cpuFamily", f, { shouldDirty: true });
+        }}
+      >
+        <SelectTrigger id={id} className="w-full">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value={NONE}>{tc("none")}</SelectItem>
+          {options.map((o) => (
+            <SelectItem key={o.value} value={o.value}>
+              {o.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}
+
+const NONE = "__none";

@@ -1062,9 +1062,6 @@
     "hardware": {
       "title": "Hardware",
       "cpuBrand": "Processor",
-      "cpuFamily": "{brand} processor",
-      "cpuModel": "Processor model",
-      "cpuModelHint": "As the PC shows it, for example i7-1255U or Ryzen 5 5600G.",
       "brands": {
         "intel": "Intel",
         "amd": "AMD",
@@ -1075,8 +1072,6 @@
       "screen": "Screen size (inches)",
       "portCount": "Number of ports",
       "os": "Operating system",
-      "osVersion": "Version",
-      "osVersionHint": "For example 23H2, Sonoma 14.5 or 22.04.",
       "storageSize": "Storage size",
       "storageSize2": "Second drive size",
       "unit": "Unit",
@@ -1177,7 +1172,7 @@
       "columnTag": "Tag (AST-0042) or Serial: a row naming an asset already registered updates it, and its empty cells leave what is there. Any other row adds an asset.",
       "columnPerson": "Assigned to: the person's employee number, email or full name. A change of place or holder goes in the movement history.",
       "columnDates": "Dates: 2026-03-31 or 31/03/2026 (day first).",
-      "columnHardware": "Hardware: processor (brand, family, model), RAM (GB), storage (512 GB, SSD (NVMe)), ports separated by commas, operating system and version. The template's Lists sheet has the values each column takes.",
+      "columnHardware": "Hardware: processor as the Lists sheet has it (Intel Core i5), RAM (GB), storage (512 GB, SSD (NVMe)), ports separated by commas, operating system. The template's Lists sheet has the values each column takes.",
       "resultTitle": "What loading {file} will do",
       "loadedTitle": "{file} is loaded",
       "counts": {

@@ -6,9 +6,8 @@ import { assetInput } from "./schemas";
 
 /** The hardware columns, as the template and the inventory export name them. */
 export const HARDWARE_HEADERS = [
-  "Processor brand", "Processor family", "Processor model", "vCPUs", "RAM (GB)",
-  "Storage size", "Storage type", "Storage 2 size", "Storage 2 type",
-  "Ports", "Operating system", "OS version", "Screen (inches)", "Port count",
+  "Processor", "vCPUs", "RAM (GB)", "Storage size", "Storage type", "Storage 2 size", "Storage 2 type",
+  "Ports", "Operating system", "Screen (inches)", "Port count",
 ] as const;
 
 /**

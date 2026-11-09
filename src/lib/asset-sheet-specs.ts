@@ -246,76 +246,28 @@ export function readSpecs(raw: Raw, base: AssetSpecs, lookups: Lookup[]) {
  * The hardware columns of an inventory export, named as the template names them (HARDWARE_HEADERS),
  * so an export, filled in, loads back. `label` gives a list value's name.
  */
-export function hardwareColumns(
-  label: (
-    list: "cpu_intel" | "cpu_amd" | "cpu_apple" | "operating_system",
-    code: string,
-  ) => string,
-) {
-  const s = (a: { specs?: unknown }) => assetSpecs.parse(a.specs ?? {});
-  const drive = (a: { specs?: unknown }, i: number) => s(a).drives[i];
+export function hardwareColumns(label: (list: "cpu_intel" | "cpu_amd" | "cpu_apple" | "operating_system", code: string) => string) {
+  type A = { specs?: unknown; os?: string | null };
+  const s = (a: A) => assetSpecs.parse(a.specs ?? {});
+  const drive = (a: A, i: number) => s(a).drives[i];
+  const kind = (a: A, i: number) => (drive(a, i)?.type ? STORAGE_LABELS[drive(a, i).type as keyof typeof STORAGE_LABELS] : "");
   return [
     {
-      header: "Processor brand",
-      value: (a: { specs?: unknown }) =>
-        s(a).cpuBrand ? CPU_BRAND_LABELS[s(a).cpuBrand as CpuBrand] : "",
-    },
-    {
-      header: "Processor family",
-      value: (a: { specs?: unknown }) => {
+      header: "Processor",
+      value: (a: A) => {
         const x = s(a);
-        return x.cpuBrand && x.cpuFamily
-          ? label(CPU_LIST[x.cpuBrand], x.cpuFamily)
-          : "";
+        return x.cpuBrand ? [CPU_BRAND_LABELS[x.cpuBrand], x.cpuFamily ? label(CPU_LIST[x.cpuBrand], x.cpuFamily) : ""].filter(Boolean).join(" ") : "";
       },
     },
-    {
-      header: "Processor model",
-      value: (a: { specs?: unknown }) => s(a).cpuModel,
-    },
-    { header: "vCPUs", value: (a: { specs?: unknown }) => s(a).vcpus },
-    { header: "RAM (GB)", value: (a: { specs?: unknown }) => s(a).ramGb },
-    {
-      header: "Storage size",
-      value: (a: { specs?: unknown }) =>
-        drive(a, 0) ? driveSize(drive(a, 0)) : "",
-    },
-    {
-      header: "Storage type",
-      value: (a: { specs?: unknown }) =>
-        drive(a, 0)?.type
-          ? STORAGE_LABELS[drive(a, 0).type as keyof typeof STORAGE_LABELS]
-          : "",
-    },
-    {
-      header: "Storage 2 size",
-      value: (a: { specs?: unknown }) =>
-        drive(a, 1) ? driveSize(drive(a, 1)) : "",
-    },
-    {
-      header: "Storage 2 type",
-      value: (a: { specs?: unknown }) =>
-        drive(a, 1)?.type
-          ? STORAGE_LABELS[drive(a, 1).type as keyof typeof STORAGE_LABELS]
-          : "",
-    },
-    {
-      header: "Ports",
-      value: (a: { specs?: unknown }) =>
-        s(a)
-          .ports.map((p) => PORT_LABELS[p])
-          .join(", "),
-    },
-    {
-      header: "Operating system",
-      value: (a: { specs?: unknown; os?: string | null }) =>
-        s(a).os ? label("operating_system", s(a).os) : (a.os ?? ""),
-    },
-    { header: "OS version", value: (a: { specs?: unknown }) => s(a).osVersion },
-    {
-      header: "Screen (inches)",
-      value: (a: { specs?: unknown }) => s(a).screenInches,
-    },
-    { header: "Port count", value: (a: { specs?: unknown }) => s(a).portCount },
+    { header: "vCPUs", value: (a: A) => s(a).vcpus },
+    { header: "RAM (GB)", value: (a: A) => s(a).ramGb },
+    { header: "Storage size", value: (a: A) => (drive(a, 0) ? driveSize(drive(a, 0)) : "") },
+    { header: "Storage type", value: (a: A) => kind(a, 0) },
+    { header: "Storage 2 size", value: (a: A) => (drive(a, 1) ? driveSize(drive(a, 1)) : "") },
+    { header: "Storage 2 type", value: (a: A) => kind(a, 1) },
+    { header: "Ports", value: (a: A) => s(a).ports.map((p) => PORT_LABELS[p]).join(", ") },
+    { header: "Operating system", value: (a: A) => (s(a).os ? label("operating_system", s(a).os) : (a.os ?? "")) },
+    { header: "Screen (inches)", value: (a: A) => s(a).screenInches },
+    { header: "Port count", value: (a: A) => s(a).portCount },
   ];
 }

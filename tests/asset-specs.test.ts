@@ -28,6 +28,8 @@ describe("an asset's hardware", () => {
   it("keeps only what the type has", () => {
     const desktop = pruneSpecs(full, "desktop");
     expect(desktop).toMatchObject({ cpuBrand: "amd", cpuFamily: "ryzen_5", ramGb: 16, os: "win11_pro", vcpus: null, screenInches: null, portCount: null });
+    // The processor's model and the system's version are no longer kept.
+    expect(desktop).toMatchObject({ cpuModel: "", osVersion: "" });
     expect(desktop.drives).toHaveLength(2);
     // SFP is not a desktop port.
     expect(desktop.ports).toEqual(["usb_c", "hdmi", "ethernet"]);

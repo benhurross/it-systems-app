@@ -69,13 +69,13 @@ export async function getAsset(id: number) {
 
 /**
  * What is saved of an asset: only the hardware details its type has, and the operating system
- * written out ("Windows 11 Pro 23H2") where one is chosen from the list, for lists and exports.
+ * written out ("Windows 11 Pro") where one is chosen from the list, for lists and exports.
  */
 async function fitted(input: z.infer<typeof assetInput>) {
   const specs = pruneSpecs(input.specs, input.type, input.category);
   if (!specs.os) return { ...input, specs };
   const [os] = await db.select({ label: lookups.labelEn }).from(lookups).where(and(eq(lookups.list, "operating_system"), eq(lookups.code, specs.os)));
-  return { ...input, specs, os: [os?.label ?? specs.os, specs.osVersion].filter(Boolean).join(" ") };
+  return { ...input, specs, os: os?.label ?? specs.os };
 }
 
 export async function createAsset(input: z.infer<typeof assetInput>, actor: Actor) {

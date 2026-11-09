@@ -65,7 +65,7 @@ const HARDWARE_LABEL = {
   processor: "processor",
   cpuBrand: "cpuBrand",
   cpuFamily: "processor",
-  cpuModel: "cpuModel",
+  cpuModel: "processor",
   vcpus: "vcpus",
   ramGb: "ram",
   drive1: "storageSize",
@@ -73,7 +73,7 @@ const HARDWARE_LABEL = {
   drive2: "storageSize2",
   drive2Type: "storageType",
   ports: "ports",
-  osVersion: "osVersion",
+  osVersion: "os",
   screen: "screen",
   portCount: "portCount",
 } as const;
