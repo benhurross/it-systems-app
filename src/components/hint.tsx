@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
  * A question mark that shows a description or instructions when the pointer rests on it, or when
  * it is clicked, tapped or opened from the keyboard, so they take no room on the page until wanted.
  */
-export function Hint({ children, label, className }: { children: ReactNode; label?: string; className?: string }) {
+export function Hint({ children, label, className, icon }: { children: ReactNode; label?: string; className?: string; icon?: ReactNode }) {
   const t = useTranslations("common");
   const [open, setOpen] = useState(false);
   // Opened by the pointer resting on it: kept open while it moves onto the text, shut a moment after it leaves both.
@@ -47,7 +47,7 @@ export function Hint({ children, label, className }: { children: ReactNode; labe
             className,
           )}
         >
-          <CircleHelp className="size-4" />
+          {icon ?? <CircleHelp className="size-4" />}
         </button>
       </PopoverTrigger>
       <PopoverContent

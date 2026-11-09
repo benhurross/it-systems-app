@@ -182,3 +182,19 @@ export async function deleteRelationship(id: number, actor: Actor) {
   );
   return row;
 }
+
+/** IT confirms the asset cannot be repaired: from then on it is due for replacement. */
+export async function markBeyondRepair(id: number, reason: string, actor: Actor) {
+  const row = one(
+    await db.update(assets).set({ beyondRepairAt: new Date(), beyondRepairReason: reason, beyondRepairBy: actor.name }).where(eq(assets.id, id)).returning({ id: assets.id, name: assets.name }),
+  );
+  await audit(actor, "update", "asset", id, `Marked ${ref("asset", id)} ${row.name} beyond repair, due for replacement: ${reason}`);
+  return { id };
+}
+
+/** Taken back: repaired after all, or marked by mistake. */
+export async function clearBeyondRepair(id: number, actor: Actor) {
+  const row = one(await db.update(assets).set({ beyondRepairAt: null, beyondRepairReason: null, beyondRepairBy: null }).where(eq(assets.id, id)).returning({ id: assets.id, name: assets.name }));
+  await audit(actor, "update", "asset", id, `${ref("asset", id)} ${row.name} is no longer marked beyond repair`);
+  return { id };
+}

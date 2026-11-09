@@ -249,10 +249,11 @@ describe("asset lifecycle", () => {
     });
   });
 
-  it("flags unsupported systems and end-user devices past four years", () => {
+  it("flags unsupported systems, and replacement only once IT confirms it is beyond repair", () => {
     expect(assetFlags({ ...base, supportStatus: "end_of_life" }, today).unsupported).toBe(true);
-    expect(assetFlags({ ...base, purchaseDate: "2022-09-01" }, today).replacementDue).toBe(true);
-    expect(assetFlags({ ...base, purchaseDate: "2022-09-01", category: "servers" }, today).replacementDue).toBe(false);
+    // Old is not the same as due for replacement: parts are replaced and upgraded.
+    expect(assetFlags({ ...base, purchaseDate: "2018-09-01" }, today).replacementDue).toBe(false);
+    expect(assetFlags({ ...base, beyondRepairAt: "2026-09-01T08:00:00Z" }, today).replacementDue).toBe(true);
   });
 
   it("does not flag retired assets", () => {

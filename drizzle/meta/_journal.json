@@ -134,6 +134,13 @@
       "when": 1794204631750,
       "tag": "0018_asset_specs",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1794205405255,
+      "tag": "0019_asset_beyond_repair",
+      "breakpoints": true
     }
   ]
 }

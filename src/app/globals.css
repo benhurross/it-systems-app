@@ -368,3 +368,25 @@
     inset: 0 auto auto 0;
   }
 }
+
+
+/* Something critical about an asset: its warning icon glows, unless motion is turned down. */
+@keyframes attention-glow {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 0 transparent);
+    opacity: 1;
+  }
+  50% {
+    filter: drop-shadow(0 0 4px var(--destructive));
+    opacity: 0.75;
+  }
+}
+.attention-glow svg {
+  animation: attention-glow 1.6s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .attention-glow svg {
+    animation: none;
+  }
+}

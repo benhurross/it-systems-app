@@ -1,13 +1,13 @@
 "use client";
 
-import { Plus } from "lucide-react";
+import { Plus, TriangleAlert } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { AssetDialog } from "@/components/assets/asset-dialog";
 import { AssetsHeader } from "@/components/assets/assets-header";
 import { EnumBadge } from "@/components/badges";
+import { Hint } from "@/components/hint";
 import { columnHelper, DataTable } from "@/components/data-table";
-import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -63,15 +63,7 @@ export default function InventoryPage() {
       id: "attention",
       header: t("assets.attention"),
       enableSorting: false,
-      cell: (info) => (
-        <div className="flex flex-wrap gap-1">
-          {info.row.original.flags.map((f) => (
-            <StatusBadge key={f} tone={f === "warrantyExpiring" ? "warning" : "danger"}>
-              {t(`assets.flags.${f}`)}
-            </StatusBadge>
-          ))}
-        </div>
-      ),
+      cell: (info) => <AttentionIcon flags={info.row.original.flags} />,
     }),
   ];
 
@@ -129,5 +121,29 @@ export default function InventoryPage() {
       />
       {adding && <AssetDialog onClose={() => setAdding(false)} />}
     </>
+  );
+}
+
+/**
+ * What needs looking at, as one icon: red and glowing for something critical (warranty expired,
+ * unsupported, beyond repair), amber for a warning (warranty ending soon); the list on hover or tap.
+ */
+function AttentionIcon({ flags }: { flags: (keyof AssetFlags)[] }) {
+  const t = useTranslations("assets");
+  if (!flags.length) return null;
+  const critical = flags.some((f) => f !== "warrantyExpiring");
+  const issues = flags.map((f) => t(`flags.${f}`));
+  return (
+    <Hint
+      label={`${t("attention")}: ${issues.join(", ")}`}
+      className={critical ? "attention-glow text-destructive hover:text-destructive" : "text-warning hover:text-warning"}
+      icon={<TriangleAlert className="size-4" />}
+    >
+      <ul className="list-disc space-y-0.5 ps-4">
+        {issues.map((issue) => (
+          <li key={issue}>{issue}</li>
+        ))}
+      </ul>
+    </Hint>
   );
 }

@@ -407,3 +407,38 @@ test("an asset's hardware: the form shows what its type has, and the page shows 
   await expect(spec).toContainText("USB-C, HDMI");
   console.assertClean();
 });
+
+test("an asset is due for replacement only once marked beyond repair, shown as a glowing icon with its issues", async ({ page }, info) => {
+  const console = watchConsole(page);
+  const name = unique(info, "OLD-LT").replace(/\s+/g, "-");
+  // Bought long ago: old alone flags nothing.
+  const res = await page.request.post("/api/assets", {
+    data: { name, category: "end_user", type: "laptop", status: "in_use", location: "jeddah", supportStatus: "supported", criticality: "medium", monitorMethod: "none", purchaseDate: "2018-01-10" },
+  });
+  expect(res.ok(), await res.text()).toBe(true);
+  const id = ((await res.json()) as { id: number }).id;
+  await page.goto(`/en/assets/inventory?q=${encodeURIComponent(name)}`);
+  const row = page.getByRole("row").filter({ hasText: name });
+  await expect(row).toBeVisible();
+  await expect(row.getByRole("button", { name: /^Needs attention/ })).toHaveCount(0);
+
+  await page.goto(`/en/assets/${id}`);
+  await page.getByRole("button", { name: "Mark as beyond repair" }).click();
+  const dialog = page.getByRole("dialog");
+  await dialog.getByLabel("Why it cannot be repaired").fill("Motherboard failed; repair costs more than a new one");
+  await dialog.getByRole("button", { name: "Mark beyond repair" }).click();
+  await expect(page.getByRole("note")).toContainText("Motherboard failed");
+  await expect(page.getByRole("note")).toContainText("Beyond repair: due for replacement");
+
+  await page.goto(`/en/assets/inventory?q=${encodeURIComponent(name)}`);
+  const icon = page.getByRole("row").filter({ hasText: name }).getByRole("button", { name: "Needs attention: Due for replacement" });
+  await expect(icon).toHaveClass(/attention-glow/);
+  await icon.hover();
+  await expect(page.getByRole("dialog").getByText("Due for replacement")).toBeVisible();
+
+  // Taken back, repaired after all.
+  await page.goto(`/en/assets/${id}`);
+  await page.getByRole("button", { name: "Not beyond repair" }).click();
+  await expect(page.getByRole("note")).toHaveCount(0);
+  console.assertClean();
+});

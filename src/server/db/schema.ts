@@ -236,6 +236,10 @@ export const assets = pgTable(
     /** For remote support with the AnyDesk app. */
     anydeskId: text(),
     os: text(),
+    /** When IT confirmed it cannot be repaired, and why: only then is it due for replacement. */
+    beyondRepairAt: timestamp({ withTimezone: true }),
+    beyondRepairReason: text(),
+    beyondRepairBy: text(),
     /** Processor, memory, drives, ports, operating system, screen: what the asset's type has (lib/asset-specs). */
     specs: jsonb().$type<AssetSpecs>().notNull().default({} as AssetSpecs),
     notes: text(),
