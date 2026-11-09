@@ -26,9 +26,7 @@ import type { Json } from "@/lib/api-types";
 import {
   type ImportField,
   type Problem,
-  TEMPLATE_HEADERS,
 } from "@/lib/asset-import";
-import { downloadCsv, toCsv } from "@/lib/csv";
 import { ref } from "@/lib/domain";
 import type * as assetImport from "@/server/services/asset-import";
 
@@ -61,6 +59,24 @@ async function send(file: File, apply: boolean): Promise<Result> {
     throw new Error((data as { error?: string } | null)?.error ?? "");
   return data as Result;
 }
+
+/** The hardware columns' names, as the asset form words them. */
+const HARDWARE_LABEL = {
+  processor: "processor",
+  cpuBrand: "cpuBrand",
+  cpuFamily: "processor",
+  cpuModel: "cpuModel",
+  vcpus: "vcpus",
+  ramGb: "ram",
+  drive1: "storageSize",
+  drive1Type: "storageType",
+  drive2: "storageSize2",
+  drive2Type: "storageType",
+  ports: "ports",
+  osVersion: "osVersion",
+  screen: "screen",
+  portCount: "portCount",
+} as const;
 
 export default function AssetImportPage() {
   const t = useTranslations();
@@ -108,8 +124,12 @@ export default function AssetImportPage() {
     if (input.current) input.current.value = "";
   };
 
-  const fieldName = (field: ImportField) =>
-    field === "tag" ? t("assets.import.tag") : t(`assets.${field}`);
+  const fieldName = (field: ImportField | "specs") =>
+    field === "tag"
+      ? t("assets.import.tag")
+      : field in HARDWARE_LABEL
+        ? t(`assets.hardware.${HARDWARE_LABEL[field as keyof typeof HARDWARE_LABEL]}`)
+        : t(`assets.${field as "name"}`);
   const problem = (p: Problem) => {
     switch (p.code) {
       case "required":
@@ -142,15 +162,6 @@ export default function AssetImportPage() {
         return t("assets.import.problems.noHeader");
     }
   };
-  const template = () =>
-    downloadCsv(
-      "assets-template.csv",
-      toCsv(
-        [],
-        TEMPLATE_HEADERS.map((header) => ({ header, value: () => "" })),
-      ),
-    );
-
   const toLoad = result ? result.counts.add + result.counts.update : 0;
   const busy = check.isPending || load.isPending;
 
@@ -166,9 +177,12 @@ export default function AssetImportPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-5">
-            <Button variant="outline" onClick={template}>
-              <Download />
-              {t("assets.import.template")}
+            {/* The Excel template, with the values each column takes from the app's lists. */}
+            <Button variant="outline" asChild>
+              <a href="/api/assets/import/template" download>
+                <Download />
+                {t("assets.import.template")}
+              </a>
             </Button>
             <Field>
               <div className="flex items-center gap-1">
@@ -204,6 +218,7 @@ export default function AssetImportPage() {
                 <li>{t("assets.import.columnTag")}</li>
                 <li>{t("assets.import.columnPerson")}</li>
                 <li>{t("assets.import.columnDates")}</li>
+                <li>{t("assets.import.columnHardware")}</li>
               </ul>
             </div>
           </CardContent>

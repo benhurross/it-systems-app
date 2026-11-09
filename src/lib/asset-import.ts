@@ -1,6 +1,15 @@
 import type { z } from "zod";
 import { ASSET_STATUSES, CRITICALITIES, SUPPORT_STATUSES } from "./domain";
+import { assetSpecs, pruneSpecs } from "./asset-specs";
+import { readSpecs } from "./asset-sheet-specs";
 import { assetInput } from "./schemas";
+
+/** The hardware columns, as the template and the inventory export name them. */
+export const HARDWARE_HEADERS = [
+  "Processor brand", "Processor family", "Processor model", "vCPUs", "RAM (GB)",
+  "Storage size", "Storage type", "Storage 2 size", "Storage 2 type",
+  "Ports", "Operating system", "OS version", "Screen (inches)", "Port count",
+] as const;
 
 /**
  * Reading an inventory sheet (Excel or CSV) into assets: the columns are those of the inventory
@@ -16,7 +25,7 @@ export type ImportField = (typeof FIELDS)[number];
 /** Each field and the column names it is found under, compared without case, spaces or signs. */
 const COLUMNS = {
   tag: ["tag", "assettag", "assetno", "assetnumber"],
-  name: ["name", "assetname", "hostname", "computername", "devicename"],
+  name: ["name", "assetname", "assetnameworkstationname", "workstationname", "hostname", "computername", "devicename"],
   category: ["category", "assetcategory"],
   type: ["type", "assettype", "devicetype"],
   manufacturer: ["manufacturer", "make", "brand"],
@@ -34,14 +43,29 @@ const COLUMNS = {
   macAddress: ["macaddress", "mac"],
   anydeskId: ["anydeskid", "anydesk"],
   os: ["os", "operatingsystem", "operatingsystemorfirmware", "firmware"],
+  osVersion: ["osversion", "operatingsystemversion"],
+  processor: ["processor", "cpu"],
+  cpuBrand: ["processorbrand", "cpubrand", "cpumake"],
+  cpuFamily: ["processorfamily", "cpufamily", "processorseries"],
+  cpuModel: ["processormodel", "cpumodel"],
+  vcpus: ["vcpus", "virtualcpus", "vcpu"],
+  ramGb: ["ramgb", "ram", "memory", "memorygb", "memoryramgb"],
+  drive1: ["storagesize", "storage", "storage1size", "storage1", "disksize", "disk", "drive1"],
+  drive1Type: ["storagetype", "storage1type", "disktype", "drivetype", "drive1type"],
+  drive2: ["storage2size", "storage2", "seconddrivesize", "seconddrive", "drive2"],
+  drive2Type: ["storage2type", "seconddrivetype", "drive2type"],
+  ports: ["ports"],
+  screen: ["screeninches", "screen", "screensize", "screensizeinches"],
+  portCount: ["portcount", "numberofports"],
   notes: ["notes", "remarks", "comments"],
 } as const;
 export const FIELDS = Object.keys(COLUMNS) as (keyof typeof COLUMNS)[];
 
 /** The columns of the template, as the inventory export names them. */
 export const TEMPLATE_HEADERS = [
-  "Tag", "Name", "Category", "Type", "Manufacturer", "Model", "Serial", "Status", "Location", "Assigned to",
-  "Purchased", "Cost (SAR)", "Warranty ends", "Support", "IP address", "MAC address", "AnyDesk ID",
+  "Tag", "Asset Name / Workstation Name", "Category", "Type", "Manufacturer", "Model", "Serial", "Status", "Location", "Assigned to",
+  "Purchased", "Cost (SAR)", "Warranty ends", "Support", "Criticality", "IP address", "MAC address", "AnyDesk ID",
+  ...HARDWARE_HEADERS, "Notes",
 ] as const;
 
 /** Where a type of device goes when the sheet does not say. */
@@ -76,8 +100,8 @@ export type PlannedRow = {
   name: string;
   action: "add" | "update" | "unchanged" | "skip";
   assetId: number | null;
-  /** For updates, the fields that change. */
-  changes: ImportField[];
+  /** For updates, the fields that change ("specs": the hardware). */
+  changes: (ImportField | "specs")[];
   problems: Problem[];
   input: AssetInput | null;
 };
@@ -214,9 +238,14 @@ export function planImport(sheet: Cell[][], ctx: ImportContext): { rows: Planned
       if (Number.isFinite(n) && /\d/.test(raw("purchaseCost"))) values.purchaseCost = n;
       else problems.push({ code: "number", field: "purchaseCost", value: raw("purchaseCost") });
     }
-    for (const field of ["name", "model", "serial", "ipAddress", "macAddress", "anydeskId", "os", "notes"] as const) {
+    for (const field of ["name", "model", "serial", "ipAddress", "macAddress", "anydeskId", "notes"] as const) {
       if (raw(field)) values[field] = raw(field);
     }
+    // The hardware, over what the asset has; a system the list does not know stays as written.
+    const read = readSpecs((f) => raw(f as ImportField), assetSpecs.parse(existing?.specs ?? {}), ctx.lookups);
+    for (const p of read.problems) problems.push({ code: "unknown", field: p.field as ImportField, value: p.value });
+    values.specs = read.specs;
+    if (read.osText) values.os = read.osText;
 
     // Updates start from what is there; new assets from sensible defaults.
     const base: Partial<AssetInput> = existing ?? {
@@ -244,7 +273,12 @@ export function planImport(sheet: Cell[][], ctx: ImportContext): { rows: Planned
       if (parsed.success) input = parsed.data;
       else for (const issue of parsed.error.issues) problems.push({ code: "invalid", field: issue.path[0] as ImportField, message: issue.message });
     }
-    const changes = existing && input ? FIELDS.filter((f) => f !== "tag" && f in input! && !same(input![f as keyof AssetInput], existing![f as keyof AssetInput])) : [];
+    const changes: PlannedRow["changes"] = existing && input ? FIELDS.filter((f) => f !== "tag" && f !== "os" && f in input! && !same(input![f as keyof AssetInput], existing![f as keyof AssetInput])) : [];
+    if (existing && input) {
+      const specsNow = JSON.stringify(pruneSpecs(input.specs, input.type, input.category));
+      if (specsNow !== JSON.stringify(pruneSpecs(assetSpecs.parse(existing.specs ?? {}), existing.type, existing.category))) changes.push("specs");
+      if (read.osText && !same(input.os, existing.os)) changes.push("os");
+    }
     return {
       line,
       name: name || existing?.name || "",

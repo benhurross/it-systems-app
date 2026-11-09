@@ -213,8 +213,8 @@ test("assets are loaded from a spreadsheet: checked first, then added and update
 
   await page.goto("/en/assets/import");
   await expect(page.getByRole("link", { name: "Import" })).toHaveAttribute("aria-current", "page");
-  const [template] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "Download template" }).click()]);
-  expect(template.suggestedFilename()).toBe("assets-template.csv");
+  const [template] = await Promise.all([page.waitForEvent("download"), page.getByRole("link", { name: "Download the Excel template" }).click()]);
+  expect(template.suggestedFilename()).toBe("asset-import-template.xlsx");
 
   // A file that is not a spreadsheet is refused.
   await page.getByLabel("Excel or CSV file").setInputFiles({ name: "notes.xlsx", mimeType: "application/octet-stream", buffer: Buffer.from("not a workbook") });

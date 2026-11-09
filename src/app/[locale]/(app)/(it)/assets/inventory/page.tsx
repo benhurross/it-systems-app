@@ -18,6 +18,7 @@ import type { Asset } from "@/lib/api-types";
 import { isoDate } from "@/lib/dates";
 import { ASSET_STATUSES, ref } from "@/lib/domain";
 import { assetFlags, type AssetFlags } from "@/lib/lifecycle";
+import { hardwareColumns } from "@/lib/asset-sheet-specs";
 
 type Row = Asset & { flags: (keyof AssetFlags)[] };
 const col = columnHelper<Row>();
@@ -116,6 +117,9 @@ export default function InventoryPage() {
             { header: "IP address", value: (a) => a.ipAddress },
             { header: "MAC address", value: (a) => a.macAddress },
             { header: "AnyDesk ID", value: (a) => a.anydeskId },
+            // The hardware, in the template's columns, so an export filled in loads back.
+            ...hardwareColumns((list, code) => lookups.label(list, code)),
+            { header: "Notes", value: (a) => a.notes },
           ],
         }}
       />

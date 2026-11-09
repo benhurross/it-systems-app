@@ -128,3 +128,30 @@ export function pruneSpecs(specs: AssetSpecs, type: string, category?: string | 
 
 /** "512 GB" or "1 TB". */
 export const driveSize = (d: { size: number | null; unit: "GB" | "TB" }) => (d.size ? `${d.size} ${d.unit}` : "");
+
+/** The English names a sheet uses for ports and drives (the template's Lists, and reading them back). */
+export const PORT_LABELS: Record<Port, string> = {
+  ethernet: "Network (RJ-45)",
+  usb_a: "USB-A",
+  usb_c: "USB-C",
+  thunderbolt: "Thunderbolt",
+  usb_b: "USB-B",
+  hdmi: "HDMI",
+  displayport: "DisplayPort",
+  mini_displayport: "Mini DisplayPort",
+  vga: "VGA",
+  dvi: "DVI",
+  audio: "Audio jack (3.5 mm)",
+  sd_card: "SD card reader",
+  microsd: "microSD reader",
+  serial: "Serial (COM)",
+  docking: "Docking connector",
+  kensington: "Kensington lock",
+  sim: "SIM card slot",
+  sfp: "SFP / fibre",
+  console: "Console port",
+  wifi: "Wi-Fi",
+  bluetooth: "Bluetooth",
+};
+export const STORAGE_LABELS: Record<(typeof STORAGE_TYPES)[number], string> = { ssd_nvme: "SSD (NVMe)", ssd_sata: "SSD (SATA)", hdd: "HDD" };
+export const CPU_BRAND_LABELS: Record<CpuBrand, string> = { intel: "Intel", amd: "AMD", apple: "Apple" };

@@ -1168,7 +1168,7 @@
       "tab": "Import",
       "title": "Load assets from a spreadsheet",
       "intro": "Add your devices from an Excel (.xlsx) or CSV file, or update the ones listed: export the inventory, fill in a column such as AnyDesk ID, and load it back.",
-      "template": "Download template",
+      "template": "Download the Excel template",
       "file": "Excel or CSV file",
       "fileHint": "Up to 10 MB. The file is checked first; nothing changes until you load it.",
       "checking": "Checking the file…",
@@ -1177,6 +1177,7 @@
       "columnTag": "Tag (AST-0042) or Serial: a row naming an asset already registered updates it, and its empty cells leave what is there. Any other row adds an asset.",
       "columnPerson": "Assigned to: the person's employee number, email or full name. A change of place or holder goes in the movement history.",
       "columnDates": "Dates: 2026-03-31 or 31/03/2026 (day first).",
+      "columnHardware": "Hardware: processor (brand, family, model), RAM (GB), storage (512 GB, SSD (NVMe)), ports separated by commas, operating system and version. The template's Lists sheet has the values each column takes.",
       "resultTitle": "What loading {file} will do",
       "loadedTitle": "{file} is loaded",
       "counts": {
