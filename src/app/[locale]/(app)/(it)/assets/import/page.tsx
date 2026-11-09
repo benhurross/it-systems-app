@@ -178,7 +178,7 @@ export default function AssetImportPage() {
           </CardHeader>
           <CardContent className="space-y-5">
             {/* The Excel template, with the values each column takes from the app's lists. */}
-            <Button variant="outline" asChild>
+            <Button variant="outline" className="h-auto min-h-9 max-w-full whitespace-normal py-1.5 text-start" asChild>
               <a href="/api/assets/import/template" download>
                 <Download />
                 {t("assets.import.template")}
