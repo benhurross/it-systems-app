@@ -31,7 +31,7 @@ test.describe("inventory", () => {
     const dialog = page.getByRole("dialog");
     await dialog.getByLabel("Name").fill(name);
     await choose(page, "Category", "End-User Devices");
-    await choose(page, "Type", "Laptop");
+    await choose(page, /^Type$/, "Laptop");
     await choose(page, "Location", "Jeddah Head Office");
     await dialog.getByRole("button", { name: "Save" }).click();
 
@@ -40,7 +40,7 @@ test.describe("inventory", () => {
     await expect(page.getByText("In stock", { exact: true }).first()).toBeVisible();
 
     await page.getByRole("button", { name: "Edit" }).click();
-    await dialog.getByLabel("Model").fill("Latitude 5550");
+    await dialog.getByLabel(/^Model/).fill("Latitude 5550");
     await choose(page, "Check with", "TCP port");
     await dialog.getByLabel("TCP port").fill("3389");
     await dialog.getByRole("button", { name: "Save" }).click();
@@ -93,7 +93,7 @@ test("discovery finds this machine and adds it to the inventory", async ({ page 
   await expect(dialog.getByLabel("IP address")).toHaveValue(ip);
   await dialog.getByLabel("Name").fill(name);
   await choose(page, "Category", "Network Devices");
-  await choose(page, "Type", "Network Switch");
+  await choose(page, /^Type$/, "Network Switch");
   await dialog.getByRole("button", { name: "Save" }).click();
 
   await expect(page.getByRole("heading", { name })).toBeVisible();

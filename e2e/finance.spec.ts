@@ -57,7 +57,7 @@ test("a purchase goes from request to approval, its budget line, receipt and the
   await expect(dialog.getByLabel("Purchase cost (SAR)")).toHaveValue("4500");
   await dialog.getByLabel("Name").fill(laptop);
   await choose(page, "Category", "End-User Devices");
-  await choose(page, "Type", "Laptop");
+  await choose(page, /^Type$/, "Laptop");
   await choose(page, "Location", "Jeddah Head Office");
   await dialog.getByRole("button", { name: "Save" }).click();
   await expect(page.getByRole("heading", { name: laptop })).toBeVisible();
