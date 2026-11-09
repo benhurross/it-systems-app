@@ -34,5 +34,8 @@ describe("emptying the asset list", () => {
     expect(await n(s.tickets, isNotNull(s.tickets.assetId))).toBe(0);
     expect(await n(s.employees)).toBe(before.employees);
     expect(await n(s.licenses)).toBe(before.licenses);
+    // Numbering, and so the tags, start again at 1.
+    const [first] = await db.insert(s.assets).values({ name: "First real asset", category: "end_user", type: "laptop", location: "jeddah", status: "in_use" }).returning({ id: s.assets.id });
+    expect(first.id).toBe(1);
   });
 });

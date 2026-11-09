@@ -127,6 +127,13 @@
       "when": 1794140181353,
       "tag": "0017_device_sightings",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1794204631750,
+      "tag": "0018_asset_specs",
+      "breakpoints": true
     }
   ]
 }

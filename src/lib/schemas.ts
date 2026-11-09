@@ -34,6 +34,7 @@ import {
   WORKSTATION_ITEM_STATES,
 } from "./domain";
 import { ROLES } from "./permissions";
+import { assetSpecs } from "./asset-specs";
 import { LABEL_DPIS } from "./label-sizes";
 import { TOOL_KEYS, TOOL_MODES } from "./tools";
 
@@ -165,6 +166,7 @@ export const assetInput = z.object({
     .transform((v) => (v?.trim() ? normalizeAnydeskId(v) : null))
     .refine((v) => v === null || isAnydeskId(v), "validation.anydeskId"),
   os: optionalText,
+  specs: assetSpecs,
   notes: optionalText,
   monitorMethod: z.enum(MONITOR_METHODS),
   monitorPort: z.number().int().min(1).max(65_535).nullish().transform((v) => v ?? null),

@@ -1,3 +1,4 @@
+import { assetSpecs } from "@/lib/asset-specs";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import { changeInput } from "@/lib/schemas";
 import { createTestDb } from "./helpers/db";
@@ -44,11 +45,15 @@ describe("create, read and update for every register", () => {
       macAddress: null,
       anydeskId: "123456789",
       os: "Windows 11 Pro",
+      specs: { ...assetSpecs.parse(undefined), cpuBrand: "intel" as const, cpuFamily: "core_i5", ramGb: 16, os: "win11_pro", osVersion: "23H2", screenInches: 27 },
       notes: null,
       monitorMethod: "none" as const,
       monitorPort: null,
     };
     const created = await assets.createAsset(input, user);
+    // Saved as its type has it, the operating system written out for lists and exports.
+    expect(created.os).toBe("Windows 11 Pro 23H2");
+    expect(created.specs).toMatchObject({ cpuBrand: "intel", cpuFamily: "core_i5", ramGb: 16 });
     const updated = await assets.updateAsset(created.id, { ...input, notes: "Spare" }, user);
     expect(updated.notes).toBe("Spare");
     expect(updated.anydeskId).toBe("123456789");

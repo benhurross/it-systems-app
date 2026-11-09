@@ -2,6 +2,7 @@ import { and, asc, desc, eq, getTableColumns, or } from "drizzle-orm";
 import { sightingOfAsset } from "./device-sightings";
 import { alias } from "drizzle-orm/pg-core";
 import type { z } from "zod";
+import { pruneSpecs } from "@/lib/asset-specs";
 import { ref } from "@/lib/domain";
 import type { assetInput, assetMove, relationshipInput } from "@/lib/schemas";
 import { audit, type Actor } from "../audit";
@@ -13,6 +14,7 @@ import {
   employees,
   licenseInstalls,
   licenses,
+  lookups,
   relationships,
   tickets,
 } from "../db/schema";
@@ -65,14 +67,25 @@ export async function getAsset(id: number) {
   return { ...asset, movements, relationships: related, software, tickets: recentTickets, signIn };
 }
 
+/**
+ * What is saved of an asset: only the hardware details its type has, and the operating system
+ * written out ("Windows 11 Pro 23H2") where one is chosen from the list, for lists and exports.
+ */
+async function fitted(input: z.infer<typeof assetInput>) {
+  const specs = pruneSpecs(input.specs, input.type, input.category);
+  if (!specs.os) return { ...input, specs };
+  const [os] = await db.select({ label: lookups.labelEn }).from(lookups).where(and(eq(lookups.list, "operating_system"), eq(lookups.code, specs.os)));
+  return { ...input, specs, os: [os?.label ?? specs.os, specs.osVersion].filter(Boolean).join(" ") };
+}
+
 export async function createAsset(input: z.infer<typeof assetInput>, actor: Actor) {
-  const row = one(await db.insert(assets).values(input).returning());
+  const row = one(await db.insert(assets).values(await fitted(input)).returning());
   await audit(actor, "create", "asset", row.id, `Registered ${ref("asset", row.id)}: ${row.name}`);
   return row;
 }
 
 export async function updateAsset(id: number, input: z.infer<typeof assetInput>, actor: Actor) {
-  const row = one(await db.update(assets).set(input).where(eq(assets.id, id)).returning());
+  const row = one(await db.update(assets).set(await fitted(input)).where(eq(assets.id, id)).returning());
   await audit(actor, "update", "asset", id, `Updated ${ref("asset", id)}: ${row.name}`);
   return row;
 }

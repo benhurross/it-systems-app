@@ -59,7 +59,10 @@ export async function assetsReport() {
   return { removed, unlinked };
 }
 
-/** Deletes every asset in one go (all or nothing), then the files of their documents. */
+/**
+ * Deletes every asset in one go (all or nothing), then the files of their documents. Asset numbers,
+ * and so the tags made from them (AST-0001), start again at 1.
+ */
 export async function clearAssets() {
   const report = await assetsReport();
   const files = await db.transaction(async (tx) => {
@@ -68,6 +71,7 @@ export async function clearAssets() {
     await tx.update(floorPlans).set({ switches: sql`'{}'::jsonb` });
     // The links that stay are cleared, and what hangs off an asset goes, by the database's own rules.
     await tx.delete(assets);
+    await tx.execute(sql`ALTER TABLE assets ALTER COLUMN id RESTART WITH 1`);
     return detached.map((d) => d.key);
   });
   for (const key of files) await removeStoredFile(key);

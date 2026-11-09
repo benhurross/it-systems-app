@@ -49,6 +49,7 @@ import type {
 } from "@/lib/domain";
 import type { FontChoice } from "@/lib/id-card";
 import type { ItFormKind } from "@/lib/it-forms";
+import type { AssetSpecs } from "@/lib/asset-specs";
 import type { KpiFilter } from "@/lib/kpi-register";
 import type { LayerRole } from "@/lib/svg-plan";
 import type { ToolAccessState, ToolKey } from "@/lib/tools";
@@ -235,6 +236,8 @@ export const assets = pgTable(
     /** For remote support with the AnyDesk app. */
     anydeskId: text(),
     os: text(),
+    /** Processor, memory, drives, ports, operating system, screen: what the asset's type has (lib/asset-specs). */
+    specs: jsonb().$type<AssetSpecs>().notNull().default({} as AssetSpecs),
     notes: text(),
     monitorMethod: text().$type<MonitorMethod>().notNull().default("none"),
     monitorPort: integer(),

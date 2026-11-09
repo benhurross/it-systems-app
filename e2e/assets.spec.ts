@@ -356,3 +356,54 @@ test("an asset shows its photo once one is uploaded, and a placeholder until the
   await expect(page.getByRole("img", { name: "No photo yet" })).toBeHidden();
   console.assertClean();
 });
+
+test("an asset's hardware: the form shows what its type has, and the page shows what was recorded", async ({ page }, info) => {
+  const console = watchConsole(page);
+  const name = unique(info, "LT-HW").replace(/\s+/g, "-");
+  await page.goto("/en/assets/inventory");
+  await page.getByRole("button", { name: "Add asset" }).click();
+  const dialog = page.getByRole("dialog", { name: "Add asset" });
+  const pick = async (label: RegExp, option: string) => {
+    await dialog.getByRole("combobox", { name: label }).click();
+    await page.getByRole("option", { name: option, exact: true }).click();
+  };
+  await dialog.getByLabel("Asset Name / Workstation Name").fill(name);
+  await pick(/^Category$/, "End-User Devices");
+  await pick(/^Type$/, "Laptop");
+  await pick(/^Location$/, "Jeddah Head Office");
+  // A brand's own list of processors appears once the brand is chosen.
+  await expect(dialog.getByRole("combobox", { name: /AMD processor/ })).toHaveCount(0);
+  await pick(/^Processor/, "AMD");
+  await pick(/AMD processor/, "Ryzen 5");
+  await dialog.getByLabel(/Processor model/).fill("5600U");
+  await dialog.getByLabel(/Memory/).fill("16");
+  await dialog.getByLabel(/Screen size/).fill("14");
+  await dialog.getByLabel(/^Storage size/).fill("512");
+  await pick(/^Storage type/, "SSD (NVMe)");
+  await dialog.getByRole("button", { name: "Add a second drive" }).click();
+  await dialog.getByLabel(/Second drive size/).fill("1");
+  await dialog.getByRole("combobox", { name: /^Unit$/ }).nth(1).click();
+  await page.getByRole("option", { name: "TB", exact: true }).click();
+  await dialog.getByLabel("USB-C").check();
+  await dialog.getByLabel("HDMI").check();
+  await pick(/^Operating system/, "Windows 11 Pro");
+  await dialog.getByLabel(/^Version/).fill("23H2");
+
+  // Another type, other fields: a monitor has no processor, memory or system, but a screen and its ports.
+  await pick(/^Type$/, "Monitor");
+  await expect(dialog.getByRole("combobox", { name: /^Processor/ })).toHaveCount(0);
+  await expect(dialog.getByLabel(/Memory/)).toHaveCount(0);
+  await expect(dialog.getByLabel(/Screen size/)).toBeVisible();
+  await expect(dialog.getByLabel("Kensington lock")).toHaveCount(0);
+  await pick(/^Type$/, "Laptop");
+  await dialog.getByRole("button", { name: "Save" }).click();
+
+  await expect(page).toHaveURL(/\/en\/assets\/\d+$/);
+  const spec = page.locator("[data-slot='card']").filter({ has: page.locator("[data-slot='card-title']", { hasText: /^Specification$/ }) });
+  await expect(spec).toContainText("AMD Ryzen 5 5600U");
+  await expect(spec).toContainText("512 GB SSD (NVMe)");
+  await expect(spec).toContainText("1 TB");
+  await expect(spec).toContainText("Windows 11 Pro 23H2");
+  await expect(spec).toContainText("USB-C, HDMI");
+  console.assertClean();
+});

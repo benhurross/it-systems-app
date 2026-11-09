@@ -48,6 +48,10 @@ export const LOOKUP_LISTS = [
   "risk_category",
   "channel",
   "workstation_check",
+  "cpu_intel",
+  "cpu_amd",
+  "cpu_apple",
+  "operating_system",
 ] as const;
 
 /** The workbook's new-joiner checklist (IT_New_Joinee), in its three phases. */

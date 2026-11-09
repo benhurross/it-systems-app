@@ -4,7 +4,8 @@ import { assetsReport, clearAssets } from "@/server/seed/clear-assets";
 
 // Empties the asset list, to start it again:
 //   npm run assets:clear            reports what it would delete, changing nothing
-//   npm run assets:clear confirm    makes a backup (npm run backup), then deletes every asset
+//   npm run assets:clear confirm    makes a backup (npm run backup), then deletes every asset;
+//                                   asset numbers (the tags' AST-0001) start again at 1
 // What only means something with its asset goes with it; tickets, changes, risks, workstation
 // checks, IT forms and wall ports stay, their link to the asset cleared. Undo: npm run restore.
 const confirm = process.argv.slice(2).some((a) => a === "confirm" || a === "--confirm");
@@ -31,4 +32,5 @@ if (backup.status !== 0) {
 }
 await clearAssets();
 await db.$client.end();
-console.log(`\nDeleted ${removed[0][1]} assets. To undo it, restore the backup just made: npm run restore -- latest`);
+console.log(`\nDeleted ${removed[0][1]} assets. Asset numbers start again at 1: the next asset is AST-0001.`);
+console.log("To undo it, restore the backup just made: npm run restore -- latest");
