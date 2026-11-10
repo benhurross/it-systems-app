@@ -38,11 +38,12 @@ const emailsFor = (ticketId: number, kind: "new_request" | "assigned") =>
   db.select().from(s.emails).where(and(eq(s.emails.ticketId, ticketId), eq(s.emails.kind, kind))).orderBy(desc(s.emails.id));
 
 describe("a new ticket nobody is assigned to", () => {
-  it("emails every admin, with links to accept it or assign it to each IT staff member", async () => {
+  it("emails every Admin and IT Admin, with links to accept it or assign it to each IT staff member", async () => {
     const ticket = await tickets.createTicket(employee, input);
-    const [email, ...more] = await emailsFor(ticket.id, "new_request");
-    expect(more).toEqual([]);
-    expect(email).toMatchObject({ recipient: "admin@applus.test", status: "held" });
+    const sent = await emailsFor(ticket.id, "new_request");
+    expect(sent.map((e) => e.recipient).toSorted()).toEqual(["admin@applus.test", "it3@applus.test"]);
+    const email = sent.find((e) => e.recipient === "admin@applus.test")!;
+    expect(email).toMatchObject({ status: "held" });
     expect(email.subject).toMatch(/^New request IT\d{6}: New starter needs a <laptop> \| طلب جديد IT\d{6}: /);
     expect(email.html).toContain(`/en/tickets/${ticket.id}/assign?to=me`);
     expect(email.html).toContain(`/ar/tickets/${ticket.id}/assign?to=me`);
@@ -54,11 +55,11 @@ describe("a new ticket nobody is assigned to", () => {
     expect(email.text).toContain("الأجهزة");
   });
 
-  it("says incident for an incident, and does not email the admin who opened it", async () => {
+  it("says incident for an incident, and does not email the Admin who opened it", async () => {
     const incident = await tickets.createTicket(it_, { ...input, type: "incident", requesterId: employee.employeeId });
     expect((await emailsFor(incident.id, "new_request"))[0].subject).toMatch(/^New incident IT\d{6}: .* \| بلاغ عطل جديد /);
     const own = await tickets.createTicket(admin, { ...input, requesterId: employee.employeeId });
-    expect(await emailsFor(own.id, "new_request")).toEqual([]);
+    expect((await emailsFor(own.id, "new_request")).map((e) => e.recipient)).toEqual(["it3@applus.test"]);
   });
 });
 

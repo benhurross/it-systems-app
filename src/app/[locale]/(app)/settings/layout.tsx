@@ -3,6 +3,8 @@
 import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 import { AreaGuard } from "@/components/app-shell/area-guard";
+import { useCurrentUser } from "@/components/app-shell/current-user";
+import { can } from "@/lib/permissions";
 import { PageHeader } from "@/components/page-header";
 import { SectionTabs } from "@/components/section-tabs";
 
@@ -23,10 +25,12 @@ const PATHS: Record<(typeof TABS)[number], string> = {
 
 export default function SettingsLayout({ children }: { children: ReactNode }) {
   const t = useTranslations("settings");
+  // The audit log is the Admins' alone.
+  const tabs = can(useCurrentUser().role, "manager") ? TABS : TABS.filter((tab) => tab !== "audit");
   return (
     <AreaGuard area="settings">
       <PageHeader title={t("title")} description={t("description")} />
-      <SectionTabs items={TABS.map((tab) => ({ href: PATHS[tab], label: t(`tabs.${tab}`) }))} />
+      <SectionTabs items={tabs.map((tab) => ({ href: PATHS[tab], label: t(`tabs.${tab}`) }))} />
       {children}
     </AreaGuard>
   );

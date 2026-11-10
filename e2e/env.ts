@@ -6,6 +6,7 @@ export const TEST_DATABASE_URL = "postgres://apit:apit@localhost:5433/ap_it_test
 export const ACCOUNTS = {
   admin: "admin@applus.test",
   it: "it@applus.test",
+  itAdmin: "it3@applus.test",
   employee: "employee@applus.test",
 } as const;
 

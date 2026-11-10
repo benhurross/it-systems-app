@@ -126,6 +126,19 @@ describe("sending", () => {
     expect(rows[0]).not.toHaveProperty("html");
     expect((await outbox.getEmail(rows[0].id)).html).toBe("<p>Hello</p>");
   });
+
+  it("keeps Team Management's emails out of the outbox shown to IT Admins", async () => {
+    fakeServer();
+    await outbox.queueEmail([{ ...message("boss@applus.test"), kind: "team_done" }, message("c@applus.test")]);
+    const all = await outbox.listOutbox();
+    const shown = await outbox.listOutbox({ team: false });
+    const team = all.find((r) => r.kind === "team_done")!;
+    expect(team.recipient).toBe("boss@applus.test");
+    expect(shown.some((r) => r.kind === "team_done")).toBe(false);
+    expect(shown.some((r) => r.recipient === "c@applus.test")).toBe(true);
+    await expect(outbox.getEmail(team.id, { team: false })).rejects.toMatchObject({ status: 404 });
+    expect((await outbox.getEmail(team.id)).recipient).toBe("boss@applus.test");
+  });
 });
 
 describe("cleaning the outbox", () => {

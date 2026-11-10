@@ -73,12 +73,12 @@ const active = or(isNull(users.banned), eq(users.banned, false));
 const ticketUrl = (appUrl: string, id: number) => (locale: Locale) => `${appUrl}/${locale}/tickets/${id}`;
 
 /**
- * A ticket that arrived with nobody assigned goes to every admin but the one who opened it, with
+ * A ticket that arrived with nobody assigned goes to every Admin and IT Admin but the one who opened it, with
  * links to accept it or hand it to someone on the team. The links need the admin to sign in.
  */
 export function notifyNewTicket(ticket: Ticket, createdBy: string | null) {
   return quietly("new ticket", async () => {
-    const admins = (await db.select().from(users).where(and(eq(users.role, "admin"), active))).filter(
+    const admins = (await db.select().from(users).where(and(inArray(users.role, ["admin", "it_admin"]), active))).filter(
       (a) => a.id !== createdBy && !isPlaceholderEmail(a.email),
     );
     if (admins.length === 0) return;

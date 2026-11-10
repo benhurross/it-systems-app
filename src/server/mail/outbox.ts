@@ -1,6 +1,6 @@
-import { and, asc, desc, eq, inArray, isNotNull, lt, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNotNull, lt, notInArray, or, sql } from "drizzle-orm";
 import nodemailer, { type SendMailOptions } from "nodemailer";
-import type { EmailKind } from "@/lib/domain";
+import { TEAM_EMAIL_KINDS, type EmailKind } from "@/lib/domain";
 import { db } from "../db";
 import { emailLinks, emails } from "../db/schema";
 import { notFound, one } from "../http";
@@ -130,8 +130,8 @@ export async function sendTest(to: string, message: { subject: string; html: str
   return deliver(row, config, makeTransport(config));
 }
 
-/** The latest messages, newest first, without their bodies. */
-export async function listOutbox(limit = 100) {
+/** The latest messages, newest first, without their bodies; Team Management's only with `team`. */
+export async function listOutbox({ team = true, limit = 100 }: { team?: boolean; limit?: number } = {}) {
   return db
     .select({
       id: emails.id,
@@ -146,13 +146,14 @@ export async function listOutbox(limit = 100) {
       sentAt: emails.sentAt,
     })
     .from(emails)
+    .where(team ? undefined : notInArray(emails.kind, [...TEAM_EMAIL_KINDS]))
     .orderBy(desc(emails.id))
     .limit(limit);
 }
 
-export async function getEmail(id: number) {
+export async function getEmail(id: number, { team = true }: { team?: boolean } = {}) {
   const [row] = await db.select().from(emails).where(eq(emails.id, id));
-  if (!row) throw notFound();
+  if (!row || (!team && (TEAM_EMAIL_KINDS as readonly string[]).includes(row.kind))) throw notFound();
   return row;
 }
 

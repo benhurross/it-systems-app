@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { AreaGuard } from "@/components/app-shell/area-guard";
 import { useState } from "react";
 import { columnHelper, DataTable } from "@/components/data-table";
 import { Input } from "@/components/ui/input";
@@ -12,7 +13,16 @@ import { addDays, isoDate } from "@/lib/dates";
 
 const col = columnHelper<AuditEntry>();
 
+/** The audit log, for Admins only: IT Admins do not see what anyone did. */
 export default function AuditPage() {
+  return (
+    <AreaGuard area="manager">
+      <AuditLog />
+    </AreaGuard>
+  );
+}
+
+function AuditLog() {
   const t = useTranslations("settings.audit");
   const format = useFormat();
   const [from, setFrom] = useState(() => addDays(isoDate(), -30));

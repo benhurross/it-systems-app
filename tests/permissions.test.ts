@@ -4,7 +4,13 @@ import { can } from "@/lib/permissions";
 
 describe("can", () => {
   it.each([
+    ["admin", "manager", true],
     ["admin", "settings", true],
+    ["it_admin", "manager", false],
+    ["it_admin", "settings", true],
+    ["it_admin", "it", true],
+    ["it_admin", "request", true],
+    ["it_staff", "manager", false],
     ["admin", "it", true],
     ["admin", "request", true],
     ["it_staff", "settings", false],

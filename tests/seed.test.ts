@@ -52,7 +52,7 @@ describe("demo seed", () => {
 
   it("creates one account per role, each linked to an employee", async () => {
     const users = await db.select().from(s.users);
-    expect(users.map((u) => u.role).sort()).toEqual(["admin", "employee", "it_staff", "it_staff", "it_staff"]);
+    expect(users.map((u) => u.role).sort()).toEqual(["admin", "employee", "it_admin", "it_staff", "it_staff"]);
     expect(users.every((u) => u.employeeId !== null)).toBe(true);
   });
 

@@ -108,6 +108,7 @@
   },
   "roles": {
     "admin": "Admin",
+    "it_admin": "IT Admin",
     "it_staff": "IT staff",
     "employee": "Employee"
   },
@@ -444,7 +445,11 @@
       "test": "Test",
       "resolution": "Confirm a fix",
       "new_request": "New request",
-      "assigned": "Assigned"
+      "assigned": "Assigned",
+      "team_assigned": "Team task given",
+      "team_done": "Team task done",
+      "team_due": "Team task due",
+      "team_returned": "Team task sent back"
     },
     "attachmentKind": {
       "invoice": "Invoice",
@@ -531,7 +536,8 @@
       "created": "User added.",
       "updated": "User updated.",
       "selfNote": "You cannot change your own role or deactivate yourself.",
-      "deactivateConfirm": "{name} will be signed out and cannot sign in until reactivated."
+      "deactivateConfirm": "{name} will be signed out and cannot sign in until reactivated.",
+      "adminOnly": "Admins only"
     },
     "lists": {
       "list": "List",

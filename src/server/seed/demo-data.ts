@@ -42,7 +42,7 @@ export const DEMO_ACCOUNTS = [
   { email: "admin@applus.test", name: "Sara Al-Harbi", role: "admin", department: "it", location: "jeddah", jobTitle: "IT Manager" },
   { email: "it@applus.test", name: "Omar Haddad", role: "it_staff", department: "it", location: "jeddah", jobTitle: "Helpdesk Specialist" },
   { email: "it2@applus.test", name: "Faisal Al-Qahtani", role: "it_staff", department: "it", location: "jeddah", jobTitle: "Systems Administrator" },
-  { email: "it3@applus.test", name: "Joseph Mathew", role: "it_staff", department: "it", location: "riyadh", jobTitle: "Network Engineer" },
+  { email: "it3@applus.test", name: "Joseph Mathew", role: "it_admin", department: "it", location: "riyadh", jobTitle: "Network Engineer" },
   { email: "employee@applus.test", name: "Nora Al-Otaibi", role: "employee", department: "finance", location: "jeddah", jobTitle: "Accountant" },
 ] as const;
 

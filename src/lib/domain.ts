@@ -100,7 +100,9 @@ export const DAILY_CHECKS = [
   "printers",
 ] as const;
 
-export const EMAIL_KINDS = ["test", "resolution", "new_request", "assigned"] as const;
+export const EMAIL_KINDS = ["test", "resolution", "new_request", "assigned", "team_assigned", "team_done", "team_due", "team_returned"] as const;
+/** Team Management's emails: shown in the outbox to Admins only, for the team's work is watched unseen. */
+export const TEAM_EMAIL_KINDS = ["team_assigned", "team_done", "team_due", "team_returned"] as const;
 /** held: kept in the outbox because sending is off; sending: claimed by a delivery run. */
 export const EMAIL_STATUSES = ["pending", "sending", "sent", "held", "failed"] as const;
 export const SMTP_SECURITY = ["starttls", "tls", "none"] as const;

@@ -69,11 +69,13 @@ export const SETTINGS = [
   "/settings/tools",
   "/settings/api",
   "/settings/organisation",
-  "/settings/audit",
 ];
+/** The Admins' alone: not an IT Admin's. */
+export const MANAGER = ["/settings/audit"];
 
 export const ALLOWED: Record<Role, string[]> = {
-  admin: [...IT, ...REQUEST, ...SETTINGS],
+  admin: [...IT, ...REQUEST, ...SETTINGS, ...MANAGER],
+  itAdmin: [...IT, ...REQUEST, ...SETTINGS],
   it: [...IT, ...REQUEST],
   employee: REQUEST,
 };
@@ -103,4 +105,4 @@ export async function resolve(page: Page, route: string) {
   return path;
 }
 
-export const ALL = [...IT, ...REQUEST, ...SETTINGS];
+export const ALL = [...IT, ...REQUEST, ...SETTINGS, ...MANAGER];

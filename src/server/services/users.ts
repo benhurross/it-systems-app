@@ -1,5 +1,6 @@
 import { asc, eq } from "drizzle-orm";
 import type { z } from "zod";
+import { can } from "@/lib/permissions";
 import type { userCreate, userUpdate } from "@/lib/schemas";
 import { audit } from "../audit";
 import { auth, type SessionUser } from "../auth";
@@ -24,7 +25,18 @@ export async function listUsers() {
     .orderBy(asc(users.name));
 }
 
+/**
+ * Only an Admin makes someone an Admin or changes an Admin's account (role, activation, password,
+ * employee link): an IT Admin, who manages every other account, cannot raise anyone, themselves
+ * included, above their own role.
+ */
+function mayManage(actor: SessionUser, target: { role: string | null } | null, role?: string) {
+  if (can(actor.role, "manager")) return;
+  if (role === "admin" || target?.role === "admin") throw forbidden("Only an Admin can manage Admin accounts");
+}
+
 export async function createUser(input: z.infer<typeof userCreate>, actor: SessionUser) {
+  mayManage(actor, null, input.role);
   const { user } = await auth.api.createUser({
     body: { name: input.name, email: input.email, password: input.password, role: input.role },
   });
@@ -40,6 +52,7 @@ export async function createUser(input: z.infer<typeof userCreate>, actor: Sessi
  */
 export async function updateUser(id: string, input: z.infer<typeof userUpdate>, actor: SessionUser) {
   const current = one(await db.select().from(users).where(eq(users.id, id)));
+  mayManage(actor, current, input.role);
   if (id === actor.id && ((input.role && input.role !== current.role) || input.active === false)) {
     throw forbidden("You cannot change your own role or deactivate yourself");
   }

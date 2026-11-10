@@ -1,3 +1,4 @@
+import { IT_ROLES } from "@/lib/permissions";
 import { and, asc, desc, eq, getTableColumns, inArray, isNull, or } from "drizzle-orm";
 import type { z } from "zod";
 import { OFFBOARDING_TASKS, ONBOARDING_TASKS } from "@/lib/domain";
@@ -54,7 +55,7 @@ export async function listStaff() {
   return db
     .select({ id: users.id, name: users.name, role: users.role })
     .from(users)
-    .where(and(inArray(users.role, ["admin", "it_staff"]), or(isNull(users.banned), eq(users.banned, false))))
+    .where(and(inArray(users.role, [...IT_ROLES]), or(isNull(users.banned), eq(users.banned, false))))
     .orderBy(asc(users.name));
 }
 

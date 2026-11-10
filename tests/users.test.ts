@@ -73,6 +73,26 @@ describe("user management", () => {
     expect(entry.summary).not.toContain("Brand-New-Pass-9");
   });
 
+  it("lets an IT Admin manage every account but an Admin's, and make no one an Admin", async () => {
+    const itAdmin = await asUser("it3@applus.test");
+    expect(itAdmin.role).toBe("it_admin");
+    const helpdesk = await asUser("it@applus.test");
+    // Another account, theirs to manage: not to raise to Admin.
+    await expect(updateUser(helpdesk.id, { role: "admin" }, itAdmin)).rejects.toMatchObject({ status: 403 });
+    expect((await updateUser(helpdesk.id, { role: "it_admin" }, itAdmin)).role).toBe("it_admin");
+    await updateUser(helpdesk.id, { role: "it_staff" }, itAdmin);
+    // An Admin's account: not its role, activation, password or employee link.
+    for (const change of [{ role: "it_staff" as const }, { active: false }, { password: "Some-Other-Pass-1" }, { employeeId: null }]) {
+      await expect(updateUser(admin.id, change, itAdmin)).rejects.toMatchObject({ status: 403 });
+    }
+    // Nor a new Admin; another IT Admin, yes.
+    await expect(createUser(userCreate.parse({ name: "New Boss", email: "boss@applus.test", password: "Long-Enough-Pass-1", role: "admin", employeeId: null }), itAdmin)).rejects.toMatchObject({ status: 403 });
+    const made = await createUser(userCreate.parse({ name: "New Tech", email: "newtech@applus.test", password: "Long-Enough-Pass-1", role: "it_admin", employeeId: null }), itAdmin);
+    expect(made.role).toBe("it_admin");
+    // And not themselves (no one changes their own role).
+    await expect(updateUser(itAdmin.id, { role: "admin" }, itAdmin)).rejects.toMatchObject({ status: 403 });
+  });
+
   it("will not leave an employee account without an employee record", async () => {
     const nora = await asUser("employee@applus.test");
     await expect(updateUser(nora.id, { employeeId: null }, admin)).rejects.toMatchObject({ status: 400 });

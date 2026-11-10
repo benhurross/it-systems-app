@@ -329,7 +329,7 @@ describe("joiners and leavers", () => {
 
   it("lists IT staff for assignment", async () => {
     const staff = await people.listStaff();
-    expect(staff.map((u) => u.role).sort()).toEqual(["admin", "it_staff", "it_staff", "it_staff"]);
+    expect(staff.map((u) => u.role).sort()).toEqual(["admin", "it_admin", "it_staff", "it_staff"]);
   });
 });
 
