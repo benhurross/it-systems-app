@@ -492,6 +492,8 @@ export const kpiFigureInput = z
 
 const unitNumber = z.number().int().min(0).max(999).nullable();
 const fraction = z.number().min(0).max(1);
+/** Where an asset is put on a plan. */
+export const assetPlace = z.object({ planId: id, x: fraction, y: fraction });
 export const planRooms = z.array(z.object({ text: z.string().trim().min(1).max(120), x: fraction, y: fraction })).max(1000);
 
 /** A wall point on a floor plan: its patch panel and switch ports, where it is, and what it serves. */

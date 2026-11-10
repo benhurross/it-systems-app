@@ -1,12 +1,15 @@
-import { asc, count, eq, inArray } from "drizzle-orm";
+import { and, asc, count, eq, inArray, ne, or } from "drizzle-orm";
 import writeXlsxFile, { type Row } from "write-excel-file/node";
 import type { z } from "zod";
 import { outletProblems, panelLabel, switchLabel, type OutletProblem } from "@/lib/floor-plan";
+import { assetSpecs } from "@/lib/asset-specs";
+import { roomAt } from "@/lib/plan-devices";
+import { ref } from "@/lib/domain";
 import { cleanFileName, MAX_UPLOAD_BYTES, sniffType } from "@/lib/files";
 import { floorPlanInput, outletInput, planRooms, readOutletsInput } from "@/lib/schemas";
 import { audit, type Actor } from "../audit";
 import { db } from "../db";
-import { assets, floorPlans, networkOutlets } from "../db/schema";
+import { assetMovements, assets, employees, floorPlans, networkOutlets } from "../db/schema";
 import { readStoredFile, removeStoredFile, storeFile } from "../files";
 import { badRequest, notFound, one } from "../http";
 
@@ -95,6 +98,7 @@ export async function getPlan(id: number) {
   const { storageKey, ...shown } = plan;
   return {
     ...shown,
+    devices: await planDevices(id, rows.map((r) => r.outlet)),
     /** Changes with each new drawing, for the page to fetch it again. */
     drawingVersion: storageKey.slice(8, 16),
     outlets: rows.map((r, i) => ({ ...r.outlet, assetName: r.assetName, problems: problems[i] })),
@@ -104,6 +108,85 @@ export async function getPlan(id: number) {
     }),
     panels: [...new Set(rows.flatMap((r) => (r.outlet.panel === null ? [] : [r.outlet.panel])))].toSorted((a, b) => a - b),
   };
+}
+
+/**
+ * The assets on a plan: those put in one of its rooms or on it by hand, and those plugged into its
+ * wall points that are on no plan. Retired ones are not shown.
+ */
+async function planDevices(planId: number, outlets: { id: number; assetId: number | null }[]) {
+  const plugged = outlets.filter((o) => o.assetId !== null);
+  const pluggedIds = [...new Set(plugged.map((o) => o.assetId!))];
+  const rows = await db
+    .select({
+      id: assets.id,
+      name: assets.name,
+      type: assets.type,
+      category: assets.category,
+      status: assets.status,
+      room: assets.room,
+      planId: assets.planId,
+      planX: assets.planX,
+      planY: assets.planY,
+      ipAddress: assets.ipAddress,
+      monitorMethod: assets.monitorMethod,
+      monitorStatus: assets.monitorStatus,
+      specs: assets.specs,
+      assignedName: employees.name,
+    })
+    .from(assets)
+    .leftJoin(employees, eq(employees.id, assets.assignedTo))
+    .where(and(ne(assets.status, "retired"), pluggedIds.length ? or(eq(assets.planId, planId), inArray(assets.id, pluggedIds)) : eq(assets.planId, planId)))
+    .orderBy(asc(assets.name));
+  return rows
+    .filter((a) => a.planId === planId || a.planId === null)
+    .map(({ specs, planId: on, ...a }) => ({
+      ...a,
+      // Put on another plan, it shows there; plugged in here and on none, at its wall point.
+      planX: on === planId ? a.planX : null,
+      planY: on === planId ? a.planY : null,
+      room: on === planId ? a.room : "",
+      onPlan: on === planId,
+      screenInches: assetSpecs.parse(specs ?? {}).screenInches,
+      outletId: plugged.find((o) => o.assetId === a.id)?.id ?? null,
+    }));
+}
+
+/**
+ * Puts an asset on a plan, at a spot: in the room whose name is nearest there, which, if it is
+ * another room, is written in its movement history.
+ */
+export async function placeAsset(id: number, input: { planId: number; x: number; y: number }, actor: Actor) {
+  const [plan] = await db.select({ id: floorPlans.id, name: floorPlans.name, rooms: floorPlans.rooms }).from(floorPlans).where(eq(floorPlans.id, input.planId));
+  if (!plan) throw badRequest("A linked record does not exist");
+  const [asset] = await db.select().from(assets).where(eq(assets.id, id));
+  if (!asset) throw notFound();
+  const room = roomAt(plan.rooms ?? [], input) ?? asset.room;
+  const row = await db.transaction(async (tx) => {
+    if (room !== asset.room) {
+      await tx.insert(assetMovements).values({
+        assetId: id,
+        fromLocation: asset.location,
+        toLocation: asset.location,
+        fromRoom: asset.room,
+        toRoom: room,
+        fromEmployeeId: asset.assignedTo,
+        toEmployeeId: asset.assignedTo,
+        reason: `Placed on the floor plan "${plan.name}"`,
+        movedBy: actor.name,
+      });
+    }
+    return one(await tx.update(assets).set({ planId: plan.id, planX: input.x, planY: input.y, room }).where(eq(assets.id, id)).returning());
+  });
+  await audit(actor, "update", "asset", id, `Placed ${ref("asset", id)} on the floor plan "${plan.name}"${room ? `, ${room}` : ""}`);
+  return { id: row.id, room: row.room };
+}
+
+/** Takes an asset off the plans; its room is kept, as written. */
+export async function unplaceAsset(id: number, actor: Actor) {
+  const row = one(await db.update(assets).set({ planId: null, planX: null, planY: null }).where(eq(assets.id, id)).returning({ id: assets.id }));
+  await audit(actor, "update", "asset", id, `Took ${ref("asset", id)} off the floor plans`);
+  return row;
 }
 
 /** Adds a floor's plan: the drawing and the outlets read from it. */

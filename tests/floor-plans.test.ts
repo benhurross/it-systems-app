@@ -191,6 +191,45 @@ describe("SVG floor plans", () => {
     expect((await plans.getPlan(paper)).rooms).toBeNull();
   });
 
+  it("shows the assets in its rooms, placed by hand or plugged in, and keeps the room as they move", async () => {
+    const { id } = await plans.createPlan("Devices", { ...svgDrawing([read(1, 1, 1, 1, 0.2, 0.33)]), rooms: [{ text: "Board Room", x: 0.2, y: 0.5 }, { text: "Server Room", x: 0.8, y: 0.1 }] }, it_);
+    const assets = await import("@/server/services/assets");
+    const [tv] = await db
+      .insert(s.assets)
+      .values({ name: "MR-TV-01", category: "communication", type: "monitor", status: "in_use", location: "jeddah", room: "Board Room", planId: id, specs: { screenInches: 65 } as never })
+      .returning();
+    const [old] = await db.insert(s.assets).values({ name: "OLD-PC", category: "end_user", type: "desktop", status: "retired", location: "jeddah", room: "Board Room", planId: id }).returning();
+    // Plugged into one of its wall points and on no plan: shown at the wall point.
+    const [outlet] = (await plans.getPlan(id)).outlets;
+    await plans.updateOutlet(outlet.id, { ...outlet, assetId: laptopId }, it_);
+    await db.update(s.assets).set({ planId: null, planX: null, planY: null }).where(eq(s.assets.id, laptopId));
+
+    let devices = (await plans.getPlan(id)).devices;
+    expect(devices.map((d) => d.id).toSorted()).toEqual([tv.id, laptopId].toSorted());
+    expect(devices.find((d) => d.id === tv.id)).toMatchObject({ room: "Board Room", planX: null, screenInches: 65, onPlan: true, assignedName: null });
+    expect(devices.find((d) => d.id === laptopId)).toMatchObject({ outletId: outlet.id, onPlan: false, room: "" });
+    expect(devices.some((d) => d.id === old.id)).toBe(false);
+
+    // Put by hand next to the server room's name: it is in the server room, and its history says so.
+    expect(await plans.placeAsset(tv.id, { planId: id, x: 0.79, y: 0.12 }, it_)).toEqual({ id: tv.id, room: "Server Room" });
+    devices = (await plans.getPlan(id)).devices;
+    expect(devices.find((d) => d.id === tv.id)).toMatchObject({ room: "Server Room", planX: 0.79, planY: 0.12 });
+    const detail = await assets.getAsset(tv.id);
+    expect(detail.movements[0]).toMatchObject({ fromRoom: "Board Room", toRoom: "Server Room" });
+    // Put far from any room name: the room stays, the spot is kept; nothing new in its history.
+    await plans.placeAsset(tv.id, { planId: id, x: 0.5, y: 0.95 }, it_);
+    expect((await assets.getAsset(tv.id)).movements).toHaveLength(1);
+    expect((await plans.getPlan(id)).devices.find((d) => d.id === tv.id)).toMatchObject({ room: "Server Room", planX: 0.5 });
+    // Moved to another room: back to where that room is, until put somewhere by hand.
+    await assets.moveAsset(tv.id, { toLocation: "jeddah", toRoom: "Board Room", toPlanId: id, toEmployeeId: null, status: null, reason: "Back" }, it_);
+    expect((await plans.getPlan(id)).devices.find((d) => d.id === tv.id)).toMatchObject({ room: "Board Room", planX: null, planY: null });
+    // Taken off the plans: its room is kept, as written.
+    await plans.unplaceAsset(tv.id, it_);
+    expect((await plans.getPlan(id)).devices.some((d) => d.id === tv.id)).toBe(false);
+    expect((await assets.getAsset(tv.id)).room).toBe("Board Room");
+    await expect(plans.placeAsset(tv.id, { planId: 999_999, x: 0.5, y: 0.5 }, it_)).rejects.toMatchObject({ status: 400 });
+  });
+
   it("changes only what is given: the rack, the layers, the name", async () => {
     const { id } = await plans.createPlan("Partly", svgDrawing([]), it_);
     await plans.updatePlan(id, { rack: { x: 0.25, y: 0.75 } }, it_);

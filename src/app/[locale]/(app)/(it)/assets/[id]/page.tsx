@@ -138,7 +138,7 @@ export default function AssetPage({ params }: PageProps<"/[locale]/assets/[id]">
                   <Row label={t("assets.room")}>
                     {asset.room || dash}
                     {asset.room && asset.planId && (
-                      <Link href={`/network/floor-plan?plan=${asset.planId}`} className="ms-2 text-primary hover:underline">
+                      <Link href={`/network/floor-plan?plan=${asset.planId}&device=${asset.id}`} className="ms-2 text-primary hover:underline">
                         {t("assets.showOnPlan")}
                       </Link>
                     )}

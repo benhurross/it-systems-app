@@ -87,7 +87,11 @@ export async function createAsset(input: z.infer<typeof assetInput>, actor: Acto
 }
 
 export async function updateAsset(id: number, input: z.infer<typeof assetInput>, actor: Actor) {
-  const row = one(await db.update(assets).set(await fitted(input)).where(eq(assets.id, id)).returning());
+  const values = await fitted(input);
+  // Put in another room or on another plan, its spot on the plan is that room's.
+  const [now] = await db.select({ room: assets.room, planId: assets.planId }).from(assets).where(eq(assets.id, id));
+  const moved = !!now && (now.room !== values.room || now.planId !== values.planId);
+  const row = one(await db.update(assets).set(moved ? { ...values, planX: null, planY: null } : values).where(eq(assets.id, id)).returning());
   await audit(actor, "update", "asset", id, `Updated ${ref("asset", id)}: ${row.name}`);
   return row;
 }
@@ -133,7 +137,15 @@ export async function moveAsset(id: number, input: z.infer<typeof assetMove>, ac
     return one(
       await tx
         .update(assets)
-        .set({ location: input.toLocation, room: input.toRoom, planId: input.toRoom ? input.toPlanId : null, assignedTo: input.toEmployeeId, status })
+        .set({
+          location: input.toLocation,
+          room: input.toRoom,
+          planId: input.toRoom ? input.toPlanId : null,
+          // In another room, it stands where that room is on the plan until put somewhere by hand.
+          ...(input.toRoom !== current.room || (input.toRoom ? input.toPlanId : null) !== current.planId ? { planX: null, planY: null } : {}),
+          assignedTo: input.toEmployeeId,
+          status,
+        })
         .where(eq(assets.id, id))
         .returning(),
     );

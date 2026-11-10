@@ -225,3 +225,81 @@ test("a plan drawn as an SVG is shown in 3D and from above, and its cables trace
   await expect(page.getByRole("img", { name: `${name}, the floor plan` })).toBeHidden();
   console.assertClean();
 });
+
+test("assets stand in their rooms on the 3D plan, and are placed, moved and taken off it", async ({ page }, info) => {
+  const console = watchConsole(page);
+  const name = unique(info, "Floor devices");
+  const svg = floorPlanSvg([{ p: "P1-1", s: "S1-1", x: 140, y: 200 }]);
+  // Uploaded as the upload dialog sends it: the drawing, its size, and its room names.
+  const made = await page.request.post("/api/floor-plans", {
+    multipart: {
+      file: { name: "Office.svg", mimeType: "image/svg+xml", buffer: Buffer.from(svg) },
+      name,
+      page: JSON.stringify({ width: 200, height: 300 }),
+      mark: JSON.stringify({ width: 6, height: 5 }),
+      outlets: "[]",
+      rooms: JSON.stringify([{ text: "SERVER", x: 0.3, y: 0.2 }, { text: "PROJECT MANAGER", x: 0.7, y: 0.7 }]),
+    },
+  });
+  expect(made.ok(), await made.text()).toBe(true);
+  const { id: planId } = (await made.json()) as { id: number };
+
+  const tvName = unique(info, "MR-TV").replace(/\s+/g, "-");
+  const res = await page.request.post("/api/assets", {
+    data: { name: tvName, category: "communication", type: "monitor", status: "in_use", location: "jeddah", supportStatus: "supported", criticality: "low", monitorMethod: "none", specs: { screenInches: 65 } },
+  });
+  expect(res.ok(), await res.text()).toBe(true);
+  const { id: tvId } = (await res.json()) as { id: number };
+
+  // Put in a room of the plan from the asset's form: it now shows on the plan, in that room.
+  await page.goto(`/en/assets/${tvId}`);
+  await page.getByRole("button", { name: "Edit" }).click();
+  const dialog = page.getByRole("dialog");
+  await dialog.getByRole("combobox", { name: /^Room \/ area/ }).click();
+  await page.getByPlaceholder("Search, or type a room…").fill("PROJECT MANAGER");
+  await page.getByRole("group", { name }).getByRole("option", { name: "PROJECT MANAGER" }).click();
+  await dialog.getByRole("button", { name: "Save" }).click();
+  await expect(page.getByText("PROJECT MANAGER", { exact: true })).toBeVisible();
+  await page.getByRole("link", { name: "Show the floor plan" }).click();
+
+  await expect(page).toHaveURL(new RegExp(`plan=${planId}&device=${tvId}`));
+  await expect(page.getByRole("img", { name: `${name}, the floor plan` }).locator("canvas")).toBeVisible();
+  const card = page.locator("[data-device-card]");
+  await expect(card).toContainText(tvName);
+  await expect(card).toContainText("No one (shared)");
+  await expect(card).toContainText("In its room");
+  const list = page.getByRole("complementary").locator("[data-slot='card']").filter({ hasText: "Devices on this plan" });
+  await expect(list).toContainText("PROJECT MANAGER");
+  await expect(list.getByRole("button", { name: tvName })).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByRole("switch", { name: "Devices" })).toBeChecked();
+
+  // Moved by hand next to the server room's name: it is in the server room now.
+  const map = page.getByRole("img", { name: `${name}, the floor plan` });
+  await page.getByRole("radio", { name: "Top view" }).click();
+  await card.getByRole("button", { name: "Move on the plan" }).click();
+  await expect(page.getByText(`Click where ${tvName} is on the plan.`)).toBeVisible();
+  const placed = page.waitForResponse((r) => r.url().endsWith(`/api/assets/${tvId}/place`) && r.request().method() === "POST");
+  await map.click({ position: { x: 60, y: 60 } });
+  expect((await placed).ok()).toBe(true);
+  await expect(card).toContainText("Placed by hand");
+
+  // Taken off the plan, then put back with Place a device.
+  await card.getByRole("button", { name: "Take off the plan" }).click();
+  await expect(page.getByText("Taken off the plan.")).toBeVisible();
+  await expect(list.getByRole("button", { name: tvName })).toHaveCount(0);
+  await list.getByRole("button", { name: "Place a device" }).click();
+  const chooser = page.getByRole("dialog", { name: "Place a device" });
+  await chooser.getByPlaceholder("Search assets…").fill(tvName);
+  await chooser.getByRole("option", { name: new RegExp(tvName) }).click();
+  await expect(page.getByText(`Click where ${tvName} is on the plan.`)).toBeVisible();
+  await map.click({ position: { x: 200, y: 200 } });
+  await expect(page.getByText(/^Placed (in|on)/)).toBeVisible();
+  await expect(list.getByRole("button", { name: tvName })).toBeVisible();
+
+  // Its page links to it on the plan.
+  await page.goto(`/en/assets/${tvId}`);
+  await expect(page.getByRole("link", { name: "Show the floor plan" })).toHaveAttribute("href", new RegExp(`plan=${planId}&device=${tvId}`));
+
+  expect((await page.request.delete(`/api/floor-plans/${planId}`)).ok()).toBe(true);
+  console.assertClean();
+});

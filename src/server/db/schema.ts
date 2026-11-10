@@ -228,6 +228,9 @@ export const assets = pgTable(
     room: text().notNull().default(""),
     /** The floor plan that room is on, when it was picked from one: where the asset shows on the map. */
     planId: integer().references(() => floorPlans.id, { onDelete: "set null" }),
+    /** Where on that plan it was put by hand (fractions of the plan from its top left); null: in its room. */
+    planX: real(),
+    planY: real(),
     assignedTo: integer().references(() => employees.id, { onDelete: "set null" }),
     purchaseId: integer().references(() => purchases.id, { onDelete: "set null" }),
     purchaseDate: day(),

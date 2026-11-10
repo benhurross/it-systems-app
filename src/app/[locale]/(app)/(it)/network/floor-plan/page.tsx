@@ -4,11 +4,22 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Box, Download, Ellipsis, Map as MapIcon, Maximize, Move, Pencil, Plus, Server, Settings2, Square, Upload, X, ZoomIn, ZoomOut } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
+import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 import { type ReactNode, Suspense, useCallback, useEffect, useEffectEvent, useId, useMemo, useRef, useState } from "react";
 import { EnumBadge } from "@/components/badges";
 import { EmptyState } from "@/components/empty-state";
 import { OutletDialog, outletName, PlanSettingsDialog } from "@/components/network/floor-plan/dialogs";
+import {
+  DEVICE_ICON,
+  DeviceCard,
+  deviceMatches,
+  DevicesCard,
+  PlaceDeviceDialog,
+  RING_CLASS,
+  ringOf,
+  type ShownDevice,
+} from "@/components/network/floor-plan/devices-panel";
 import { RackPanel } from "@/components/network/floor-plan/rack-panel";
 import { UploadDialog } from "@/components/network/floor-plan/upload-dialog";
 import { NetworkHeader } from "@/components/network/network-header";
@@ -28,6 +39,7 @@ import { Link } from "@/i18n/navigation";
 import { api } from "@/lib/api";
 import type { FloorPlan, FloorPlanSummary, Outlet } from "@/lib/api-types";
 import { outletMatches } from "@/lib/floor-plan";
+import { deviceKind, placeDevices } from "@/lib/plan-devices";
 import { defaultRoles, fitRooms, readSvgPlan, type SvgPlan } from "@/lib/svg-plan";
 import type { OutletLook, Plan3DProps } from "@/components/network/floor-plan/plan-3d";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
@@ -148,7 +160,12 @@ function PlanView({
   const [fitRequest, setFitRequest] = useState(0);
   const [showProblems, setShowProblems] = useState(false);
   const [selected, setSelected] = useState<number | null>(Number(params.get("outlet")) || null);
-  const [placing, setPlacing] = useState<{ move?: Outlet; rack?: true } | null>(null);
+  const [placing, setPlacing] = useState<{ move?: Outlet; rack?: true; device?: { id: number; name: string } } | null>(null);
+  // An asset chosen on the plan (?device= opens on it); the assets shown, and their names.
+  const [deviceId, setDeviceId] = useState<number | null>(Number(params.get("device")) || null);
+  const [showDevices, setShowDevices] = useState(true);
+  const [deviceNames, setDeviceNames] = useState(false);
+  const [choosingDevice, setChoosingDevice] = useState(false);
   const [adding, setAdding] = useState<{ x: number; y: number } | null>(null);
   const [editing, setEditing] = useState<Outlet | null>(null);
   const [dialog, setDialog] = useState<"replace" | "settings" | null>(null);
@@ -177,6 +194,24 @@ function PlanView({
   const hit = new Set(matches.map((o) => o.id));
   const problemOutlets = outlets.filter((o) => o.problems.length);
   const current = outlets.find((o) => o.id === selected) ?? null;
+
+  // The assets, where each stands: put there, in its room, or at its wall point.
+  const { shownDevices, unplacedDevices } = useMemo(() => {
+    if (!plan) return { shownDevices: [] as ShownDevice[], unplacedDevices: [] as FloorPlan["devices"] };
+    const withKind = plan.devices.flatMap((d) => {
+      const kind = deviceKind(d);
+      return kind ? [{ ...d, kind }] : [];
+    });
+    const { placed, unplaced } = placeDevices(withKind, plan.rooms ?? model?.rooms ?? [], plan.outlets);
+    return { shownDevices: placed, unplacedDevices: unplaced };
+  }, [plan, model]);
+  const device = shownDevices.find((d) => d.id === deviceId) ?? null;
+  const deviceHits = useMemo(() => new Set(shownDevices.filter((d) => deviceMatches(d, query)).map((d) => d.id)), [shownDevices, query]);
+  const placeDevice = useApiMutation(
+    ({ id, x, y }: { id: number; x: number; y: number }) => api<{ room: string }>(`/assets/${id}/place`, { body: { planId, x, y } }),
+    { onSuccess: (r) => toast.success(r.room ? t("devices.placedIn", { room: r.room }) : t("devices.placed")) },
+  );
+  const unplace = useApiMutation((id: number) => api(`/assets/${id}/place`, { method: "DELETE" }), { success: t("devices.removed") });
 
   const placeRack = useApiMutation((at: { x: number; y: number }) => api(`/floor-plans/${planId}`, { method: "PATCH", body: { rack: at } }), { success: t("rackPlaced") });
   const move = useApiMutation(
@@ -232,7 +267,11 @@ function PlanView({
   const open = useEffectEvent(() => {
     if (!plan) return;
     const asked = plan.outlets.find((o) => o.id === selected);
-    if (asked) {
+    const askedDevice = shownDevices.find((d) => d.id === deviceId);
+    if (askedDevice) {
+      setZoom(3);
+      setFocus({ x: askedDevice.x, y: askedDevice.y, n: Date.now() });
+    } else if (asked) {
       setZoom(4);
       setFocus({ x: asked.x, y: asked.y, n: Date.now() });
     } else fitTo(query && matches.length ? matches : plan.outlets);
@@ -255,6 +294,7 @@ function PlanView({
 
   const select = (o: Outlet) => {
     setSelected(o.id);
+    setDeviceId(null);
     if (zoom < 3) setZoom(3);
     setFocus({ x: o.x, y: o.y, n: Date.now() });
   };
@@ -262,6 +302,7 @@ function PlanView({
   /** Nothing chosen: no outlet, switch or patch panel, and so no cables drawn. */
   const clearSelection = () => {
     setSelected(null);
+    setDeviceId(null);
     setSwitchNoState(null);
     setPanelNoState(null);
   };
@@ -293,7 +334,10 @@ function PlanView({
   const traced = current ? [current.id] : outlets.filter(inGroup).map((o) => o.id);
   const place = (at: { x: number; y: number }) => {
     if (placing?.rack) placeRack.mutate(at);
-    else if (placing?.move) move.mutate({ outlet: placing.move, ...at });
+    else if (placing?.device) {
+      placeDevice.mutate({ id: placing.device.id, ...at });
+      setDeviceId(placing.device.id);
+    } else if (placing?.move) move.mutate({ outlet: placing.move, ...at });
     else setAdding(at);
     setPlacing(null);
   };
@@ -369,6 +413,16 @@ function PlanView({
           <Switch id={problemsId} checked={showProblems} onCheckedChange={setShowProblems} />
           <Label htmlFor={problemsId}>{t("showProblems")}</Label>
         </div>
+        <div className="flex h-9 items-center gap-2">
+          <Switch id={`${problemsId}-devices`} checked={showDevices} onCheckedChange={setShowDevices} />
+          <Label htmlFor={`${problemsId}-devices`}>{t("devices.show")}</Label>
+        </div>
+        {showDevices && (
+          <div className="flex h-9 items-center gap-2">
+            <Switch id={`${problemsId}-names`} checked={deviceNames} onCheckedChange={setDeviceNames} />
+            <Label htmlFor={`${problemsId}-names`}>{t("devices.names")}</Label>
+          </div>
+        )}
         <div className="ms-auto flex flex-wrap items-center gap-2">
           <Button onClick={() => setPlacing({})}>
             <Plus />
@@ -440,13 +494,25 @@ function PlanView({
                 <ZoomIn />
               </Button>
             </div>
-            <Button variant="ghost" size="sm" onClick={() => fitTo(outlets)} disabled={!outlets.length}>
+            <Button
+              variant="ghost"
+              size="sm"
+              // With no outlets, a 3D plan frames its devices.
+              onClick={() => (outlets.length ? fitTo(outlets) : setFitRequest((n) => n + 1))}
+              disabled={!outlets.length && !(svg && showDevices && shownDevices.length)}
+            >
               <Maximize />
               {t("fit")}
             </Button>
             {placing ? (
               <p role="status" className="flex items-center gap-2 text-sm font-medium text-primary">
-                {placing.rack ? t("rackHint") : placing.move ? t("moveHint", { label: label(placing.move) }) : t("placeHint")}
+                {placing.rack
+                  ? t("rackHint")
+                  : placing.device
+                    ? t("devices.placeHint", { name: placing.device.name })
+                    : placing.move
+                      ? t("moveHint", { label: label(placing.move) })
+                      : t("placeHint")}
                 <Button variant="outline" size="sm" onClick={() => setPlacing(null)}>
                   <X />
                   {t("cancelPlacing")}
@@ -473,6 +539,25 @@ function PlanView({
                   ...plan.switches.map((w) => ({ kind: "switch" as const, number: w.number, status: w.asset?.monitorStatus ?? null, picked: switchNo === w.number || current?.switchNo === w.number })),
                 ]}
                 traced={traced}
+                devices={
+                  showDevices
+                    ? shownDevices.map((d) => ({
+                        id: d.id,
+                        x: d.x,
+                        y: d.y,
+                        kind: d.kind,
+                        name: d.name,
+                        ring: ringOf(d),
+                        screenInches: d.screenInches,
+                        look: d.id === deviceId ? ("picked" as const) : query.trim() && !deviceHits.has(d.id) ? ("faded" as const) : ("normal" as const),
+                      }))
+                    : []
+                }
+                deviceNames={deviceNames || (!!query.trim() && deviceHits.size > 0)}
+                onPickDevice={(id) => {
+                  setSelected(null);
+                  setDeviceId(deviceId === id ? null : id);
+                }}
                 view={view}
                 focus={networkOnly}
                 placing={!!placing}
@@ -482,7 +567,10 @@ function PlanView({
                 className="h-[70vh] lg:h-[var(--map-height)]"
                 noWebGl={t("noWebGl")}
                 // A second click on the chosen outlet lets it go, and its cable with it.
-                onPickOutlet={(id) => setSelected(selected === id ? null : id)}
+                onPickOutlet={(id) => {
+                  setDeviceId(null);
+                  setSelected(selected === id ? null : id);
+                }}
                 onPickNothing={clearSelection}
                 onPickUnit={(u) => {
                   setSelected(null);
@@ -523,6 +611,34 @@ function PlanView({
                   />
                 );
               })}
+              {showDevices &&
+                shownDevices.map((d) => {
+                  const Icon = DEVICE_ICON[d.kind];
+                  const faded = !!query.trim() && !deviceHits.has(d.id);
+                  return (
+                    <button
+                      key={`device-${d.id}`}
+                      type="button"
+                      data-device={d.id}
+                      aria-label={t("devices.label", { name: d.name })}
+                      aria-pressed={d.id === deviceId}
+                      title={d.name}
+                      onClick={() => {
+                        setSelected(null);
+                        setDeviceId(deviceId === d.id ? null : d.id);
+                      }}
+                      className={cn(
+                        "absolute grid size-6 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-2 shadow-sm transition-transform hover:scale-125 focus-visible:outline-2 focus-visible:outline-ring",
+                        RING_CLASS[ringOf(d)],
+                        d.id === deviceId && "z-[5] scale-125 ring-2 ring-primary ring-offset-1",
+                        faded && "opacity-30",
+                      )}
+                      style={{ left: `${d.x * 100}%`, top: `${d.y * 100}%` }}
+                    >
+                      <Icon className="size-3.5" aria-hidden />
+                    </button>
+                  );
+                })}
               {placing && (
                 <button
                   type="button"
@@ -540,6 +656,17 @@ function PlanView({
         </section>
 
         <aside className="min-w-0 space-y-4">
+          {device && (
+            <DeviceCard
+              device={device}
+              onClose={() => setDeviceId(null)}
+              onMove={() => setPlacing({ device })}
+              onRemove={() => {
+                unplace.mutate(device.id);
+                setDeviceId(null);
+              }}
+            />
+          )}
           {current ? (
             <OutletCard
               plan={plan}
@@ -552,6 +679,20 @@ function PlanView({
           ) : null}
           {query.trim() && matches.length > 0 && (
             <OutletList title={t("results")} outlets={matches} selected={selected} onSelect={select} label={label} />
+          )}
+          {showDevices && (
+            <DevicesCard
+              shown={shownDevices}
+              unplaced={unplacedDevices}
+              selected={deviceId}
+              onSelect={(d) => {
+                setSelected(null);
+                setDeviceId(d.id);
+                setFocus({ x: d.x, y: d.y, n: Date.now() });
+              }}
+              onPlace={(d) => setPlacing({ device: d })}
+              onAdd={() => setChoosingDevice(true)}
+            />
           )}
           <RackPanel plan={plan} panelNo={panelNo} switchNo={switchNo} onPanel={(n) => (setSelected(null), setPanelNo(n))} onSwitch={(n) => (setSelected(null), setSwitchNo(n))} />
           <Card>
@@ -587,6 +728,16 @@ function PlanView({
         </aside>
       </div>
 
+      {choosingDevice && (
+        <PlaceDeviceDialog
+          onClose={() => setChoosingDevice(false)}
+          onPick={(a) => {
+            setChoosingDevice(false);
+            setShowDevices(true);
+            setPlacing({ device: a });
+          }}
+        />
+      )}
       {adding && <OutletDialog plan={plan} at={adding} onClose={() => setAdding(null)} onSaved={setSelected} />}
       {editing && <OutletDialog plan={plan} outlet={editing} onClose={() => setEditing(null)} />}
       {dialog === "settings" && <PlanSettingsDialog plan={plan} roles={model ? roles : null} onClose={() => setDialog(null)} />}

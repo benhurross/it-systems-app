@@ -2433,7 +2433,7 @@
     "zoomIn": "Zoom in",
     "zoomOut": "Zoom out",
     "zoomLevel": "Zoom {percent}%",
-    "fit": "Show all the outlets",
+    "fit": "Show it all",
     "mapLabel": "{name}, the floor plan",
     "mapHint": "Drag to move round the plan; Ctrl and the mouse wheel zoom.",
     "placeHint": "Click the plan where the outlet is.",
@@ -2554,6 +2554,45 @@
       "hint": "Click a patch panel or a switch to show every outlet wired to it, with its cables; click it again to clear.",
       "notLinked": "Not linked to a device yet"
     },
-    "howTo": "How to use the plan"
+    "howTo": "How to use the plan",
+    "devices": {
+      "show": "Devices",
+      "names": "Device names",
+      "title": "Devices on this plan",
+      "add": "Place a device",
+      "count": "{count, plural, one {# device} other {# devices}}",
+      "none": "No devices on this plan yet. Give an asset a room from this plan, or place one.",
+      "noRoom": "No room",
+      "toPlace": "To place",
+      "toPlaceHint": "In a room the drawing does not name: place each where it is.",
+      "place": "Place",
+      "close": "Close",
+      "shared": "No one (shared)",
+      "answers": "Monitoring",
+      "where": "On the plan",
+      "placedHere": "Placed by hand",
+      "inItsRoom": "In its room",
+      "atOutlet": "At its wall point",
+      "open": "Open asset",
+      "move": "Move on the plan",
+      "remove": "Take off the plan",
+      "placed": "Placed on the plan.",
+      "placedIn": "Placed in {room}.",
+      "removed": "Taken off the plan.",
+      "placeHint": "Click where {name} is on the plan.",
+      "label": "Device: {name}",
+      "addTitle": "Place a device",
+      "addHint": "Choose the asset, then click where it is on the plan. It takes the room whose name is nearest.",
+      "searchAssets": "Search assets…",
+      "noAssets": "No assets found.",
+      "legend": {
+        "title": "Ring colours",
+        "none": "Not monitored",
+        "up": "Online",
+        "degraded": "Slow",
+        "down": "Down",
+        "repair": "In repair"
+      }
+    }
   }
 }

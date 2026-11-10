@@ -5,11 +5,15 @@ import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import type { DeviceStatus } from "@/lib/domain";
 import type { LayerRole, SvgPlan } from "@/lib/svg-plan";
+import type { DeviceKind } from "@/lib/plan-devices";
 import { cn } from "@/lib/utils";
+import { deviceModel, type RingColor } from "./device-models";
 
 /** How an outlet is drawn: as it is, found, on the switch or panel looked at, to check, chosen, or out of the way. */
 export type OutletLook = "normal" | "hit" | "group" | "problem" | "selected" | "faded";
 export type Outlet3D = { id: number; x: number; y: number; label: string; panel: number | null; panelPort: number | null; switchNo: number | null; switchPort: number | null; look: OutletLook };
+/** An asset on the plan: what it is, where, the colour of its ring, and whether it is chosen or out of the way. */
+export type Device3D = { id: number; x: number; y: number; kind: DeviceKind; name: string; ring: RingColor; screenInches: number | null; look: "normal" | "picked" | "faded" };
 export type Unit3D = { kind: "panel" | "switch"; number: number; status?: DeviceStatus | null; picked: boolean };
 
 export type Plan3DProps = {
@@ -19,6 +23,9 @@ export type Plan3DProps = {
   /** Where the rack stands, in fractions of the plan. */
   rack: { x: number; y: number } | null;
   units: Unit3D[];
+  devices: Device3D[];
+  /** Every device's name shown over it, not only the chosen one's. */
+  deviceNames: boolean;
   /** Outlets whose cable is drawn to the rack: the one chosen, or those of the switch or panel looked at. */
   traced: number[];
   view: "3d" | "top";
@@ -37,6 +44,7 @@ export type Plan3DProps = {
   /** A click on nothing in particular: the floor, a wall, the sky. */
   onPickNothing: () => void;
   onPickUnit: (unit: { kind: "panel" | "switch"; number: number }) => void;
+  onPickDevice: (id: number) => void;
   onPlace: (at: { x: number; y: number }) => void;
 };
 
@@ -95,8 +103,8 @@ function dispose(object: THREE.Object3D) {
 
 /**
  * The floor in 3D, or seen from above: walls raised from the drawing's lines, the rest flat, the
- * outlets as blocks, the server rack with its patch panels and switches, and cables traced from
- * outlets to the rack. Drag to turn (3D) or move (top view); the wheel zooms.
+ * outlets as blocks, the server rack with its patch panels and switches, cables traced from
+ * outlets to the rack, and the assets in their rooms, each a model of what it is. Drag to turn (3D) or move (top view); the wheel zooms.
  */
 export default function Plan3D(props: Plan3DProps) {
   const host = useRef<HTMLDivElement>(null);
@@ -121,6 +129,7 @@ export default function Plan3D(props: Plan3DProps) {
     faint: THREE.Material[];
     roomLabels: THREE.Sprite[];
     dynamic: THREE.Group;
+    devices: THREE.Group;
     outletMesh: THREE.InstancedMesh | null;
     units: { mesh: THREE.Mesh; unit: Unit3D }[];
     goal: { target: THREE.Vector3; until: number } | null;
@@ -214,6 +223,8 @@ export default function Plan3D(props: Plan3DProps) {
 
     const dynamic = new THREE.Group();
     scene.add(dynamic);
+    const devices = new THREE.Group();
+    scene.add(devices);
 
     const perspective = new THREE.PerspectiveCamera(45, 1, 0.5, size * 20);
     perspective.position.set(size * 0.35, size * 0.7, size * 0.75);
@@ -236,7 +247,7 @@ export default function Plan3D(props: Plan3DProps) {
     pan.minZoom = 0.5;
     pan.maxZoom = 30;
 
-    world.current = { scene, renderer, perspective, top, orbit, pan, floor, faint, roomLabels, dynamic, outletMesh: null, units: [], goal: null, size, wall };
+    world.current = { scene, renderer, perspective, top, orbit, pan, floor, faint, roomLabels, dynamic, devices, outletMesh: null, units: [], goal: null, size, wall };
 
     const resize = () => {
       const w = el.clientWidth;
@@ -415,6 +426,33 @@ export default function Plan3D(props: Plan3DProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [props.outlets, props.rack, props.units, props.traced, props.view, model, props.roles]);
 
+  // The assets: each a model of what it is, on a ring the colour of its status, named when chosen.
+  useEffect(() => {
+    const w = world.current;
+    if (!w) return;
+    dispose(w.devices);
+    w.devices.clear();
+    // A metre, from the walls' height (2.7 m), a little larger than life to be seen from afar.
+    const u = (w.wall / 2.7) * 1.3;
+    for (const d of props.devices) {
+      const model = deviceModel(d.kind, { u, ceiling: w.wall, screenInches: d.screenInches, ring: d.ring, picked: d.look === "picked", faded: d.look === "faded" });
+      model.position.copy(toWorld(d.x, d.y));
+      model.traverse((o) => (o.userData.deviceId = d.id));
+      w.devices.add(model);
+      if (d.look === "picked" || (props.deviceNames && d.look !== "faded")) {
+        const top = props.view === "top";
+        const tag = textSprite([d.name], u * (top ? 0.3 : 0.32), d.look === "picked" ? "#ffffff" : "#0f172a", d.look === "picked" ? "#16a34aee" : "#ffffffdd");
+        // Above it in 3D; seen from above, under its ring, so the device itself shows.
+        if (top) tag.position.copy(toWorld(d.x, d.y)).add(new THREE.Vector3(0, w.wall * 1.1, u * 1.05));
+        else tag.position.copy(toWorld(d.x, d.y)).setY(Math.max(u * 1.6, d.kind === "accessPoint" || d.kind === "camera" ? w.wall * 1.05 : u * 1.9));
+        tag.material.depthTest = false;
+        tag.renderOrder = 11;
+        w.devices.add(tag);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [props.devices, props.deviceNames, props.view, model, props.roles]);
+
   // A point brought to the middle, closer in.
   useEffect(() => {
     const w = world.current;
@@ -434,8 +472,10 @@ export default function Plan3D(props: Plan3DProps) {
   const frame = useEffectEvent(() => {
     const w = world.current;
     if (!w) return;
-    const xs = props.outlets.map((o) => o.x);
-    const ys = props.outlets.map((o) => o.y);
+    // The outlets, else the devices, are what is framed.
+    const shown = props.outlets.length ? props.outlets : props.devices;
+    const xs = shown.map((o) => o.x);
+    const ys = shown.map((o) => o.y);
     const [x0, x1, y0, y1] = xs.length ? [Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys)] : [0, 1, 0, 1];
     const centre = toWorld((x0 + x1) / 2, (y0 + y1) / 2);
     const span = Math.max((x1 - x0) * W, (y1 - y0) * H, w.size * 0.15);
@@ -469,7 +509,11 @@ export default function Plan3D(props: Plan3DProps) {
     }
     const unit = ray.intersectObjects(w.units.map((u) => u.mesh))[0];
     const outlet = w.outletMesh ? ray.intersectObject(w.outletMesh)[0] : undefined;
-    if (unit && (!outlet || unit.distance < outlet.distance)) {
+    // The nearest thing hit: a device, a unit of the rack, an outlet.
+    const device = ray.intersectObjects(w.devices.children, true).find((h) => h.object.userData.deviceId !== undefined && !(h.object as THREE.Sprite).isSprite);
+    if (device && (!unit || device.distance < unit.distance) && (!outlet || device.distance < outlet.distance)) {
+      props.onPickDevice(device.object.userData.deviceId as number);
+    } else if (unit && (!outlet || unit.distance < outlet.distance)) {
       const u = unit.object.userData.unit as Unit3D;
       props.onPickUnit({ kind: u.kind, number: u.number });
     } else if (outlet?.instanceId !== undefined) props.onPickOutlet(props.outlets[outlet.instanceId].id);
