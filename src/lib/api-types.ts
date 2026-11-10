@@ -29,6 +29,7 @@ import type * as users from "@/server/services/users";
 import type * as workstationChecks from "@/server/services/workstation-checks";
 import type * as itForms from "@/server/services/it-forms";
 import type * as team from "@/server/services/team";
+import type * as teamPlans from "@/server/services/team-plans";
 
 export type Json<T> = T extends Date
   ? string
@@ -108,3 +109,5 @@ export type TeamTask = Item<typeof team.listTasks>;
 export type TeamTaskDetail = Result<typeof team.getTask>;
 export type TeamTaskEvent = TeamTaskDetail["events"][number];
 export type TeamAssignee = Item<typeof team.listAssignees>;
+export type TeamPlan = Item<typeof teamPlans.listPlans>;
+export type TeamDashboard = Result<typeof teamPlans.teamDashboard>;

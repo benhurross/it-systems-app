@@ -52,7 +52,7 @@ import type { ItFormKind } from "@/lib/it-forms";
 import type { AssetSpecs } from "@/lib/asset-specs";
 import type { KpiFilter } from "@/lib/kpi-register";
 import type { LayerRole } from "@/lib/svg-plan";
-import type { Requester, TaskEventKind, TaskPriority, TaskStatus as TeamTaskStatus } from "@/lib/team";
+import type { PlanKind, Requester, TaskEventKind, TaskPriority, TaskStatus as TeamTaskStatus } from "@/lib/team";
 import type { ToolAccessState, ToolKey } from "@/lib/tools";
 
 const id = () => integer().primaryKey().generatedAlwaysAsIdentity();
@@ -1054,4 +1054,23 @@ export const teamTaskEvents = pgTable(
     at: timestamp({ withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index().on(t.taskId)],
+);
+
+/** A member's own plan: work they mean to do, or days they are busy or away (an exam, leave). */
+export const teamPlans = pgTable(
+  "team_plans",
+  {
+    id: id(),
+    userId: text()
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    kind: text().$type<PlanKind>().notNull().default("work"),
+    title: text().notNull(),
+    note: text(),
+    startDate: day().notNull(),
+    endDate: day().notNull(),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [index().on(t.userId), index().on(t.startDate)],
 );

@@ -77,3 +77,20 @@ export const isOverdue = (t: { status: TaskStatus; dueDate: string | null }, tod
 export function memberMayMove(from: TaskStatus, to: TaskStatus) {
   return from !== "confirmed" && to !== "confirmed" && from !== to;
 }
+
+/** What a plan entry is: planned work, or time a member is busy or away. */
+export const PLAN_KINDS = ["work", "exam", "training", "leave", "out_of_office", "other"] as const;
+export type PlanKind = (typeof PLAN_KINDS)[number];
+/** The kinds that make a member busy or away: the manager gives them lighter work then. */
+export const AWAY_KINDS: readonly PlanKind[] = ["exam", "training", "leave", "out_of_office"];
+
+export const planInput = z
+  .object({
+    kind: z.enum(PLAN_KINDS),
+    title: z.string().trim().min(1).max(200),
+    note: text(2000),
+    startDate: z.iso.date(),
+    endDate: z.iso.date(),
+  })
+  .refine((p) => p.endDate >= p.startDate, { message: "validation.endBeforeStart", path: ["endDate"] });
+export type PlanInput = z.output<typeof planInput>;

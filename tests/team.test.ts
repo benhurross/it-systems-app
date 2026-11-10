@@ -148,3 +148,38 @@ describe("team emails", () => {
     await putSetting("team", { notifyAssigned: true, notifyDone: true, notifyDue: true, notifyReturned: true }, manager);
   });
 });
+
+describe("team plans and the dashboard", () => {
+  it("are written by each member for themselves; the manager reads everyone's", async () => {
+    const plans = await import("@/server/services/team-plans");
+    const { planInput } = await import("@/lib/team");
+    const exam = await plans.createPlan(planInput.parse({ kind: "exam", title: "CCNA exam", startDate: "2026-11-19", endDate: "2026-11-19" }), omar);
+    await plans.createPlan(planInput.parse({ kind: "leave", title: "Annual leave", startDate: "2026-11-16", endDate: "2026-11-18" }), faisal);
+    const week = { from: "2026-11-15", to: "2026-11-21" };
+    expect((await plans.listPlans(omar, week)).map((p) => p.title)).toEqual(["CCNA exam"]);
+    expect((await plans.listPlans(manager, week)).map((p) => p.title).toSorted()).toEqual(["Annual leave", "CCNA exam"]);
+    // Outside the days asked: not listed.
+    expect(await plans.listPlans(omar, { from: "2026-12-01", to: "2026-12-07" })).toEqual([]);
+    // Only one's own is changed: the manager reads it, another member does not even find it.
+    await expect(plans.updatePlan(exam.id, planInput.parse({ kind: "exam", title: "Moved", startDate: "2026-11-20", endDate: "2026-11-20" }), manager)).rejects.toMatchObject({ status: 403 });
+    await expect(plans.deletePlan(exam.id, faisal)).rejects.toMatchObject({ status: 404 });
+    expect((await plans.updatePlan(exam.id, planInput.parse({ kind: "exam", title: "CCNA exam", startDate: "2026-11-20", endDate: "2026-11-20" }), omar)).startDate).toBe("2026-11-20");
+    expect(planInput.safeParse({ kind: "leave", title: "Backwards", startDate: "2026-11-20", endDate: "2026-11-19" }).success).toBe(false);
+  });
+
+  it("show the manager each member's workload, who is away, what waits for review and what is due", async () => {
+    const plans = await import("@/server/services/team-plans");
+    const fresh = await team.createTask(input({ title: "Dashboard task", dueDate: "2026-11-12" }), manager);
+    await team.actOnTask(fresh.id, { action: "done", text: null }, omar);
+    const board = await plans.teamDashboard(new Date("2026-11-16T08:00:00Z"));
+    const o = board.members.find((m) => m.name === "Omar Haddad")!;
+    expect(o.toReview).toBeGreaterThanOrEqual(1);
+    expect(o.tickets).toBeGreaterThan(0);
+    expect(board.members.find((m) => m.name === "Faisal Al-Qahtani")!.away).toEqual([{ kind: "leave", title: "Annual leave", startDate: "2026-11-16", endDate: "2026-11-18" }]);
+    expect(board.toReview.some((t) => t.id === fresh.id)).toBe(true);
+    expect(board.figures.toReview).toBe(board.toReview.length);
+    expect(board.members.every((m) => m.progress >= 0 && m.progress <= 100)).toBe(true);
+    // The manager's private notes are never in the activity.
+    expect(board.activity.some((a) => a.kind === "note")).toBe(false);
+  });
+});

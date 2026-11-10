@@ -32,6 +32,11 @@ export const numberFormatter = (locale: string, options?: Intl.NumberFormatOptio
 // Month names rather than digits, so 03/04 is never read two ways.
 const DATE: Intl.DateTimeFormatOptions = { day: "numeric", month: "short", year: "numeric", timeZone: TIME_ZONE };
 
+/** A date in the language's own words and digits, as `options` ask (a weekday, a month). */
+export function formatWith(value: Date | string, locale: string, options: Intl.DateTimeFormatOptions) {
+  return dateFormatter(intl(locale), options).format(toDate(value));
+}
+
 export function formatDate(value: Date | string, locale: string) {
   return dateFormatter(intl(locale), DATE).format(toDate(value));
 }

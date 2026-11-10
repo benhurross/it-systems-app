@@ -1,6 +1,6 @@
 # Plan: IT Admin role and Team Management
 
-Status: proposed, waiting for approval.
+Status: approved and built (IT Admin role, tasks and emails, plans and dashboard).
 
 ## 1. Roles
 

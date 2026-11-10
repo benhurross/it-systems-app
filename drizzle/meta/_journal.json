@@ -169,6 +169,13 @@
       "when": 1794316569168,
       "tag": "0023_team_tasks",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1794317992492,
+      "tag": "0024_team_plans",
+      "breakpoints": true
     }
   ]
 }
