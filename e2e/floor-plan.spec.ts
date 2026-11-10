@@ -293,7 +293,7 @@ test("assets stand in their rooms on the 3D plan, and are placed, moved and take
   await chooser.getByRole("option", { name: new RegExp(tvName) }).click();
   await expect(page.getByText(`Click where ${tvName} is on the plan.`)).toBeVisible();
   await map.click({ position: { x: 200, y: 200 } });
-  await expect(page.getByText(/^Placed (in|on)/)).toBeVisible();
+  await expect(page.getByText(/^Placed (in|on)/).first()).toBeVisible();
   await expect(list.getByRole("button", { name: tvName })).toBeVisible();
 
   // A laptop in the same room; the type filter shows only one kind, and the list says what it hides.
