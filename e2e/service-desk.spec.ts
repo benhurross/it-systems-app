@@ -269,10 +269,11 @@ test.describe("admins", () => {
     const { id } = (await created.json()) as { id: number };
     await employee.close();
 
-    // The email every admin gets, held in the outbox while sending is off.
+    // The email every Admin and IT Admin gets, held in the outbox while sending is off.
     const outbox = (await (await page.request.get("/api/settings/email/outbox")).json()) as { id: number; ticketId: number; kind: string; recipient: string }[];
-    const email = outbox.find((e) => e.ticketId === id && e.kind === "new_request")!;
-    expect(email.recipient).toBe("admin@applus.test");
+    const sent = outbox.filter((e) => e.ticketId === id && e.kind === "new_request");
+    expect(sent.map((e) => e.recipient).toSorted()).toEqual(["admin@applus.test", "it3@applus.test"]);
+    const email = sent.find((e) => e.recipient === "admin@applus.test")!;
     const { html } = (await (await page.request.get(`/api/settings/email/outbox/${email.id}`)).json()) as { html: string };
     const links = [...html.matchAll(/href="([^"]+)"/g)].map((m) => m[1].replaceAll("&amp;", "&"));
     const accept = links.find((l) => l.endsWith(`/en/tickets/${id}/assign?to=me`))!;
