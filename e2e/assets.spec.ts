@@ -463,3 +463,53 @@ test("an asset is due for replacement only once marked beyond repair, shown as a
   await expect(page.getByRole("note")).toHaveCount(0);
   console.assertClean();
 });
+
+test("a device shared by a room is in use with no one, and stays so when moved to another room", async ({ page }, info) => {
+  const console = watchConsole(page);
+  const name = unique(info, "MR-LT").replace(/\s+/g, "-");
+  const res = await page.request.post("/api/assets", {
+    data: { name, category: "end_user", type: "laptop", status: "in_stock", location: "jeddah", supportStatus: "supported", criticality: "low", monitorMethod: "none" },
+  });
+  expect(res.ok(), await res.text()).toBe(true);
+  const { id } = (await res.json()) as { id: number };
+  const room = (text: string) => `${text} ${info.workerIndex}${Date.now() % 100_000}`;
+  const pickRoom = async (label: RegExp, value: string) => {
+    await page.getByRole("dialog").getByRole("combobox", { name: label }).click();
+    await page.getByPlaceholder("Search, or type a room…").fill(value);
+    await page.getByRole("option", { name: `Use “${value}”` }).click();
+  };
+
+  // Put in the board room, for everyone: In use, held by no one.
+  await page.goto(`/en/assets/${id}`);
+  const board = room("Board room");
+  await page.getByRole("button", { name: "Move or reassign" }).click();
+  const dialog = page.getByRole("dialog");
+  await pickRoom(/^New room \/ area/, board);
+  await choose(page, "Status after the move", "In use");
+  await dialog.getByLabel("Reason").fill("Meeting room laptop");
+  await dialog.getByRole("button", { name: "Save" }).click();
+  await expect(page.getByRole("cell", { name: "Meeting room laptop" })).toBeVisible();
+  await expect(page.getByText("In use", { exact: true }).first()).toBeVisible();
+  await expect(page.getByText(board, { exact: true })).toBeVisible();
+
+  // Moved to another room: still in use, the room change in its history.
+  const training = room("Training room");
+  await page.getByRole("button", { name: "Move or reassign" }).click();
+  await expect(dialog.getByRole("combobox", { name: "Status after the move" })).toHaveText("In use");
+  await pickRoom(/^New room \/ area/, training);
+  await dialog.getByLabel("Reason").fill("Training week");
+  await dialog.getByRole("button", { name: "Save" }).click();
+  const row = page.getByRole("row").filter({ hasText: "Training week" });
+  await expect(row).toContainText(board);
+  await expect(row).toContainText(training);
+  await expect(page.getByText("In use", { exact: true }).first()).toBeVisible();
+
+  // A room an asset is in is offered for others, in the asset form too.
+  await page.goto("/en/assets/inventory");
+  await page.getByRole("button", { name: "Add asset" }).click();
+  await dialog.getByRole("combobox", { name: /^Room \/ area/ }).click();
+  await page.getByPlaceholder("Search, or type a room…").fill(training);
+  await page.getByRole("option", { name: training, exact: true }).click();
+  await expect(dialog.getByRole("combobox", { name: /^Room \/ area/ })).toHaveText(training);
+  console.assertClean();
+});

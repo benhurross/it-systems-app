@@ -148,6 +148,13 @@
       "when": 1794211070433,
       "tag": "0020_hardware_lists",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1794289312339,
+      "tag": "0021_asset_rooms",
+      "breakpoints": true
     }
   ]
 }

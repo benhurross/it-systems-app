@@ -17,7 +17,7 @@ import { useFormat } from "@/hooks/use-format";
 import type { FloorPlan } from "@/lib/api-types";
 import { MAX_UPLOAD_BYTES, sniffType } from "@/lib/files";
 import { outletProblems, pageTexts, readOutlets, type OutletProblem, type ReadOutlet } from "@/lib/floor-plan";
-import { carryOver, fitOutlets, readSvgPlan } from "@/lib/svg-plan";
+import { carryOver, fitOutlets, fitRooms, readSvgPlan } from "@/lib/svg-plan";
 
 type Read = {
   file: File;
@@ -27,6 +27,8 @@ type Read = {
   pages: number;
   problems: [OutletProblem, number][];
   format: "pdf" | "svg";
+  /** The room names an SVG drawing has, where they stand. */
+  rooms?: { text: string; x: number; y: number }[];
 };
 const ERRORS = ["fileType", "fileSize", "fileEmpty", "unreadable"] as const;
 
@@ -48,7 +50,7 @@ function readSvg(file: File, bytes: Uint8Array): Read {
   } catch {
     throw new Error("unreadable");
   }
-  return { file, page: { width: plan.width, height: plan.height }, mark: plan.mark, outlets: plan.outlets, pages: 1, problems: problemCounts(plan.outlets), format: "svg" };
+  return { file, page: { width: plan.width, height: plan.height }, mark: plan.mark, outlets: plan.outlets, pages: 1, problems: problemCounts(plan.outlets), format: "svg", rooms: fitRooms(plan.rooms) };
 }
 
 /** The plan read here, a PDF's first page or an SVG: its size, and the outlets its labels mark. */
@@ -78,6 +80,7 @@ async function send(read: Read, plan: FloorPlan | null, name: string, keep: bool
   form.set("name", name);
   form.set("page", JSON.stringify(read.page));
   form.set("mark", JSON.stringify(read.mark));
+  if (read.rooms) form.set("rooms", JSON.stringify(read.rooms));
   if (!keep) form.set("outlets", JSON.stringify(outlets));
   else if (fit) form.set("fit", JSON.stringify(fit));
   const res = await fetch(plan ? `/api/floor-plans/${plan.id}/drawing` : "/api/floor-plans", { method: plan ? "PUT" : "POST", body: form });

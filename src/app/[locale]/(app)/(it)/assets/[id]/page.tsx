@@ -135,6 +135,14 @@ export default function AssetPage({ params }: PageProps<"/[locale]/assets/[id]">
                   <Row label={t("assets.macAddress")}>{asset.macAddress ? <span dir="ltr" className="font-mono">{asset.macAddress}</span> : dash}</Row>
                   <Row label={t("assets.anydeskId")}>{asset.anydeskId ? <span dir="ltr" className="font-mono">{formatAnydeskId(asset.anydeskId)}</span> : dash}</Row>
                   <Row label={t("assets.assignedTo")}>{asset.assignedName ?? t("assets.unassigned")}</Row>
+                  <Row label={t("assets.room")}>
+                    {asset.room || dash}
+                    {asset.room && asset.planId && (
+                      <Link href={`/network/floor-plan?plan=${asset.planId}`} className="ms-2 text-primary hover:underline">
+                        {t("assets.showOnPlan")}
+                      </Link>
+                    )}
+                  </Row>
                   <Row label={t("assets.monitorMethod")}>
                     {t(`enums.monitorMethod.${asset.monitorMethod}`)}
                     {asset.monitorMethod === "tcp" && asset.monitorPort && ` ${asset.monitorPort}`}
@@ -188,8 +196,8 @@ export default function AssetPage({ params }: PageProps<"/[locale]/assets/[id]">
                     {asset.movements.map((m) => (
                       <TableRow key={m.id}>
                         <TableCell className="whitespace-nowrap">{format.date(m.movedAt)}</TableCell>
-                        <TableCell>{[lookups.label("location", m.fromLocation), m.fromEmployeeName].filter(Boolean).join(" · ")}</TableCell>
-                        <TableCell>{[lookups.label("location", m.toLocation), m.toEmployeeName].filter(Boolean).join(" · ")}</TableCell>
+                        <TableCell>{[lookups.label("location", m.fromLocation), m.fromRoom, m.fromEmployeeName].filter(Boolean).join(" · ")}</TableCell>
+                        <TableCell>{[lookups.label("location", m.toLocation), m.toRoom, m.toEmployeeName].filter(Boolean).join(" · ")}</TableCell>
                         <TableCell>{m.reason}</TableCell>
                         <TableCell>{m.movedBy}</TableCell>
                       </TableRow>

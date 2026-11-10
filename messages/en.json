@@ -1134,7 +1134,7 @@
       "columnsTitle": "The columns",
       "columns": "Name, Type and Location are needed; everything else may be left empty. Category follows from the type when it is left out. Values may be written as the app shows them (Laptop, Jeddah Head Office) or as in the dropdown lists.",
       "columnTag": "Tag (AST-0042) or Serial: a row naming an asset already registered updates it, and its empty cells leave what is there. Any other row adds an asset.",
-      "columnPerson": "Assigned to: the person's employee number, email or full name. A change of place or holder goes in the movement history.",
+      "columnPerson": "Room / area and Assigned to: the room as a floor plan names it, and the person's employee number, email or full name. A shared device (a meeting room's TV, a server) has no one: write In use as its Status. A change of place, room or holder goes in the movement history.",
       "columnDates": "Dates: 2026-03-31 or 31/03/2026 (day first).",
       "columnHardware": "Hardware: processor (Intel Core i5), RAM (GB), storage (512 GB, SSD (NVMe)), operating system. The template's Lists sheet has the values already in the app; a value not there yet is added to its list when imported.",
       "resultTitle": "What loading {file} will do",
@@ -1208,7 +1208,16 @@
       "add": "Add “{value}”",
       "added": "Added to the list.",
       "edit": "Edit list"
-    }
+    },
+    "room": "Room / area",
+    "roomSearch": "Search, or type a room…",
+    "roomUse": "Use “{value}”",
+    "roomOther": "Not on a plan",
+    "roomNone": "No rooms on the floor plans yet: type one.",
+    "showOnPlan": "Show the floor plan",
+    "moveRoom": "New room / area",
+    "moveStatus": "Status after the move",
+    "moveStatusHint": "A device shared by a room (a meeting room's TV, a server) stays In use, held by no one."
   },
   "discovery": {
     "intro": "Sweep a subnet from the server to find devices on the network and compare them with the inventory.",

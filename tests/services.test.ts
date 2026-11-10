@@ -189,13 +189,23 @@ describe("changes", () => {
 describe("assets and CMDB", () => {
   it("moves an asset, records the movement and sets its status", async () => {
     const [spare] = await db.select().from(s.assets).where(eq(s.assets.status, "in_stock")).limit(1);
-    const moved = await assets.moveAsset(spare.id, { toLocation: "riyadh", toEmployeeId: employee.employeeId, reason: "New hire kit" }, it_);
+    const move = (input: Partial<Parameters<typeof assets.moveAsset>[1]>) =>
+      assets.moveAsset(spare.id, { toLocation: "jeddah", toRoom: "", toPlanId: null, toEmployeeId: null, status: null, reason: "", ...input }, it_);
+    // Handed to someone: in use.
+    const moved = await move({ toLocation: "riyadh", toEmployeeId: employee.employeeId, reason: "New hire kit" });
     expect(moved).toMatchObject({ location: "riyadh", assignedTo: employee.employeeId, status: "in_use" });
-    const returned = await assets.moveAsset(spare.id, { toLocation: "jeddah", toEmployeeId: null, reason: "Returned" }, it_);
+    // Back to IT's store, as the Move dialog suggests: in stock.
+    const returned = await move({ toEmployeeId: null, status: "in_stock", reason: "Returned" });
     expect(returned.status).toBe("in_stock");
+    // Put in a meeting room for everyone: in use, held by no one, and stays so when moved on.
+    const shared = await move({ toRoom: "Board room", status: "in_use", reason: "Meeting room laptop" });
+    expect(shared).toMatchObject({ status: "in_use", assignedTo: null, room: "Board room" });
+    const again = await move({ toRoom: "Training room", reason: "Moved rooms" });
+    expect(again).toMatchObject({ status: "in_use", assignedTo: null, room: "Training room" });
     const detail = await assets.getAsset(spare.id);
-    expect(detail.movements.map((m) => m.reason)).toEqual(["Returned", "New hire kit"]);
-    expect(detail.movements[1].toEmployeeName).toBe("Nora Al-Otaibi");
+    expect(detail.movements.map((m) => m.reason)).toEqual(["Moved rooms", "Meeting room laptop", "Returned", "New hire kit"]);
+    expect(detail.movements[0]).toMatchObject({ fromRoom: "Board room", toRoom: "Training room" });
+    expect(detail.movements[3].toEmployeeName).toBe("Nora Al-Otaibi");
   });
 
   it("refuses the same relationship twice", async () => {

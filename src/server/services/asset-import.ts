@@ -10,6 +10,7 @@ import { db } from "../db";
 import { employees, lookups } from "../db/schema";
 import { badRequest } from "../http";
 import { createAsset, listAssets, moveAsset, updateAsset } from "./assets";
+import { listRooms } from "./floor-plans";
 
 const MAX_ROWS = 5000;
 
@@ -28,13 +29,15 @@ async function readFile(name: string, bytes: Uint8Array): Promise<Cell[][]> {
 }
 
 async function context(): Promise<ImportContext> {
-  const [lists, people, assets] = await Promise.all([
+  const [lists, people, assets, rooms] = await Promise.all([
     db.select().from(lookups).where(inArray(lookups.list, ["asset_category", "asset_type", "location", "manufacturer", ...HARDWARE_LISTS])),
     db.select({ id: employees.id, name: employees.name, email: employees.email, number: employees.employeeNumber, active: employees.active }).from(employees),
     listAssets(),
+    listRooms(),
   ]);
   return {
     lookups: lists,
+    rooms,
     employees: people,
     // As the edit form would send each back; a row the form would refuse is matched but kept as it is.
     assets: assets.map((a) => ({ ...(assetInput.safeParse(a).data ?? (a as never)), id: a.id })),
@@ -70,8 +73,12 @@ export async function importAssets(file: { name: string; bytes: Uint8Array }, ap
       } else if (row.action === "update") {
         const current = ctx.assets.find((a) => a.id === row.assetId)!;
         const input = row.input!;
-        if (input.location !== current.location || input.assignedTo !== current.assignedTo) {
-          await moveAsset(row.assetId!, { toLocation: input.location, toEmployeeId: input.assignedTo, reason }, actor);
+        if (input.location !== current.location || input.room !== (current.room ?? "") || input.assignedTo !== current.assignedTo) {
+          await moveAsset(
+            row.assetId!,
+            { toLocation: input.location, toRoom: input.room, toPlanId: input.planId, toEmployeeId: input.assignedTo, status: input.status, reason },
+            actor,
+          );
         }
         await updateAsset(row.assetId!, input, actor);
       }

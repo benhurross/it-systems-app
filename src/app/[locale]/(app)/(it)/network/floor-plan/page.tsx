@@ -28,7 +28,7 @@ import { Link } from "@/i18n/navigation";
 import { api } from "@/lib/api";
 import type { FloorPlan, FloorPlanSummary, Outlet } from "@/lib/api-types";
 import { outletMatches } from "@/lib/floor-plan";
-import { defaultRoles, readSvgPlan, type SvgPlan } from "@/lib/svg-plan";
+import { defaultRoles, fitRooms, readSvgPlan, type SvgPlan } from "@/lib/svg-plan";
 import type { OutletLook, Plan3DProps } from "@/components/network/floor-plan/plan-3d";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { cn } from "@/lib/utils";
@@ -244,6 +244,14 @@ function PlanView({
     opened.current = true;
     open();
   }, [ready]);
+
+  // A plan added before its room names were kept has them recorded once, from its drawing, so
+  // assets can be put in its rooms.
+  const keepRooms = useApiMutation((rooms: { text: string; x: number; y: number }[]) => api(`/floor-plans/${planId}`, { method: "PATCH", body: { rooms } }));
+  const recordRooms = useEffectEvent(() => {
+    if (plan && model && plan.rooms === null && !keepRooms.isPending && !keepRooms.isSuccess) keepRooms.mutate(fitRooms(model.rooms));
+  });
+  useEffect(() => recordRooms(), [model, plan?.rooms]);
 
   const select = (o: Outlet) => {
     setSelected(o.id);

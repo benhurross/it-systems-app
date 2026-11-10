@@ -168,6 +168,29 @@ describe("SVG floor plans", () => {
     await expect(plans.replaceDrawing(id, svgDrawing(null, [1, 2, 3]), it_)).rejects.toThrow("fit");
   });
 
+  it("keeps an SVG drawing's room names, and lists every room an asset can be put in", async () => {
+    const { id } = await plans.createPlan("Rooms", { ...svgDrawing([read(1, 1, 1, 1, 0.2, 0.33)]), rooms: [{ text: "Server Room", x: 0.8, y: 0.1 }, { text: "Board Room", x: 0.2, y: 0.5 }] }, it_);
+    expect((await plans.getPlan(id)).rooms).toEqual([{ text: "Server Room", x: 0.8, y: 0.1 }, { text: "Board Room", x: 0.2, y: 0.5 }]);
+    // A plan added before rooms were kept has them recorded from its drawing, quietly.
+    const { id: older } = await plans.createPlan("Older", svgDrawing([]), it_);
+    expect((await plans.getPlan(older)).rooms).toBeNull();
+    const before = await db.select().from(s.auditLog);
+    await plans.updatePlan(older, { rooms: [{ text: "Reception", x: 0.5, y: 0.9 }] }, it_);
+    expect((await db.select().from(s.auditLog)).length).toBe(before.length);
+    // A room written on an outlet counts too; a PDF's rooms are null.
+    const [outlet] = (await plans.getPlan(id)).outlets;
+    await plans.updateOutlet(outlet.id, { ...outlet, room: "IT Office" }, it_);
+    const rooms = await plans.listRooms();
+    expect(rooms).toEqual(expect.arrayContaining([
+      { room: "Server Room", planId: id, planName: "Rooms" },
+      { room: "IT Office", planId: id, planName: "Rooms" },
+      { room: "Reception", planId: older, planName: "Older" },
+    ]));
+    expect(rooms.filter((r) => r.room === "Server Room" && r.planId === id)).toHaveLength(1);
+    const { id: paper } = await plans.createPlan("Paper", { ...drawing([]), rooms: [{ text: "Ignored", x: 0, y: 0 }] }, it_);
+    expect((await plans.getPlan(paper)).rooms).toBeNull();
+  });
+
   it("changes only what is given: the rack, the layers, the name", async () => {
     const { id } = await plans.createPlan("Partly", svgDrawing([]), it_);
     await plans.updatePlan(id, { rack: { x: 0.25, y: 0.75 } }, it_);

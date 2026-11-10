@@ -32,6 +32,7 @@ const COLUMNS = {
   serial: ["serial", "serialnumber", "serialno", "sn", "servicetag"],
   status: ["status"],
   location: ["location", "site", "office", "branch"],
+  room: ["roomarea", "room", "area", "roomorarea"],
   assignedTo: ["assignedto", "user", "employee", "owner", "heldby"],
   purchaseDate: ["purchased", "purchasedate", "purchasedon", "dateofpurchase"],
   purchaseCost: ["cost", "costsar", "price", "purchasecost"],
@@ -57,7 +58,7 @@ export const FIELDS = Object.keys(COLUMNS) as (keyof typeof COLUMNS)[];
 
 /** The columns of the template, as the inventory export names them. */
 export const TEMPLATE_HEADERS = [
-  "Tag", "Asset Name / Workstation Name", "Category", "Type", "Manufacturer", "Model", "Serial", "Status", "Location", "Assigned to",
+  "Tag", "Asset Name / Workstation Name", "Category", "Type", "Manufacturer", "Model", "Serial", "Status", "Location", "Room / area", "Assigned to",
   "Purchased", "Cost (SAR)", "Warranty ends", "Support", "Criticality", "IP address", "MAC address", "AnyDesk ID",
   ...HARDWARE_HEADERS, "Notes",
 ] as const;
@@ -102,6 +103,8 @@ export type PlannedRow = {
 
 export type ImportContext = {
   lookups: { list: string; code: string; labelEn: string; labelAr: string; sortOrder?: number }[];
+  /** The rooms the floor plans name, so a room written in the sheet puts the asset on its plan. */
+  rooms?: { room: string; planId: number | null }[];
   employees: { id: number; name: string; email: string | null; number: string | null; active: boolean }[];
   assets: (AssetInput & { id: number })[];
 };
@@ -239,6 +242,13 @@ export function planImport(
     }
     for (const field of ["name", "model", "serial", "ipAddress", "macAddress", "anydeskId", "notes"] as const) {
       if (raw(field)) values[field] = raw(field);
+    }
+    // A room the floor plans name is the one on that plan; any other is kept as written.
+    if (raw("room")) {
+      const written = raw("room").replace(/\s+/g, " ").slice(0, 120);
+      const onPlan = ctx.rooms?.find((r) => r.planId !== null && key(r.room) === key(written));
+      values.room = onPlan?.room ?? written;
+      values.planId = onPlan?.planId ?? null;
     }
     // The hardware, over what the asset has; a processor or system its list lacks is added to it.
     const read = readSpecs((f) => raw(f as ImportField), assetSpecs.parse(existing?.specs ?? {}), ctx.lookups, added);

@@ -46,6 +46,8 @@ const day = z.iso.date();
 const optionalDay = z.iso.date().nullish().transform((v) => v ?? null);
 const id = z.number().int().positive();
 const optionalId = id.nullish().transform((v) => v ?? null);
+/** A room or area, as a floor plan names it ("Server room"); "" when not said. */
+const room = z.string().trim().max(120).nullish().transform((v) => v ?? "");
 const optionalUser = z.string().min(1).nullish().transform((v) => v ?? null);
 const amount = z.number().nonnegative().max(1e11);
 const code = z.string().trim().min(1).max(60);
@@ -151,6 +153,8 @@ export const assetInput = z.object({
   serial: optionalText,
   status: z.enum(ASSET_STATUSES),
   location: code,
+  room,
+  planId: optionalId,
   assignedTo: optionalId,
   purchaseId: optionalId,
   purchaseDate: optionalDay,
@@ -176,7 +180,11 @@ export const assetInput = z.object({
 
 export const assetMove = z.object({
   toLocation: code,
+  toRoom: room,
+  toPlanId: optionalId,
   toEmployeeId: optionalId,
+  /** What it is after the move; unsaid, handed to someone it is in use, else it stays as it was. */
+  status: z.enum(ASSET_STATUSES).nullish().transform((v) => v ?? null),
   reason: name,
 });
 
@@ -484,6 +492,7 @@ export const kpiFigureInput = z
 
 const unitNumber = z.number().int().min(0).max(999).nullable();
 const fraction = z.number().min(0).max(1);
+export const planRooms = z.array(z.object({ text: z.string().trim().min(1).max(120), x: fraction, y: fraction })).max(1000);
 
 /** A wall point on a floor plan: its patch panel and switch ports, where it is, and what it serves. */
 export const outletInput = z.object({
@@ -509,6 +518,8 @@ export const floorPlanInput = z.object({
   switches: z.record(z.string().regex(/^\d{1,3}$/), id).optional(),
   rack: z.object({ x: fraction, y: fraction }).nullable().optional(),
   layers: z.record(z.string().max(200), z.enum(["wall", "glass", "flat"])).optional(),
+  /** The room names read from an SVG drawing, where they stand. */
+  rooms: planRooms.optional(),
 });
 
 const password = z.string().min(10).max(128);

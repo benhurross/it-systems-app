@@ -86,3 +86,19 @@ describe("reading hardware from a sheet", () => {
     expect(added).toEqual([{ list: "operating_system", code: "rocky_linux_9", label: "Rocky Linux 9" }]);
   });
 });
+
+describe("reading rooms from a sheet", () => {
+  it("puts an asset in a room a floor plan names, on that plan, and keeps any other as written", () => {
+    const withRooms = { ...ctx, rooms: [{ room: "Server Room", planId: 3 }, { room: "Store", planId: null }] };
+    const { rows } = planImport(
+      [
+        ["Name", "Type", "Location", "Room / area", "Status"],
+        ["SRV-01", "Laptop", "Jeddah Head Office", "server room", "In use"],
+        ["MR-TV-01", "Monitor", "Jeddah Head Office", "Board  room", "In use"],
+      ],
+      withRooms,
+    );
+    expect(rows[0].input).toMatchObject({ room: "Server Room", planId: 3, status: "in_use", assignedTo: null });
+    expect(rows[1].input).toMatchObject({ room: "Board room", planId: null, status: "in_use" });
+  });
+});

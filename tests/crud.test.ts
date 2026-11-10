@@ -35,6 +35,8 @@ describe("create, read and update for every register", () => {
       serial: "TEST123",
       status: "in_stock" as const,
       location: "jeddah",
+      room: "Server room",
+      planId: null,
       assignedTo: null,
       purchaseId: null,
       purchaseDate: "2026-09-01",

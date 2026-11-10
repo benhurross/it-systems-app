@@ -343,3 +343,10 @@ export function carryOver<T extends Placed>(current: Entered[], read: T[], fit: 
   });
   return { outlets, carried, lost: left.length };
 }
+
+/** A drawing's room names as the plan keeps them: a thousand at most, each one line of 120 characters. */
+export const fitRooms = (rooms: SvgRoom[]) =>
+  rooms
+    .map((r) => ({ text: r.text.trim().replace(/\s+/g, " ").slice(0, 120), x: Math.min(1, Math.max(0, r.x)), y: Math.min(1, Math.max(0, r.y)) }))
+    .filter((r) => r.text)
+    .slice(0, 1000);

@@ -3,7 +3,7 @@ import writeXlsxFile, { type Row } from "write-excel-file/node";
 import type { z } from "zod";
 import { outletProblems, panelLabel, switchLabel, type OutletProblem } from "@/lib/floor-plan";
 import { cleanFileName, MAX_UPLOAD_BYTES, sniffType } from "@/lib/files";
-import { floorPlanInput, outletInput, readOutletsInput } from "@/lib/schemas";
+import { floorPlanInput, outletInput, planRooms, readOutletsInput } from "@/lib/schemas";
 import { audit, type Actor } from "../audit";
 import { db } from "../db";
 import { assets, floorPlans, networkOutlets } from "../db/schema";
@@ -22,6 +22,8 @@ export type Drawing = {
    * y' = d·x + e·y + f, in fractions of each page), found from the outlets labelled alike on both.
    */
   fit?: number[] | null;
+  /** The room names an SVG drawing has; null for a PDF. */
+  rooms?: { text: string; x: number; y: number }[] | null;
 };
 
 /** Whether the bytes are an SVG drawing: XML text whose root is an svg element. */
@@ -51,7 +53,8 @@ function checkDrawing(d: Drawing) {
   if (sizes.some((n) => !Number.isFinite(n) || n <= 0 || n > 20_000)) throw badRequest("pageSize");
   const fit = d.fit ?? null;
   if (fit && (fit.length !== 6 || fit.some((n) => typeof n !== "number" || !Number.isFinite(n) || Math.abs(n) > 100))) throw badRequest("fit");
-  return { format, outlets: d.outlets === null ? null : readOutletsInput.parse(d.outlets), fit } as const;
+  const rooms = format === "svg" && d.rooms ? planRooms.parse(d.rooms) : null;
+  return { format, outlets: d.outlets === null ? null : readOutletsInput.parse(d.outlets), fit, rooms } as const;
 }
 
 const clamp01 = (n: number) => Math.min(1, Math.max(0, n));
@@ -124,6 +127,7 @@ export async function createPlan(name: string, drawing: Drawing, actor: Actor) {
             pageHeight: drawing.page.height,
             markWidth: drawing.mark.width,
             markHeight: drawing.mark.height,
+            rooms: checked.rooms,
             updatedByName: actor.name,
           })
           .returning({ id: floorPlans.id }),
@@ -144,7 +148,7 @@ export async function createPlan(name: string, drawing: Drawing, actor: Actor) {
  * (moved onto the new drawing when a fit is given, with the rack).
  */
 export async function replaceDrawing(id: number, drawing: Drawing, actor: Actor) {
-  const { format, outlets, fit } = checkDrawing(drawing);
+  const { format, outlets, fit, rooms } = checkDrawing(drawing);
   const [plan] = await db.select().from(floorPlans).where(eq(floorPlans.id, id));
   if (!plan) throw notFound();
   const storageKey = await storeFile(drawing.file.bytes);
@@ -157,6 +161,7 @@ export async function replaceDrawing(id: number, drawing: Drawing, actor: Actor)
           fileName: fileNameFor(drawing.file.name, format),
           // The new drawing's layers are its own; the rack goes where the fit puts it.
           layers: {},
+          rooms,
           rack: plan.rack && fit && !outlets ? moved(fit, plan.rack) : plan.rack,
           size: drawing.file.bytes.length,
           storageKey,
@@ -200,8 +205,16 @@ export async function updatePlan(id: number, input: z.input<typeof floorPlanInpu
     const found = await db.select({ id: assets.id }).from(assets).where(inArray(assets.id, ids));
     if (found.length !== ids.length) throw badRequest("A linked record does not exist");
   }
-  const row = one(await db.update(floorPlans).set({ ...values, updatedByName: actor.name }).where(eq(floorPlans.id, id)).returning({ id: floorPlans.id, name: floorPlans.name }));
-  await audit(actor, "update", "floor_plan", id, `Updated the floor plan "${row.name}"`);
+  // The room names alone are read from the drawing, not a change anyone made: kept quietly.
+  const onlyRooms = Object.keys(values).every((k) => k === "rooms");
+  const row = one(
+    await db
+      .update(floorPlans)
+      .set(onlyRooms ? values : { ...values, updatedByName: actor.name })
+      .where(eq(floorPlans.id, id))
+      .returning({ id: floorPlans.id, name: floorPlans.name }),
+  );
+  if (!onlyRooms) await audit(actor, "update", "floor_plan", id, `Updated the floor plan "${row.name}"`);
   return { id: row.id };
 }
 
@@ -210,6 +223,29 @@ export async function deletePlan(id: number, actor: Actor) {
   await removeStoredFile(plan.storageKey);
   await audit(actor, "delete", "floor_plan", id, `Deleted the floor plan "${plan.name}"`);
   return { id };
+}
+
+/**
+ * Every room an asset can be put in: those the floor plans' drawings name (with the plan, so the
+ * asset shows on it), and those written on outlets and assets.
+ */
+export async function listRooms() {
+  const [plans, outlets, placed] = await Promise.all([
+    db.select({ id: floorPlans.id, name: floorPlans.name, rooms: floorPlans.rooms }).from(floorPlans).orderBy(asc(floorPlans.name)),
+    db.selectDistinct({ room: networkOutlets.room, planId: networkOutlets.planId }).from(networkOutlets),
+    db.selectDistinct({ room: assets.room, planId: assets.planId }).from(assets),
+  ]);
+  const found = new Map<string, { room: string; planId: number | null; planName: string | null }>();
+  const add = (room: string, planId: number | null) => {
+    const text = room.trim().replace(/\s+/g, " ");
+    if (!text) return;
+    const k = `${text.toLowerCase()}|${planId ?? ""}`;
+    if (!found.has(k)) found.set(k, { room: text, planId, planName: plans.find((p) => p.id === planId)?.name ?? null });
+  };
+  for (const p of plans) for (const r of p.rooms ?? []) add(r.text, p.id);
+  for (const o of outlets) add(o.room, o.planId);
+  for (const a of placed) add(a.room, a.planId);
+  return [...found.values()].toSorted((a, b) => (a.planName ?? "~").localeCompare(b.planName ?? "~") || a.room.localeCompare(b.room));
 }
 
 /** The drawing itself, a PDF. */

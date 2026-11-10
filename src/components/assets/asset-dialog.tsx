@@ -28,6 +28,7 @@ import {
 import { assetInput } from "@/lib/schemas";
 import { assetSpecs, PROFILES, profileOf } from "@/lib/asset-specs";
 import { ListField } from "./list-field";
+import { RoomField } from "./room-field";
 import { HardwareFields } from "./hardware-fields";
 
 export type AssetInput = z.output<typeof assetInput>;
@@ -152,6 +153,7 @@ export function AssetDialog({
           label={t("assets.location")}
           options={lookups.options("location")}
         />
+        <RoomField roomName="room" planName="planId" label={t("assets.room")} />
         <ComboboxField
           name="assignedTo"
           label={t("assets.assignedTo")}

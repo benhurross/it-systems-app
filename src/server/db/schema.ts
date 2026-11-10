@@ -224,6 +224,10 @@ export const assets = pgTable(
     serial: text(),
     status: text().$type<AssetStatus>().notNull().default("in_stock"),
     location: text().notNull(),
+    /** The room or area it is in ("Server room"), as the floor plans name them; "" when not said. */
+    room: text().notNull().default(""),
+    /** The floor plan that room is on, when it was picked from one: where the asset shows on the map. */
+    planId: integer().references(() => floorPlans.id, { onDelete: "set null" }),
     assignedTo: integer().references(() => employees.id, { onDelete: "set null" }),
     purchaseId: integer().references(() => purchases.id, { onDelete: "set null" }),
     purchaseDate: day(),
@@ -264,6 +268,8 @@ export const assetMovements = pgTable("asset_movements", {
     .references(() => assets.id, { onDelete: "cascade" }),
   fromLocation: text(),
   toLocation: text().notNull(),
+  fromRoom: text().notNull().default(""),
+  toRoom: text().notNull().default(""),
   fromEmployeeId: integer().references(() => employees.id, { onDelete: "set null" }),
   toEmployeeId: integer().references(() => employees.id, { onDelete: "set null" }),
   reason: text().notNull(),
@@ -686,6 +692,8 @@ export const itForms = pgTable(
  * A floor's plan: the drawing (a PDF under UPLOADS_DIR, at `storageKey`) and its network outlets.
  * `switches` says which asset each switch number on the plan is (S4 is the core switch, say).
  */
+export type PlanRoom = { text: string; x: number; y: number };
+
 export const floorPlans = pgTable("floor_plans", {
   id: id(),
   name: text().notNull(),
@@ -704,6 +712,8 @@ export const floorPlans = pgTable("floor_plans", {
   rack: jsonb().$type<{ x: number; y: number } | null>(),
   /** How each layer of an SVG is shown, where chosen: raised as walls, as glass, or flat. */
   layers: jsonb().$type<Record<string, LayerRole>>().notNull().default({}),
+  /** The room names an SVG drawing has, where they stand (fractions of the plan); null until read. */
+  rooms: jsonb().$type<PlanRoom[] | null>(),
   updatedByName: text().notNull(),
   createdAt: createdAt(),
   updatedAt: updatedAt(),

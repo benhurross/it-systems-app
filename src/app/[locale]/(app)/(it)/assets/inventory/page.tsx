@@ -109,6 +109,7 @@ export default function InventoryPage() {
             { header: "Serial", value: (a) => a.serial },
             { header: "Status", value: (a) => a.status },
             { header: "Location", value: (a) => lookups.label("location", a.location) },
+            { header: "Room / area", value: (a) => a.room },
             { header: "Assigned to", value: (a) => a.assignedName },
             { header: "Purchased", value: (a) => a.purchaseDate },
             { header: "Cost (SAR)", value: (a) => a.purchaseCost },

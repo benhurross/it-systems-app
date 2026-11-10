@@ -73,6 +73,8 @@ export async function getAsset(id: number) {
  */
 async function fitted(input: z.infer<typeof assetInput>) {
   const specs = pruneSpecs(input.specs, input.type, input.category);
+  // No room, no place on a plan.
+  if (!input.room) input = { ...input, planId: null };
   if (!specs.os) return { ...input, specs };
   const [os] = await db.select({ label: lookups.labelEn }).from(lookups).where(and(eq(lookups.list, "operating_system"), eq(lookups.code, specs.os)));
   return { ...input, specs, os: os?.label ?? specs.os };
@@ -109,8 +111,9 @@ export async function deleteAsset(id: number, actor: Actor) {
 }
 
 /**
- * Moves or reassigns an asset and writes the movement register in one transaction.
- * Handing it to someone puts it in use; taking it back from someone returns it to stock.
+ * Moves or reassigns an asset and writes the movement register in one transaction. Its status is
+ * what the move says; unsaid, handing it to someone puts it in use, and anything else leaves it as
+ * it was: a meeting room's TV moved to another room is still in use, held by no one.
  */
 export async function moveAsset(id: number, input: z.infer<typeof assetMove>, actor: Actor) {
   const row = await db.transaction(async (tx) => {
@@ -119,21 +122,23 @@ export async function moveAsset(id: number, input: z.infer<typeof assetMove>, ac
       assetId: id,
       fromLocation: current.location,
       toLocation: input.toLocation,
+      fromRoom: current.room,
+      toRoom: input.toRoom,
       fromEmployeeId: current.assignedTo,
       toEmployeeId: input.toEmployeeId,
       reason: input.reason,
       movedBy: actor.name,
     });
-    const status = input.toEmployeeId ? "in_use" : current.status === "in_use" ? "in_stock" : current.status;
+    const status = input.status ?? (input.toEmployeeId ? "in_use" : current.status);
     return one(
       await tx
         .update(assets)
-        .set({ location: input.toLocation, assignedTo: input.toEmployeeId, status })
+        .set({ location: input.toLocation, room: input.toRoom, planId: input.toRoom ? input.toPlanId : null, assignedTo: input.toEmployeeId, status })
         .where(eq(assets.id, id))
         .returning(),
     );
   });
-  await audit(actor, "move", "asset", id, `Moved ${ref("asset", id)} to ${input.toLocation}: ${input.reason}`);
+  await audit(actor, "move", "asset", id, `Moved ${ref("asset", id)} to ${input.toLocation}${input.toRoom ? `, ${input.toRoom}` : ""}: ${input.reason}`);
   return row;
 }
 

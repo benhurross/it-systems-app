@@ -4,6 +4,7 @@ import { TEMPLATE_HEADERS } from "@/lib/asset-import";
 import { ASSET_STATUSES, CRITICALITIES, SUPPORT_STATUSES } from "@/lib/domain";
 import { db } from "../db";
 import { lookups } from "../db/schema";
+import { listRooms } from "./floor-plans";
 
 /**
  * The workbook to fill in the inventory with: an empty Assets sheet with every column the import
@@ -20,6 +21,7 @@ export async function assetTemplate() {
     .where(and(inArray(lookups.list, lists as never[]), eq(lookups.active, true)))
     .orderBy(asc(lookups.sortOrder), asc(lookups.id));
   const of = (list: string) => rows.filter((r) => r.list === list).map((r) => r.label);
+  const rooms = [...new Set((await listRooms()).filter((r) => r.planId !== null).map((r) => r.room))];
 
   const head = (value: string): Cell => ({ value, fontWeight: "bold", backgroundColor: "#DCE6F1", wrap: true, alignVertical: "top" });
   const assets: Row[] = [TEMPLATE_HEADERS.map(head)];
@@ -28,6 +30,8 @@ export async function assetTemplate() {
     ["Category", of("asset_category")],
     ["Type", of("asset_type")],
     ["Location", of("location")],
+    // The rooms the floor plans name: one of these puts the asset on its plan.
+    ["Room / area", rooms],
     ["Manufacturer", of("manufacturer")],
     ["Status", ASSET_STATUSES.map(words)],
     ["Support", SUPPORT_STATUSES.map(words)],
@@ -41,7 +45,7 @@ export async function assetTemplate() {
 
   const sample: Partial<Record<(typeof TEMPLATE_HEADERS)[number], string>> = {
     "Asset Name / Workstation Name": "FIN-PC-07", Category: "End-User Devices", Type: "Laptop", Manufacturer: "Dell", Model: "Latitude 5550",
-    Serial: "5CD1234XYZ", Status: "In use", Location: "Jeddah Head Office", "Assigned to": "employee@applus.com.sa", Purchased: "2025-01-15",
+    Serial: "5CD1234XYZ", Status: "In use", Location: "Jeddah Head Office", "Room / area": "Finance", "Assigned to": "employee@applus.com.sa", Purchased: "2025-01-15",
     "Cost (SAR)": "4500", "Warranty ends": "2028-01-15", Support: "Supported", Criticality: "Medium", "IP address": "192.168.0.57",
     Processor: "Intel Core i7", "RAM (GB)": "16", "Storage size": "512 GB", "Storage type": "SSD (NVMe)",
     "Operating system": "Windows 11 Pro", "Screen (inches)": "15.6",
@@ -55,7 +59,8 @@ export async function assetTemplate() {
     ["• Category, Type, Location, Manufacturer, Status, Support and Criticality take the values on the Lists sheet."],
     ["• Processor, Storage type and Operating system: preferably as on the Lists sheet (Intel Core i5, SSD (NVMe), Windows 11 Pro). A value not there yet is added to its list when the sheet is loaded; the import page shows which first."],
     ["• RAM in GB (16). Storage size as 512 GB or 1 TB. Storage 2 is for a second drive. Port count is for switches and routers."],
-    ["• Assigned to: the employee's ID number, email or full name, as in People → Directory."],
+    ["• Room / area: where it is, preferably a room on the Lists sheet (from the floor plans), which also puts it on that plan's map. Any other room can be written."],
+    ["• Assigned to: the employee's ID number, email or full name, as in People → Directory. A shared device (meeting room TV, server) has no one: leave it empty and write In use as its Status."],
     ["• Dates as 2026-03-31 or 31/03/2026. Leave a cell empty when it does not apply (a monitor has no processor)."],
     ["• Load it in Assets → Import: the app shows what each row will do before anything is saved."],
     [""],
