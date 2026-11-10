@@ -259,7 +259,7 @@ export function ComboboxField({ options, placeholder, ...props }: FieldProps & {
           render={({ field }) => {
             const selected = options.find((o) => o.value === field.value);
             return (
-              <Popover open={open} onOpenChange={setOpen}>
+              <Popover modal open={open} onOpenChange={setOpen}>
                 <PopoverTrigger asChild>
                   <Button
                     id={id}

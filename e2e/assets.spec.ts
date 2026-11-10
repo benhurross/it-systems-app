@@ -513,3 +513,18 @@ test("a device shared by a room is in use with no one, and stays so when moved t
   await expect(dialog.getByRole("combobox", { name: /^Room \/ area/ })).toHaveText(training);
   console.assertClean();
 });
+
+test("the asset form's searchable dropdowns scroll with the mouse wheel", async ({ page }) => {
+  await page.goto("/en/assets/inventory");
+  await page.getByRole("button", { name: "Add asset" }).click();
+  const dialog = page.getByRole("dialog", { name: "Add asset" });
+  for (const name of [/^Manufacturer/, /^Assigned to/]) {
+    await dialog.getByRole("combobox", { name }).click();
+    const list = page.locator("[data-slot='command-list']").last();
+    const box = (await list.boundingBox())!;
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.wheel(0, 300);
+    await expect.poll(() => list.evaluate((e) => e.scrollTop)).toBeGreaterThan(0);
+    await page.keyboard.press("Escape");
+  }
+});

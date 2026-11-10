@@ -56,6 +56,8 @@ export function ListField({ name, label, list, empty = "" }: { name: string; lab
               )}
             </div>
             <Popover
+              // Modal: a form's dialog lets nothing outside it scroll, the list included, unless it is.
+              modal
               open={open}
               onOpenChange={(o) => {
                 setOpen(o);

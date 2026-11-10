@@ -43,6 +43,8 @@ export function RoomField({ roomName, planName, label }: { roomName: string; pla
         <span className="font-normal text-muted-foreground">{tc("optional")}</span>
       </FieldLabel>
       <Popover
+        // Modal: a form's dialog lets nothing outside it scroll, the list included, unless it is.
+        modal
         open={open}
         onOpenChange={(o) => {
           setOpen(o);
