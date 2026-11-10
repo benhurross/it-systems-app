@@ -18,6 +18,8 @@ import {
   Users,
   Wallet,
   Wrench,
+  ListTodo,
+  UsersRound,
   type LucideIcon,
 } from "lucide-react";
 import { can, type Area } from "./permissions";
@@ -41,11 +43,15 @@ export type NavItem = {
     | "risk"
     | "people"
     | "settings"
+    | "team"
+    | "myWork"
     | "myRequests"
     | "newRequest"
     | "tools";
   href: string;
   icon: LucideIcon;
+  /** Narrower than its group's: only roles reaching this area see it. */
+  area?: Area;
 };
 
 export type NavGroup = {
@@ -62,6 +68,7 @@ export const NAV: NavGroup[] = [
     area: "it",
     items: [
       { key: "dashboard", href: "/", icon: LayoutDashboard },
+      { key: "myWork", href: "/my-work", icon: ListTodo },
       { key: "kpis", href: "/kpis", icon: Target },
     ],
   },
@@ -90,6 +97,7 @@ export const NAV: NavGroup[] = [
     key: "management",
     area: "it",
     items: [
+      { key: "team", href: "/team", icon: UsersRound, area: "manager" },
       { key: "projects", href: "/projects", icon: FolderKanban },
       { key: "finance", href: "/finance", icon: Wallet },
       { key: "risk", href: "/risk", icon: ShieldAlert },
@@ -121,7 +129,10 @@ export const NAV: NavGroup[] = [
 ];
 
 export function navFor(role: string | null | undefined): NavGroup[] {
-  return NAV.filter((g) => can(role, g.area) && !(g.hiddenWith && can(role, g.hiddenWith)));
+  return NAV.filter((g) => can(role, g.area) && !(g.hiddenWith && can(role, g.hiddenWith))).map((g) => ({
+    ...g,
+    items: g.items.filter((i) => !i.area || can(role, i.area)),
+  }));
 }
 
 /** Where a role lands after signing in, and where the logo points. */

@@ -15,6 +15,7 @@ export const REQUEST = [
 ];
 export const IT = [
   "/",
+  "/my-work",
   "/kpis",
   "/tickets",
   "/tickets/new",
@@ -71,7 +72,7 @@ export const SETTINGS = [
   "/settings/organisation",
 ];
 /** The Admins' alone: not an IT Admin's. */
-export const MANAGER = ["/settings/audit"];
+export const MANAGER = ["/settings/audit", "/team"];
 
 export const ALLOWED: Record<Role, string[]> = {
   admin: [...IT, ...REQUEST, ...SETTINGS, ...MANAGER],

@@ -1,5 +1,6 @@
 import { deliverPending, pruneOutbox } from "./mail/outbox";
 import { autoCloseResolved } from "./services/respond";
+import { remindDueTasks } from "./services/team";
 import { failureLog } from "./loop-errors";
 
 const TICK_MS = 60_000;
@@ -7,8 +8,8 @@ const DAY_MS = 86_400_000;
 const server = globalThis as typeof globalThis & { jobsStarted?: boolean };
 
 /**
- * Housekeeping, once per server process: every minute, closing unanswered resolved tickets and
- * sending the email that is waiting; once a day, clearing old email from the outbox.
+ * Housekeeping, once per server process: every minute, closing unanswered resolved tickets,
+ * reminding of team tasks due (once a day each) and sending the email that is waiting; once a day, clearing old email from the outbox.
  */
 export function startJobs() {
   if (server.jobsStarted) return;
@@ -18,6 +19,7 @@ export function startJobs() {
   const tick = async () => {
     try {
       await autoCloseResolved();
+      await remindDueTasks();
       await deliverPending();
       if (Date.now() - lastPrune >= DAY_MS) {
         lastPrune = Date.now();

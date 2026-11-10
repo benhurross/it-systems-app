@@ -3,6 +3,7 @@ import type { z } from "zod";
 import { DEFAULT_MONITOR_SETTINGS } from "@/lib/monitor";
 import { labelPrinterSettings, monitorSettings, organisationSettings, slaSettings, ticketSettings, toolSettings } from "@/lib/schemas";
 import { DEFAULT_SLA } from "@/lib/sla";
+import { DEFAULT_TEAM_SETTINGS, teamSettings } from "@/lib/team";
 import { audit, type Actor } from "./audit";
 import { db } from "./db";
 import { settings } from "./db/schema";
@@ -13,6 +14,8 @@ const SETTINGS = {
   organisation: { schema: organisationSettings, defaults: { name: "AP Plus", fiscalYearStartMonth: 1 } },
   tickets: { schema: ticketSettings, defaults: { autoCloseDays: 3 } },
   tools: { schema: toolSettings, defaults: {} },
+  // Team Management's emails: the Admins' own, through /api/team/settings, not the settings API.
+  team: { schema: teamSettings, defaults: DEFAULT_TEAM_SETTINGS },
   labelPrinter: { schema: labelPrinterSettings, defaults: { host: "", port: 9100, widthMm: 50, heightMm: 25, dpi: 203 as const, owner: "AP Plus IT" } },
 };
 

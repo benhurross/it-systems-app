@@ -39,6 +39,14 @@ describe("navigation", () => {
     expect(keys("admin")).not.toContain("myRequests");
   });
 
+  it("shows Team Management to Admins only, and My work to all of IT", () => {
+    expect(keys("admin")).toContain("team");
+    expect(keys("it_admin")).not.toContain("team");
+    expect(keys("it_admin")).toContain("settings");
+    for (const role of ["admin", "it_admin", "it_staff"]) expect(keys(role)).toContain("myWork");
+    expect(keys("employee")).not.toContain("myWork");
+  });
+
   it("hides Settings from IT staff", () => {
     expect(keys("it_staff")).toContain("network");
     expect(keys("it_staff")).not.toContain("settings");

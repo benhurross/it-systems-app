@@ -28,6 +28,7 @@ import type * as tools from "@/server/services/tools";
 import type * as users from "@/server/services/users";
 import type * as workstationChecks from "@/server/services/workstation-checks";
 import type * as itForms from "@/server/services/it-forms";
+import type * as team from "@/server/services/team";
 
 export type Json<T> = T extends Date
   ? string
@@ -102,3 +103,8 @@ export type MyWorkstationCheck = Item<typeof workstationChecks.myWorkstationChec
 export type ChecklistItem = Item<typeof workstationChecks.workstationChecklist>;
 export type ItFormRow = Item<typeof itForms.listItForms>;
 export type ItFormRecord = Result<typeof itForms.getItForm>;
+
+export type TeamTask = Item<typeof team.listTasks>;
+export type TeamTaskDetail = Result<typeof team.getTask>;
+export type TeamTaskEvent = TeamTaskDetail["events"][number];
+export type TeamAssignee = Item<typeof team.listAssignees>;

@@ -71,7 +71,9 @@
     "myRequests": "طلباتي",
     "newRequest": "طلب جديد",
     "home": "لوحتي",
-    "tools": "الأدوات"
+    "tools": "الأدوات",
+    "team": "إدارة الفريق",
+    "myWork": "عملي"
   },
   "auth": {
     "title": "تسجيل الدخول",
@@ -494,7 +496,8 @@
     "anydeskId": "استخدم المعرّف المكوّن من 9 أو 10 أرقام الذي يظهره AnyDesk، أو اسمه المستعار (name@namespace).",
     "kpiCounts": "أدخل العددين، على ألا يزيد الأول على الثاني.",
     "kpiCode": "لمؤشر آخر هذا الرمز.",
-    "mobile": "أدخل رقم جوال: أرقام فقط، ويمكن أن يبدأ بـ +، من 7 إلى 15 رقمًا."
+    "mobile": "أدخل رقم جوال: أرقام فقط، ويمكن أن يبدأ بـ +، من 7 إلى 15 رقمًا.",
+    "requesterName": "اذكر المسمى الوظيفي للمسؤول أو اسم الشخص."
   },
   "settings": {
     "title": "الإعدادات",
@@ -1883,6 +1886,41 @@
       "subject": "أُسند {ref} إليك: {subject}",
       "heading": "أُسند {ref} إليك",
       "body": "أسند {name} هذه التذكرة إليك."
+    },
+    "team": {
+      "open": "فتح المهمة",
+      "facts": {
+        "title": "المهمة",
+        "assignee": "لـ",
+        "requester": "بطلب من",
+        "priority": "الأولوية",
+        "due": "الاستحقاق"
+      },
+      "assigned": {
+        "subject": "مهمة لك: {title}",
+        "heading": "مهمة لك",
+        "body": "أسند إليك {name} هذه المهمة."
+      },
+      "done": {
+        "subject": "منجزة، للمراجعة: {title}",
+        "heading": "مهمة منجزة بانتظار مراجعتك",
+        "body": "حدد {name} هذه المهمة كمنجزة. أكّدها، أو أعدها مع تعليق."
+      },
+      "due": {
+        "subject": "مهمة تستحق قريبًا: {title}",
+        "heading": "مهمة تستحق قريبًا",
+        "body": "حان موعد استحقاق هذه المهمة ولم تُنجز بعد."
+      },
+      "overdue": {
+        "subject": "مهمة متأخرة: {title}",
+        "heading": "مهمة متأخرة",
+        "body": "تجاوزت هذه المهمة موعد استحقاقها ولم تُنجز بعد."
+      },
+      "returned": {
+        "subject": "أُعيدت: {title}",
+        "heading": "أُعيدت إليك مهمة",
+        "body": "أعاد {name} هذه المهمة:"
+      }
     }
   },
   "respond": {
@@ -2624,5 +2662,138 @@
       "hidden": "({count} مخفية بفلتر النوع)",
       "showAll": "إظهار الكل"
     }
+  },
+  "team": {
+    "title": "إدارة الفريق",
+    "description": "مهام فريقك وخططه وعبء عمله، يراها المسؤولون فقط.",
+    "tabs": {
+      "board": "المهام",
+      "planning": "التخطيط",
+      "dashboard": "لوحة المتابعة",
+      "settings": "الرسائل"
+    },
+    "statuses": {
+      "todo": "للتنفيذ",
+      "in_progress": "قيد التنفيذ",
+      "done": "منجزة، للمراجعة",
+      "confirmed": "مؤكدة"
+    },
+    "memberStatuses": {
+      "todo": "للتنفيذ",
+      "in_progress": "قيد التنفيذ",
+      "done": "منجزة",
+      "confirmed": "مؤكدة"
+    },
+    "priorities": {
+      "low": "منخفضة",
+      "medium": "متوسطة",
+      "high": "عالية",
+      "urgent": "عاجلة"
+    },
+    "requesters": {
+      "it_manager": "مدير تقنية المعلومات",
+      "ceo": "الرئيس التنفيذي",
+      "gm": "المدير العام",
+      "dgm": "نائب المدير العام",
+      "executive": "مسؤول تنفيذي",
+      "other": "آخر"
+    },
+    "newTask": "مهمة جديدة",
+    "editTask": "تعديل المهمة",
+    "task": "المهمة",
+    "taskTitle": "العنوان",
+    "taskDescription": "الوصف",
+    "assignee": "لـ",
+    "requester": "بطلب من",
+    "requesterName": "المسمى أو الاسم",
+    "requesterNameHint": "المسمى الوظيفي للمسؤول (المدير المالي) أو اسم الشخص.",
+    "priority": "الأولوية",
+    "dueDate": "الاستحقاق",
+    "confidential": "سرية",
+    "confidentialHint": "يراها المسؤولون والشخص المكلف بها فقط.",
+    "project": "مشروع تقنية المعلومات",
+    "progress": "التقدم",
+    "saved": "حُفظت المهمة.",
+    "deleted": "حُذفت المهمة.",
+    "deleteTask": "حذف المهمة",
+    "deleteConfirm": "حذف «{title}» وسجلها؟ لا يمكن التراجع عن ذلك.",
+    "board": "لوحة",
+    "list": "قائمة",
+    "view": "العرض",
+    "filters": {
+      "member": "العضو",
+      "allMembers": "الجميع",
+      "requester": "بطلب من",
+      "anyone": "أي أحد",
+      "priority": "الأولوية",
+      "anyPriority": "أي أولوية",
+      "confidentialOnly": "السرية فقط",
+      "overdueOnly": "المتأخرة فقط",
+      "search": "ابحث في المهام…",
+      "searchLabel": "بحث"
+    },
+    "empty": "لا مهام هنا.",
+    "noTasks": "لا توجد مهام بعد. أعطِ فريقك أول مهمة من «مهمة جديدة».",
+    "overdue": "متأخرة",
+    "dueOn": "تستحق {date}",
+    "noDue": "بلا تاريخ استحقاق",
+    "by": "من {name}",
+    "actions": {
+      "start": "بدء",
+      "done": "تحديد كمنجزة",
+      "confirm": "تأكيد",
+      "return": "إعادة",
+      "reopen": "إعادة فتح",
+      "comment": "إضافة تحديث",
+      "note": "ملاحظة خاصة",
+      "saveProgress": "حفظ التقدم",
+      "move": "نقل إلى {status}",
+      "moveTask": "نقل {title}",
+      "cancel": "إلغاء"
+    },
+    "returnHint": "اذكر ما بقي إنجازه: يراه العضو.",
+    "noteHint": "لا يرى الملاحظات الخاصة إلا المسؤولون.",
+    "doneHint": "ما ينبغي أن يعرفه المدير (اختياري).",
+    "commentPlaceholder": "ما الذي أُنجز، أو ما الذي يعيق…",
+    "timeline": "السجل",
+    "events": {
+      "created": "أنشأ {name} المهمة",
+      "edited": "عدّل {name} المهمة",
+      "reassigned": "أسندها {name} إلى شخص آخر",
+      "started": "بدأها {name}",
+      "progress": "جعل {name} التقدم {progress}%",
+      "comment": "أضاف {name} تحديثًا",
+      "note": "كتب {name} ملاحظة خاصة",
+      "done": "حددها {name} كمنجزة",
+      "confirmed": "أكد {name} إنجازها",
+      "returned": "أعادها {name}",
+      "reopened": "أعاد {name} فتحها",
+      "moved": "نقلها {name} إلى {status}"
+    },
+    "private": "خاصة",
+    "toReview": "للمراجعة",
+    "confirmedBy": "أكدها {name}",
+    "settings": {
+      "title": "رسائل إدارة الفريق",
+      "description": "تُرسل عبر إعدادات البريد في التطبيق، بالعربية والإنجليزية.",
+      "notifyAssigned": "عند إسناد مهمة لشخص، إليه",
+      "notifyDone": "عند تحديد مهمة كمنجزة، إلى المسؤول الذي أسندها",
+      "notifyDue": "عند استحقاق مهمة غدًا، وكل يوم تتأخر فيه، إلى المسؤول الذي أسندها والشخص المكلف بها",
+      "notifyReturned": "عند إعادة مهمة، إلى الشخص المكلف بها",
+      "saved": "حُفظت إعدادات الرسائل."
+    },
+    "myWork": {
+      "title": "عملي",
+      "description": "المهام المسندة إليك، وخطتك.",
+      "tasks": "مهامي",
+      "empty": "لا مهام لك الآن.",
+      "returned": "أُعيدت: {comment}"
+    },
+    "createdBy": "أنشأها",
+    "lastUpdate": "آخر تحديث",
+    "status": "الحالة",
+    "toReviewCount": "{count} للمراجعة",
+    "progressDone": "أُنجز {value}%",
+    "from": "من {name}"
   }
 }

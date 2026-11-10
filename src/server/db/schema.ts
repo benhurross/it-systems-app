@@ -52,6 +52,7 @@ import type { ItFormKind } from "@/lib/it-forms";
 import type { AssetSpecs } from "@/lib/asset-specs";
 import type { KpiFilter } from "@/lib/kpi-register";
 import type { LayerRole } from "@/lib/svg-plan";
+import type { Requester, TaskEventKind, TaskPriority, TaskStatus as TeamTaskStatus } from "@/lib/team";
 import type { ToolAccessState, ToolKey } from "@/lib/tools";
 
 const id = () => integer().primaryKey().generatedAlwaysAsIdentity();
@@ -998,4 +999,59 @@ export const toolUses = pgTable(
     at: timestamp({ withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index().on(t.tool, t.at)],
+);
+
+// ---------------------------------------------------------------- team management
+
+/**
+ * A task the IT manager gives a member of the team, from himself or on an executive's behalf. Seen
+ * by the Admins and the member it is for; a confidential one by them alone, as any other.
+ */
+export const teamTasks = pgTable(
+  "team_tasks",
+  {
+    id: id(),
+    title: text().notNull(),
+    description: text(),
+    assigneeId: text().references(() => users.id, { onDelete: "set null" }),
+    createdById: text().references(() => users.id, { onDelete: "set null" }),
+    createdByName: text().notNull(),
+    requester: text().$type<Requester>().notNull().default("it_manager"),
+    requesterName: text(),
+    priority: text().$type<TaskPriority>().notNull().default("medium"),
+    dueDate: day(),
+    status: text().$type<TeamTaskStatus>().notNull().default("todo"),
+    progress: smallint().notNull().default(0),
+    confidential: boolean().notNull().default(false),
+    projectId: integer().references(() => projects.id, { onDelete: "set null" }),
+    startedAt: timestamp({ withTimezone: true }),
+    doneAt: timestamp({ withTimezone: true }),
+    confirmedAt: timestamp({ withTimezone: true }),
+    confirmedByName: text(),
+    /** The Riyadh day its due or overdue reminder last went, so it goes once a day. */
+    remindedOn: day(),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [index().on(t.assigneeId), index().on(t.status)],
+);
+
+/** A task's timeline: what was done to it, by whom; a note is the manager's alone. */
+export const teamTaskEvents = pgTable(
+  "team_task_events",
+  {
+    id: id(),
+    taskId: integer()
+      .notNull()
+      .references(() => teamTasks.id, { onDelete: "cascade" }),
+    kind: text().$type<TaskEventKind>().notNull(),
+    userId: text().references(() => users.id, { onDelete: "set null" }),
+    userName: text().notNull(),
+    text: text(),
+    progress: smallint(),
+    /** For a move or a change: from and to, as words the page translates. */
+    detail: text(),
+    at: timestamp({ withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index().on(t.taskId)],
 );

@@ -173,3 +173,26 @@ export function assignedEmail(p: { ticket: TicketFacts; by: string; open: (local
     buttons: [{ label: t("email.ticket.open"), href: p.open(locale), primary: true }],
   }));
 }
+
+export type TeamTaskFacts = { title: string; requester: string; requesterName: string | null; priority: string; dueDate: string | null; assignee: string | null };
+export type TeamEmailKind = "assigned" | "done" | "due" | "overdue" | "returned";
+
+/**
+ * Team Management's emails: a task given or sent back (to the member), done and waiting for review,
+ * due tomorrow or overdue (to the manager, and the member). `who` is the person named in the body.
+ */
+export function teamTaskEmail(kind: TeamEmailKind, p: { task: TeamTaskFacts; who: string; comment?: string | null; open: (locale: Locale) => string }) {
+  return bilingual((t, locale) => ({
+    subject: t(`email.team.${kind}.subject`, { title: p.task.title }),
+    heading: t(`email.team.${kind}.heading`, { title: p.task.title }),
+    paragraphs: [t(`email.team.${kind}.body`, { name: p.who }), ...(p.comment ? [`“${p.comment}”`] : [])],
+    details: [
+      [t("email.team.facts.title"), p.task.title],
+      [t("email.team.facts.assignee"), p.task.assignee ?? "—"],
+      [t("email.team.facts.requester"), [t(`team.requesters.${p.task.requester}`), p.task.requesterName].filter(Boolean).join(": ")],
+      [t("email.team.facts.priority"), t(`team.priorities.${p.task.priority}`)],
+      [t("email.team.facts.due"), p.task.dueDate ?? "—"],
+    ],
+    buttons: [{ label: t("email.team.open"), href: p.open(locale), primary: true }],
+  }));
+}

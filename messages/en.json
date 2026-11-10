@@ -71,7 +71,9 @@
     "myRequests": "My requests",
     "newRequest": "New request",
     "home": "My dashboard",
-    "tools": "Tools"
+    "tools": "Tools",
+    "team": "Team Management",
+    "myWork": "My work"
   },
   "auth": {
     "title": "Sign in",
@@ -494,7 +496,8 @@
     "anydeskId": "Use the 9- or 10-digit ID AnyDesk shows, or its alias (name@namespace).",
     "kpiCounts": "Enter both counts, the first no more than the second.",
     "kpiCode": "Another KPI has this ID.",
-    "mobile": "Enter a mobile number: digits, optionally starting with +, 7 to 15 digits."
+    "mobile": "Enter a mobile number: digits, optionally starting with +, 7 to 15 digits.",
+    "requesterName": "Give the executive's title or the person's name."
   },
   "settings": {
     "title": "Settings",
@@ -1883,6 +1886,41 @@
       "subject": "{ref} is assigned to you: {subject}",
       "heading": "{ref} is assigned to you",
       "body": "{name} assigned this ticket to you."
+    },
+    "team": {
+      "open": "Open the task",
+      "facts": {
+        "title": "Task",
+        "assignee": "For",
+        "requester": "Requested by",
+        "priority": "Priority",
+        "due": "Due"
+      },
+      "assigned": {
+        "subject": "A task for you: {title}",
+        "heading": "A task for you",
+        "body": "{name} gave you this task."
+      },
+      "done": {
+        "subject": "Done, to review: {title}",
+        "heading": "A task is done, waiting for your review",
+        "body": "{name} marked this task done. Confirm it, or send it back with a comment."
+      },
+      "due": {
+        "subject": "Task due soon: {title}",
+        "heading": "A task is due soon",
+        "body": "This task is due and not finished yet."
+      },
+      "overdue": {
+        "subject": "Task overdue: {title}",
+        "heading": "A task is overdue",
+        "body": "This task is past its due date and not finished yet."
+      },
+      "returned": {
+        "subject": "Sent back: {title}",
+        "heading": "A task was sent back to you",
+        "body": "{name} sent this task back:"
+      }
     }
   },
   "respond": {
@@ -2624,5 +2662,138 @@
       "hidden": "{count, plural, one {(# hidden by the type filter)} other {(# hidden by the type filter)}}",
       "showAll": "Show all"
     }
+  },
+  "team": {
+    "title": "Team Management",
+    "description": "Your team's tasks, plans and workload, seen only by the Admins.",
+    "tabs": {
+      "board": "Tasks",
+      "planning": "Planning",
+      "dashboard": "Dashboard",
+      "settings": "Emails"
+    },
+    "statuses": {
+      "todo": "To do",
+      "in_progress": "In progress",
+      "done": "Done, to review",
+      "confirmed": "Confirmed"
+    },
+    "memberStatuses": {
+      "todo": "To do",
+      "in_progress": "In progress",
+      "done": "Done",
+      "confirmed": "Confirmed"
+    },
+    "priorities": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High",
+      "urgent": "Urgent"
+    },
+    "requesters": {
+      "it_manager": "IT Manager",
+      "ceo": "CEO",
+      "gm": "GM",
+      "dgm": "DGM",
+      "executive": "Executive",
+      "other": "Other"
+    },
+    "newTask": "New task",
+    "editTask": "Edit task",
+    "task": "Task",
+    "taskTitle": "Title",
+    "taskDescription": "Description",
+    "assignee": "For",
+    "requester": "Requested by",
+    "requesterName": "Title or name",
+    "requesterNameHint": "The executive's title (CFO) or the person's name.",
+    "priority": "Priority",
+    "dueDate": "Due",
+    "confidential": "Confidential",
+    "confidentialHint": "Seen only by the Admins and the person it is for.",
+    "project": "IT project",
+    "progress": "Progress",
+    "saved": "Task saved.",
+    "deleted": "Task deleted.",
+    "deleteTask": "Delete task",
+    "deleteConfirm": "Delete \"{title}\" and its timeline? This cannot be undone.",
+    "board": "Board",
+    "list": "List",
+    "view": "View",
+    "filters": {
+      "member": "Member",
+      "allMembers": "Everyone",
+      "requester": "Requested by",
+      "anyone": "Anyone",
+      "priority": "Priority",
+      "anyPriority": "Any priority",
+      "confidentialOnly": "Confidential only",
+      "overdueOnly": "Overdue only",
+      "search": "Search tasks…",
+      "searchLabel": "Search"
+    },
+    "empty": "No tasks here.",
+    "noTasks": "No tasks yet. Give your team its first one with New task.",
+    "overdue": "Overdue",
+    "dueOn": "Due {date}",
+    "noDue": "No due date",
+    "by": "By {name}",
+    "actions": {
+      "start": "Start",
+      "done": "Mark done",
+      "confirm": "Confirm",
+      "return": "Send back",
+      "reopen": "Reopen",
+      "comment": "Add an update",
+      "note": "Private note",
+      "saveProgress": "Save progress",
+      "move": "Move to {status}",
+      "moveTask": "Move {title}",
+      "cancel": "Cancel"
+    },
+    "returnHint": "Say what is still to be done: the member sees it.",
+    "noteHint": "Only the Admins see private notes.",
+    "doneHint": "Anything the manager should know (optional).",
+    "commentPlaceholder": "What was done, or what is in the way…",
+    "timeline": "Timeline",
+    "events": {
+      "created": "{name} created the task",
+      "edited": "{name} changed the task",
+      "reassigned": "{name} gave it to someone else",
+      "started": "{name} started",
+      "progress": "{name} set progress to {progress}%",
+      "comment": "{name} added an update",
+      "note": "{name} wrote a private note",
+      "done": "{name} marked it done",
+      "confirmed": "{name} confirmed it was done",
+      "returned": "{name} sent it back",
+      "reopened": "{name} reopened it",
+      "moved": "{name} moved it to {status}"
+    },
+    "private": "Private",
+    "toReview": "To review",
+    "confirmedBy": "Confirmed by {name}",
+    "settings": {
+      "title": "Emails from Team Management",
+      "description": "Sent through the app's email settings, in English and Arabic.",
+      "notifyAssigned": "A task is given to someone, to them",
+      "notifyDone": "A task is marked done, to the Admin who gave it",
+      "notifyDue": "A task is due tomorrow, and each day it is overdue, to the Admin who gave it and the person it is for",
+      "notifyReturned": "A task is sent back, to the person it is for",
+      "saved": "Email settings saved."
+    },
+    "myWork": {
+      "title": "My work",
+      "description": "The tasks given to you, and your plan.",
+      "tasks": "My tasks",
+      "empty": "No tasks for you right now.",
+      "returned": "Sent back: {comment}"
+    },
+    "createdBy": "Created",
+    "lastUpdate": "Last update",
+    "status": "Status",
+    "toReviewCount": "{count} to review",
+    "progressDone": "{value}% done",
+    "from": "From {name}"
   }
 }
