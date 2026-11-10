@@ -259,7 +259,7 @@ test("assets stand in their rooms on the 3D plan, and are placed, moved and take
   await page.getByPlaceholder("Search, or type a room…").fill("PROJECT MANAGER");
   await page.getByRole("group", { name }).getByRole("option", { name: "PROJECT MANAGER" }).click();
   await dialog.getByRole("button", { name: "Save" }).click();
-  await expect(page.getByText("PROJECT MANAGER", { exact: true })).toBeVisible();
+  await expect(page.getByRole("definition").filter({ hasText: "PROJECT MANAGER" })).toContainText("Show the floor plan");
   await page.getByRole("link", { name: "Show the floor plan" }).click();
 
   await expect(page).toHaveURL(new RegExp(`plan=${planId}&device=${tvId}`));
@@ -295,6 +295,27 @@ test("assets stand in their rooms on the 3D plan, and are placed, moved and take
   await map.click({ position: { x: 200, y: 200 } });
   await expect(page.getByText(/^Placed (in|on)/)).toBeVisible();
   await expect(list.getByRole("button", { name: tvName })).toBeVisible();
+
+  // A laptop in the same room; the type filter shows only one kind, and the list says what it hides.
+  const lt = await page.request.post("/api/assets", {
+    data: { name: `${tvName}-LT`, category: "end_user", type: "laptop", status: "in_use", location: "jeddah", supportStatus: "supported", criticality: "low", monitorMethod: "none", room: "SERVER", planId },
+  });
+  expect(lt.ok(), await lt.text()).toBe(true);
+  await page.reload();
+  await expect(list.getByRole("button", { name: `${tvName}-LT` })).toBeVisible();
+  await card.getByRole("button", { name: "Close" }).click();
+  await page.getByRole("button", { name: "Device types: All devices" }).click();
+  await page.getByRole("menuitem", { name: "Only Laptops" }).click();
+  await expect(page.getByRole("button", { name: "Device types: Laptops" })).toBeVisible();
+  await expect(list.getByRole("button", { name: `${tvName}-LT` })).toBeVisible();
+  await expect(list.getByRole("button", { name: tvName, exact: true })).toHaveCount(0);
+  await expect(list).toContainText("(1 hidden by the type filter)");
+  // Ticked back on, in the menu.
+  await page.getByRole("button", { name: "Device types: Laptops" }).click();
+  await page.getByRole("menuitemcheckbox", { name: /TVs and displays/ }).click();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("button", { name: "Device types: All devices" })).toBeVisible();
+  await expect(list.getByRole("button", { name: tvName, exact: true })).toBeVisible();
 
   // Its page links to it on the plan.
   await page.goto(`/en/assets/${tvId}`);

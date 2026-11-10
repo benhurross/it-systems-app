@@ -4,6 +4,7 @@ import {
   BatteryCharging,
   Box,
   Cctv,
+  ChevronDown,
   ExternalLink,
   HardDrive,
   Laptop,
@@ -27,6 +28,15 @@ import { EnumBadge } from "@/components/badges";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Command, CommandEmpty, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useApi } from "@/hooks/use-api";
 import { useLookups } from "@/hooks/use-lookups";
@@ -152,6 +162,8 @@ export function DeviceCard({ device, onClose, onMove, onRemove }: { device: Show
 /** The devices on the plan, by room, and those in a room the drawing does not name, to be placed. */
 export function DevicesCard({
   shown,
+  hidden,
+  onShowAll,
   unplaced,
   selected,
   onSelect,
@@ -159,6 +171,9 @@ export function DevicesCard({
   onAdd,
 }: {
   shown: ShownDevice[];
+  /** How many the device type filter leaves out. */
+  hidden: number;
+  onShowAll: () => void;
   unplaced: PlanDeviceRow[];
   selected: number | null;
   onSelect: (d: ShownDevice) => void;
@@ -176,7 +191,18 @@ export function DevicesCard({
         </Button>
       </CardHeader>
       <CardContent className="space-y-3 text-sm">
-        <p className="text-muted-foreground">{shown.length ? t("count", { count: shown.length }) : t("none")}</p>
+        <p className="text-muted-foreground">
+          {shown.length || hidden ? t("count", { count: shown.length }) : t("none")}
+          {hidden > 0 && (
+            <>
+              {" "}
+              {t("hidden", { count: hidden })}{" "}
+              <button type="button" className="text-primary hover:underline" onClick={onShowAll}>
+                {t("showAll")}
+              </button>
+            </>
+          )}
+        </p>
         {rooms.map((room) => (
           <div key={room} className="space-y-0.5">
             <h3 className="text-xs font-medium text-muted-foreground" dir="auto">
@@ -275,5 +301,65 @@ export function PlaceDeviceDialog({ onPick, onClose }: { onPick: (a: Asset) => v
         </Command>
       </DialogContent>
     </Dialog>
+  );
+}
+
+/**
+ * Which kinds of device the plan shows: all, or those ticked (only the desktops, say, once every
+ * laptop is placed). Lists the kinds on the plan, with how many of each.
+ */
+export function DeviceKindFilter({ present, shown, onChange }: { present: Map<DeviceKind, number>; shown: Set<DeviceKind> | null; onChange: (kinds: Set<DeviceKind> | null) => void }) {
+  const t = useTranslations("floorPlan.devices");
+  const kinds = [...present.keys()].toSorted((a, b) => t(`kinds.${a}`).localeCompare(t(`kinds.${b}`)));
+  const on = (k: DeviceKind) => shown === null || shown.has(k);
+  const toggle = (k: DeviceKind, value: boolean) => {
+    const next = new Set(shown ?? kinds);
+    if (value) next.add(k);
+    else next.delete(k);
+    onChange(kinds.every((x) => next.has(x)) ? null : next);
+  };
+  const label = shown === null ? t("allKinds") : shown.size === 1 ? t(`kinds.${[...shown][0]}`) : t("someKinds", { count: kinds.filter(on).length });
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline" size="sm" aria-label={t("kindFilter", { shown: label })} className={cn(shown !== null && "border-primary text-primary")}>
+          {label}
+          <ChevronDown />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="w-56">
+        <DropdownMenuLabel>{t("kindTitle")}</DropdownMenuLabel>
+        <DropdownMenuItem onSelect={() => onChange(null)} disabled={shown === null}>
+          {t("allKinds")}
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        {kinds.map((k) => {
+          const Icon = DEVICE_ICON[k];
+          return (
+            <DropdownMenuCheckboxItem
+              key={k}
+              checked={on(k)}
+              // Stays open, to tick several.
+              onSelect={(e) => e.preventDefault()}
+              onCheckedChange={(v) => toggle(k, v === true)}
+            >
+              <Icon className="text-muted-foreground" />
+              {t(`kinds.${k}`)}
+              <span className="ms-auto text-xs text-muted-foreground tabular-nums">{present.get(k)}</span>
+            </DropdownMenuCheckboxItem>
+          );
+        })}
+        {kinds.length > 1 && (
+          <>
+            <DropdownMenuSeparator />
+            {kinds.map((k) => (
+              <DropdownMenuItem key={`only-${k}`} onSelect={() => onChange(new Set([k]))} className="text-xs">
+                {t("only", { kind: t(`kinds.${k}`) })}
+              </DropdownMenuItem>
+            ))}
+          </>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

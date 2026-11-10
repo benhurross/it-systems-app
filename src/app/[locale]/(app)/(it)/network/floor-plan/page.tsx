@@ -14,6 +14,7 @@ import {
   DEVICE_ICON,
   DeviceCard,
   deviceMatches,
+  DeviceKindFilter,
   DevicesCard,
   PlaceDeviceDialog,
   RING_CLASS,
@@ -39,7 +40,7 @@ import { Link } from "@/i18n/navigation";
 import { api } from "@/lib/api";
 import type { FloorPlan, FloorPlanSummary, Outlet } from "@/lib/api-types";
 import { outletMatches } from "@/lib/floor-plan";
-import { deviceKind, placeDevices } from "@/lib/plan-devices";
+import { deviceKind, type DeviceKind, placeDevices } from "@/lib/plan-devices";
 import { defaultRoles, fitRooms, readSvgPlan, type SvgPlan } from "@/lib/svg-plan";
 import type { OutletLook, Plan3DProps } from "@/components/network/floor-plan/plan-3d";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
@@ -166,6 +167,8 @@ function PlanView({
   const [showDevices, setShowDevices] = useState(true);
   const [deviceNames, setDeviceNames] = useState(false);
   const [choosingDevice, setChoosingDevice] = useState(false);
+  // The kinds of device shown: all (null), or those ticked.
+  const [kinds, setKinds] = useState<Set<DeviceKind> | null>(null);
   const [adding, setAdding] = useState<{ x: number; y: number } | null>(null);
   const [editing, setEditing] = useState<Outlet | null>(null);
   const [dialog, setDialog] = useState<"replace" | "settings" | null>(null);
@@ -205,6 +208,13 @@ function PlanView({
     const { placed, unplaced } = placeDevices(withKind, plan.rooms ?? model?.rooms ?? [], plan.outlets);
     return { shownDevices: placed, unplacedDevices: unplaced };
   }, [plan, model]);
+  const presentKinds = useMemo(() => {
+    const counts = new Map<DeviceKind, number>();
+    for (const d of shownDevices) counts.set(d.kind, (counts.get(d.kind) ?? 0) + 1);
+    return counts;
+  }, [shownDevices]);
+  // Those of the kinds ticked; the one chosen stays, whatever its kind.
+  const visibleDevices = useMemo(() => shownDevices.filter((d) => kinds === null || kinds.has(d.kind) || d.id === deviceId), [shownDevices, kinds, deviceId]);
   const device = shownDevices.find((d) => d.id === deviceId) ?? null;
   const deviceHits = useMemo(() => new Set(shownDevices.filter((d) => deviceMatches(d, query)).map((d) => d.id)), [shownDevices, query]);
   const placeDevice = useApiMutation(
@@ -417,6 +427,11 @@ function PlanView({
           <Switch id={`${problemsId}-devices`} checked={showDevices} onCheckedChange={setShowDevices} />
           <Label htmlFor={`${problemsId}-devices`}>{t("devices.show")}</Label>
         </div>
+        {showDevices && presentKinds.size > 0 && (
+          <div className="flex h-9 items-center">
+            <DeviceKindFilter present={presentKinds} shown={kinds} onChange={setKinds} />
+          </div>
+        )}
         {showDevices && (
           <div className="flex h-9 items-center gap-2">
             <Switch id={`${problemsId}-names`} checked={deviceNames} onCheckedChange={setDeviceNames} />
@@ -541,7 +556,7 @@ function PlanView({
                 traced={traced}
                 devices={
                   showDevices
-                    ? shownDevices.map((d) => ({
+                    ? visibleDevices.map((d) => ({
                         id: d.id,
                         x: d.x,
                         y: d.y,
@@ -612,7 +627,7 @@ function PlanView({
                 );
               })}
               {showDevices &&
-                shownDevices.map((d) => {
+                visibleDevices.map((d) => {
                   const Icon = DEVICE_ICON[d.kind];
                   const faded = !!query.trim() && !deviceHits.has(d.id);
                   return (
@@ -682,7 +697,9 @@ function PlanView({
           )}
           {showDevices && (
             <DevicesCard
-              shown={shownDevices}
+              shown={visibleDevices}
+              hidden={shownDevices.length - visibleDevices.length}
+              onShowAll={() => setKinds(null)}
               unplaced={unplacedDevices}
               selected={deviceId}
               onSelect={(d) => {

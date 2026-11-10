@@ -2592,7 +2592,31 @@
         "degraded": "Slow",
         "down": "Down",
         "repair": "In repair"
-      }
+      },
+      "kinds": {
+        "laptop": "Laptops",
+        "desktop": "Desktops",
+        "monitor": "Monitors",
+        "tv": "TVs and displays",
+        "server": "Servers",
+        "network": "Switches and cabinets",
+        "router": "Routers",
+        "firewall": "Firewalls",
+        "accessPoint": "Access points",
+        "printer": "Printers and scanners",
+        "camera": "Cameras",
+        "phone": "Phones",
+        "ups": "UPS",
+        "storage": "Storage and backup",
+        "other": "Other devices"
+      },
+      "kindTitle": "Show these devices",
+      "allKinds": "All devices",
+      "someKinds": "{count, plural, one {# type} other {# types}}",
+      "kindFilter": "Device types: {shown}",
+      "only": "Only {kind}",
+      "hidden": "{count, plural, one {(# hidden by the type filter)} other {(# hidden by the type filter)}}",
+      "showAll": "Show all"
     }
   }
 }
