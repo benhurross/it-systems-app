@@ -277,7 +277,7 @@ export function TeamPlanning({ tasks }: { tasks: TeamTask[] }) {
       {isLoading ? (
         <Skeleton className="h-64 w-full" />
       ) : view === "week" ? (
-        <div className="overflow-x-auto rounded-xl border">
+        <div className="overflow-x-auto rounded-xl border" tabIndex={0} role="region" aria-label={t("week")}>
           <table className="w-full min-w-[56rem] table-fixed border-collapse text-sm">
             <thead>
               <tr className="bg-muted/50">
@@ -356,7 +356,7 @@ export function TeamPlanning({ tasks }: { tasks: TeamTask[] }) {
           </table>
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-xl border">
+        <div className="overflow-x-auto rounded-xl border" tabIndex={0} role="region" aria-label={t("month")}>
           <div className="grid min-w-[48rem] grid-cols-7">
             {days.slice(0, 7).map((d) => (
               <div

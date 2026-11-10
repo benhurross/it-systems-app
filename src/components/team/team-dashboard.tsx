@@ -67,7 +67,8 @@ function Workload({ members }: { members: Dashboard["members"] }) {
       <CardHeader>
         <CardTitle className="text-base">{t("workload")}</CardTitle>
       </CardHeader>
-      <CardContent className="overflow-x-auto">
+      {/* Scrolls sideways on a narrow screen: reachable from the keyboard to do so. */}
+      <CardContent className="overflow-x-auto" tabIndex={0} role="region" aria-label={t("workload")}>
         <table className="w-full min-w-[40rem] text-sm">
           <thead>
             <tr className="border-b text-start text-xs text-muted-foreground">
