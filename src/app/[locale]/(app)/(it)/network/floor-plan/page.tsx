@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Box, Download, Ellipsis, Map as MapIcon, Maximize, Move, Pencil, Plus, Server, Settings2, Square, Upload, X, ZoomIn, ZoomOut } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
+import { useTheme } from "next-themes";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 import { type ReactNode, Suspense, useCallback, useEffect, useEffectEvent, useId, useMemo, useRef, useState } from "react";
@@ -140,6 +141,8 @@ function PlanView({
     staleTime: Infinity,
   });
   const svg = plan?.format === "svg";
+  // The 3D view follows the theme (light, dark, or the computer's).
+  const dark = useTheme().resolvedTheme === "dark";
   const doc = usePdfDocument(svg ? null : bytes);
   const model = useMemo<SvgPlan | null>(() => (svg && bytes ? readModel(bytes) : null), [svg, bytes]);
   const roles = useMemo(() => (model ? { ...defaultRoles(model.layers), ...plan?.layers } : {}), [model, plan?.layers]);
@@ -547,6 +550,7 @@ function PlanView({
               <Plan3D
                 model={model}
                 roles={roles}
+                dark={dark}
                 outlets={outlets.map((o) => ({ id: o.id, x: o.x, y: o.y, label: label(o), panel: o.panel, panelPort: o.panelPort, switchNo: o.switchNo, switchPort: o.switchPort, look: look(o) }))}
                 rack={rack}
                 units={[

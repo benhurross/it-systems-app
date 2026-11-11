@@ -46,6 +46,8 @@ export type Plan3DProps = {
   onPickUnit: (unit: { kind: "panel" | "switch"; number: number }) => void;
   onPickDevice: (id: number) => void;
   onPlace: (at: { x: number; y: number }) => void;
+  /** Drawn in the dark theme's colours. */
+  dark?: boolean;
 };
 
 const COLORS: Record<OutletLook, number> = {
@@ -58,6 +60,12 @@ const COLORS: Record<OutletLook, number> = {
 };
 const STATUS: Record<DeviceStatus, number> = { up: 0x16a34a, degraded: 0xf59e0b, down: 0xdc2626, unknown: 0x64748b };
 const TRACE = 0xf97316;
+
+/** The building's colours, in the light theme and the dark. */
+const PALETTE = {
+  light: { sky: 0xeef1f5, floor: 0xf8fafc, flat: 0x8b939e, wall: 0xd8dde4, wallEdge: 0x5b6470, glass: 0x93c5fd, glassEdge: 0x3b82f6, room: "#475569", plate: 0xf8fafc },
+  dark: { sky: 0x0b1220, floor: 0x1a2436, flat: 0x5f6f86, wall: 0x334155, wallEdge: 0x94a3b8, glass: 0x1e40af, glassEdge: 0x60a5fa, room: "#cbd5e1", plate: 0xe2e8f0 },
+} as const;
 
 /** A word or two drawn on a canvas, as a sprite that always faces the camera, `height` units tall. */
 function textSprite(lines: string[], height: number, color = "#1f2937", background: string | null = null) {
@@ -152,7 +160,8 @@ export default function Plan3D(props: Plan3DProps) {
       return;
     }
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.setClearColor(0xeef1f5);
+    const colors = PALETTE[props.dark ? "dark" : "light"];
+    renderer.setClearColor(colors.sky);
     el.appendChild(renderer.domElement);
     renderer.domElement.style.display = "block";
     renderer.domElement.style.touchAction = "none";
@@ -166,7 +175,7 @@ export default function Plan3D(props: Plan3DProps) {
     sun.position.set(size * 0.4, size, size * 0.6);
     scene.add(sun);
 
-    const floor = new THREE.Mesh(new THREE.PlaneGeometry(W, H), new THREE.MeshLambertMaterial({ color: 0xf8fafc }));
+    const floor = new THREE.Mesh(new THREE.PlaneGeometry(W, H), new THREE.MeshLambertMaterial({ color: colors.floor }));
     floor.rotation.x = -Math.PI / 2;
     scene.add(floor);
 
@@ -181,7 +190,7 @@ export default function Plan3D(props: Plan3DProps) {
         }
         const geometry = new THREE.BufferGeometry();
         geometry.setAttribute("position", new THREE.BufferAttribute(points, 3));
-        const material = new THREE.LineBasicMaterial({ color: 0x8b939e, transparent: true });
+        const material = new THREE.LineBasicMaterial({ color: colors.flat, transparent: true });
         faint.push(material);
         scene.add(new THREE.LineSegments(geometry, material));
         continue;
@@ -199,7 +208,7 @@ export default function Plan3D(props: Plan3DProps) {
       geometry.setAttribute("position", new THREE.BufferAttribute(quads, 3));
       geometry.computeVertexNormals();
       const material = new THREE.MeshLambertMaterial({
-        color: role === "glass" ? 0x93c5fd : 0xd8dde4,
+        color: role === "glass" ? colors.glass : colors.wall,
         side: THREE.DoubleSide,
         transparent: true,
         depthWrite: role !== "glass",
@@ -209,13 +218,13 @@ export default function Plan3D(props: Plan3DProps) {
       scene.add(new THREE.Mesh(geometry, material));
       const edgeGeometry = new THREE.BufferGeometry();
       edgeGeometry.setAttribute("position", new THREE.BufferAttribute(edges, 3));
-      const edgeMaterial = new THREE.LineBasicMaterial({ color: role === "glass" ? 0x3b82f6 : 0x5b6470, transparent: true });
+      const edgeMaterial = new THREE.LineBasicMaterial({ color: role === "glass" ? colors.glassEdge : colors.wallEdge, transparent: true });
       faint.push(edgeMaterial);
       scene.add(new THREE.LineSegments(edgeGeometry, edgeMaterial));
     }
 
     const roomLabels = model.rooms.map((r) => {
-      const sprite = textSprite([r.text], size * 0.0075, "#475569");
+      const sprite = textSprite([r.text], size * 0.0075, colors.room);
       sprite.position.copy(toWorld(r.x, r.y)).setY(wall * 0.55);
       scene.add(sprite);
       return sprite;
@@ -296,9 +305,9 @@ export default function Plan3D(props: Plan3DProps) {
       renderer.domElement.remove();
       world.current = null;
     };
-    // Built again only for another drawing or other layer roles.
+    // Built again only for another drawing, other layer roles, or the other theme.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [model, props.roles]);
+  }, [model, props.roles, props.dark]);
 
   // 3D or from above.
   useEffect(() => {
@@ -306,7 +315,7 @@ export default function Plan3D(props: Plan3DProps) {
     if (!w) return;
     w.orbit.enabled = props.view === "3d";
     w.pan.enabled = props.view === "top";
-  }, [props.view, model, props.roles]);
+  }, [props.view, model, props.roles, props.dark]);
 
   // Network only: the building faint.
   useEffect(() => {
@@ -314,7 +323,7 @@ export default function Plan3D(props: Plan3DProps) {
     if (!w) return;
     for (const m of w.faint) m.opacity = props.focus ? 0.12 : ((m.userData.solid as number | undefined) ?? 1);
     for (const s of w.roomLabels) (s.material as THREE.SpriteMaterial).opacity = props.focus ? 0.25 : 1;
-  }, [props.focus, model, props.roles]);
+  }, [props.focus, model, props.roles, props.dark]);
 
   // The network: outlets, the rack and its panels and switches, the cables traced.
   useEffect(() => {
@@ -330,7 +339,7 @@ export default function Plan3D(props: Plan3DProps) {
     const n = Math.max(1, props.outlets.length);
     const plateSize = block * 0.78;
     const rim = new THREE.InstancedMesh(new THREE.BoxGeometry(plateSize, block * 0.1, plateSize), new THREE.MeshLambertMaterial(), n);
-    const plate = new THREE.InstancedMesh(new THREE.BoxGeometry(plateSize * 0.8, block * 0.04, plateSize * 0.8), new THREE.MeshLambertMaterial({ color: 0xf8fafc }), n);
+    const plate = new THREE.InstancedMesh(new THREE.BoxGeometry(plateSize * 0.8, block * 0.04, plateSize * 0.8), new THREE.MeshLambertMaterial({ color: PALETTE[props.dark ? "dark" : "light"].plate }), n);
     const jacks = new THREE.InstancedMesh(new THREE.BoxGeometry(plateSize * 0.34, block * 0.03, plateSize * 0.3), new THREE.MeshLambertMaterial({ color: 0x1f2937 }), n);
     for (const mesh of [rim, plate, jacks]) mesh.count = props.outlets.length;
     const m = new THREE.Matrix4();
@@ -438,7 +447,7 @@ export default function Plan3D(props: Plan3DProps) {
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [props.outlets, props.rack, props.units, props.traced, props.view, model, props.roles]);
+  }, [props.outlets, props.rack, props.units, props.traced, props.view, model, props.roles, props.dark]);
 
   // The assets: each a model of what it is, on a ring the colour of its status, named when chosen.
   useEffect(() => {
@@ -465,7 +474,7 @@ export default function Plan3D(props: Plan3DProps) {
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [props.devices, props.deviceNames, props.view, model, props.roles]);
+  }, [props.devices, props.deviceNames, props.view, model, props.roles, props.dark]);
 
   // A point brought to the middle, closer in.
   useEffect(() => {
@@ -506,7 +515,7 @@ export default function Plan3D(props: Plan3DProps) {
   });
   useEffect(() => {
     frame();
-  }, [props.fitRequest, model, props.roles]);
+  }, [props.fitRequest, model, props.roles, props.dark]);
 
   // A click (not a drag): an outlet, a panel or switch, or with `placing`, the spot on the floor.
   const pick = useEffectEvent((e: PointerEvent) => {
