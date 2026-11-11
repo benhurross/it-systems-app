@@ -138,6 +138,9 @@ test.describe("as the IT manager", () => {
     await expect(row).toContainText("95%");
     await page.getByRole("button", { name: `Edit ${code}` }).click();
     await dialog.getByRole("button", { name: "Delete", exact: true }).click();
+    // Its year of targets is listed: Delete waits for the tick.
+    await expect(page.locator("[data-delete-impact]")).toContainText("year of targets");
+    await page.getByRole("checkbox", { name: /Yes, I have checked/ }).check();
     await page.getByRole("alertdialog").getByRole("button", { name: "Delete", exact: true }).click();
     await expect(page.getByRole("rowheader", { name: new RegExp(code) })).toHaveCount(0);
     console.assertClean();

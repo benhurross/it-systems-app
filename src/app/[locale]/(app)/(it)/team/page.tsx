@@ -70,7 +70,8 @@ function Team() {
           <TabsTrigger value="settings">{t("tabs.settings")}</TabsTrigger>
         </TabsList>
         <TabsContent value="board">
-          {!isLoading && tasks.length === 0 ? <p className="rounded-xl border p-6 text-sm text-muted-foreground">{t("noTasks")}</p> : <TeamTasks tasks={tasks} loading={isLoading} onOpen={setOpen} />}
+          {!isLoading && tasks.length === 0 && <p className="mb-3 text-sm text-muted-foreground">{t("noTasks")}</p>}
+          <TeamTasks tasks={tasks} loading={isLoading} onOpen={setOpen} />
         </TabsContent>
         <TabsContent value="dashboard">
           <TeamDashboard onOpen={setOpen} />

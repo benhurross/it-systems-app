@@ -115,6 +115,10 @@ test("a floor plan is read from its PDF, searched, traced and kept up to date", 
   await page.getByRole("menuitem", { name: "Plan and switches" }).click();
   await page.getByRole("dialog", { name: "Plan and switches" }).getByRole("button", { name: "Delete" }).click();
   await expect(page.getByRole("alertdialog")).toContainText("5 outlets go with it.");
+  // Linked records listed: Delete waits for the tick.
+  await expect(page.locator("[data-delete-impact]")).toContainText("5 network outlets");
+  await expect(page.getByRole("alertdialog").getByRole("button", { name: "Delete" })).toBeDisabled();
+  await page.getByRole("checkbox", { name: /Yes, I have checked/ }).check();
   await page.getByRole("alertdialog").getByRole("button", { name: "Delete" }).click();
   await expect(page.getByRole("img", { name: `${name}, the floor plan` })).toBeHidden();
   expect(switchName.length).toBeGreaterThan(0);
@@ -221,6 +225,7 @@ test("a plan drawn as an SVG is shown in 3D and from above, and its cables trace
   await page.getByRole("button", { name: "More for this plan" }).click();
   await page.getByRole("menuitem", { name: "Plan and switches" }).click();
   await page.getByRole("dialog", { name: "Plan and switches" }).getByRole("button", { name: "Delete" }).click();
+  await page.getByRole("checkbox", { name: /Yes, I have checked/ }).check();
   await page.getByRole("alertdialog").getByRole("button", { name: "Delete" }).click();
   await expect(page.getByRole("img", { name: `${name}, the floor plan` })).toBeHidden();
   console.assertClean();

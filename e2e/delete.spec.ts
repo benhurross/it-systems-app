@@ -11,8 +11,11 @@ async function make(page: Page, path: string, body: Record<string, unknown>) {
   return ((await res.json()) as { id: number }).id;
 }
 
-/** Delete, asked first: Keep it changes nothing; Delete removes it and says so. */
-async function deleteIt(page: Page, name: string) {
+/**
+ * Delete, asked first: Keep it changes nothing; Delete removes it and says so. With `links`, what
+ * the record is linked to is listed, and Delete waits for "Yes, I have checked" to be ticked.
+ */
+async function deleteIt(page: Page, name: string, links: string[] = []) {
   await page.getByRole("button", { name: "Delete", exact: true }).click();
   const dialog = page.getByRole("alertdialog");
   await expect(dialog.getByRole("heading", { name: `Delete ${name}?` })).toBeVisible();
@@ -20,7 +23,15 @@ async function deleteIt(page: Page, name: string) {
   await dialog.getByRole("button", { name: "Keep it" }).click();
   await expect(dialog).toBeHidden();
   await page.getByRole("button", { name: "Delete", exact: true }).click();
-  await page.getByRole("alertdialog").getByRole("button", { name: "Delete", exact: true }).click();
+  const confirm = page.getByRole("alertdialog").getByRole("button", { name: "Delete", exact: true });
+  if (links.length) {
+    const listed = page.locator("[data-delete-impact]");
+    await expect(listed).toContainText("Are you sure? This is linked to other records.");
+    for (const link of links) await expect(listed).toContainText(link);
+    await expect(confirm).toBeDisabled();
+    await listed.getByRole("checkbox", { name: /Yes, I have checked/ }).check();
+  }
+  await confirm.click();
   await expect(page.getByText(`${name} deleted.`)).toBeVisible();
 }
 
@@ -30,7 +41,7 @@ test("a project is deleted with its tasks, from its page", async ({ page }, info
   const id = await make(page, "/projects", { name, status: "planned" });
   await make(page, `/projects/${id}/tasks`, { title: "A task", status: "todo" });
   await page.goto(`/en/projects/${id}`);
-  await deleteIt(page, name);
+  await deleteIt(page, name, ["1 project task"]);
   await expect(page).toHaveURL(/\/en\/projects$/);
   expect((await page.request.get(`/api/projects/${id}`)).status()).toBe(404);
   console.assertClean();
@@ -95,7 +106,15 @@ test("an asset is deleted with its documents and installs, and a licence too", a
   await expect(page.getByRole("button", { name: "Retire" })).toBeVisible();
   await page.getByRole("button", { name: "Delete", exact: true }).click();
   await expect(page.getByRole("alertdialog")).toContainText("To keep its history, retire it instead.");
-  await page.getByRole("alertdialog").getByRole("button", { name: "Delete", exact: true }).click();
+  // What it is linked to, counted now; Delete only once that is ticked as checked.
+  const listed = page.locator("[data-delete-impact]");
+  await expect(listed).toContainText("Deleted with it:");
+  await expect(listed).toContainText("1 software install");
+  await expect(listed).toContainText("1 attached document");
+  const confirm = page.getByRole("alertdialog").getByRole("button", { name: "Delete", exact: true });
+  await expect(confirm).toBeDisabled();
+  await listed.getByRole("checkbox", { name: /Yes, I have checked/ }).check();
+  await confirm.click();
   await expect(page.getByText(`${name} deleted.`)).toBeVisible();
   await expect(page).toHaveURL(/\/en\/assets\/inventory$/);
   expect((await page.request.get(`/api/assets/${asset}`)).status()).toBe(404);

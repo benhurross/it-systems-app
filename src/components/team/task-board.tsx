@@ -33,7 +33,8 @@ export function TaskBoard({
   const label = (s: TaskStatus) => t(`${member ? "memberStatuses" : "statuses"}.${s}`);
 
   return (
-    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4" data-task-board>
+    // One row of columns, as a Kanban board is; on a narrow screen it scrolls sideways rather than wrap.
+    <div className="-mx-1 flex gap-3 overflow-x-auto px-1 pb-2" data-task-board tabIndex={0} role="region" aria-label={t("board")}>
       {TASK_STATUSES.map((status) => {
         const column = tasks.filter((x) => x.status === status);
         const dragged = tasks.find((x) => x.id === dragging);
@@ -55,7 +56,11 @@ export function TaskBoard({
               if (dragged && accepts) onMove(dragged, status);
               setDragging(null);
             }}
-            className={cn("flex min-h-40 flex-col gap-2 rounded-xl border bg-muted/40 p-2 transition-colors", over === status && "border-primary bg-primary/5")}
+            className={cn(
+              "flex min-h-[60vh] min-w-56 flex-1 flex-col gap-2 rounded-xl border border-t-4 bg-muted/40 p-2 transition-colors",
+              EDGE[status],
+              over === status && "border-primary bg-primary/5",
+            )}
           >
             <h2 className="flex items-center justify-between px-1 pt-1 text-sm font-semibold">
               {label(status)}
@@ -84,6 +89,9 @@ export function TaskBoard({
     </div>
   );
 }
+
+/** Each column's top edge, in its status's colour. */
+const EDGE: Record<TaskStatus, string> = { todo: "border-t-muted-foreground/40", in_progress: "border-t-info", done: "border-t-warning", confirmed: "border-t-success" };
 
 function TaskCard({
   task,

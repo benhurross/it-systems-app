@@ -89,7 +89,7 @@ export function KpiDialog({ kpi, year, onClose }: { kpi?: KpiRow; year: number; 
       onSubmit={(v) => save.mutate(v)}
       pending={save.isPending}
       wide
-      extra={kpi && <DeleteRecord path={`/kpis/${kpi.id}`} name={`${kpi.code} ${kpi.name}`} detail={t("kpis.deleteDetail")} onDeleted={onClose} />}
+      extra={kpi && <DeleteRecord impact={`kpi/${kpi.id}`} path={`/kpis/${kpi.id}`} name={`${kpi.code} ${kpi.name}`} detail={t("kpis.deleteDetail")} onDeleted={onClose} />}
     >
       <div className="grid gap-4 sm:grid-cols-[10rem_1fr]">
         <TextField name="code" label={t("kpis.code")} dir="ltr" />

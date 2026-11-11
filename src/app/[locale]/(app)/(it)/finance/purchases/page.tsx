@@ -187,6 +187,7 @@ export default function PurchasesPage() {
       />
       {deleting && (
         <DeleteRecord
+          impact={`purchase/${deleting.id}`}
           path={`/purchases/${deleting.id}`}
           name={`${ref("purchase", deleting.id)} ${deleting.title}`}
           detail={t("finance.purchases.deleteDetail")}

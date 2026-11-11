@@ -69,7 +69,7 @@ export default function ProjectPage({ params }: PageProps<"/[locale]/projects/[i
             <Pencil />
             {t("common.edit")}
           </Button>
-          <DeleteRecord path={`/projects/${project.id}`} name={project.name} detail={t("projects.deleteDetail")} onDeleted={() => router.push("/projects")} />
+          <DeleteRecord impact={`project/${project.id}`} path={`/projects/${project.id}`} name={project.name} detail={t("projects.deleteDetail")} onDeleted={() => router.push("/projects")} />
         </div>
       </div>
 

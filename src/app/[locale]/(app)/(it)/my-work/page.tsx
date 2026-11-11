@@ -34,10 +34,12 @@ function MyWork() {
         <h2 className="text-lg font-semibold">{t("tasks")}</h2>
         {isLoading || !tasks ? (
           <Skeleton className="h-48 w-full" />
-        ) : tasks.length === 0 ? (
-          <p className="rounded-xl border p-6 text-sm text-muted-foreground">{t("empty")}</p>
         ) : (
-          <TaskBoard tasks={tasks} member onOpen={setOpen} onMove={(task, to) => move.mutate({ task, to })} />
+          <>
+            {tasks.length === 0 && <p className="text-sm text-muted-foreground">{t("empty")}</p>}
+            {/* The board, with its four columns, even before any task is given. */}
+            <TaskBoard tasks={tasks} member onOpen={setOpen} onMove={(task, to) => move.mutate({ task, to })} />
+          </>
         )}
       </section>
       <MyPlan />

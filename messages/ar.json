@@ -40,7 +40,38 @@
     "deleteForGood": "يُحذف نهائياً، ولا يعيده إلا استرجاع نسخة احتياطية.",
     "deleted": "تم حذف {name}.",
     "keep": "إبقاؤه",
-    "moreInfo": "مزيد من المعلومات"
+    "moreInfo": "مزيد من المعلومات",
+    "impact": {
+      "title": "هل أنت متأكد؟ هذا السجل مرتبط بسجلات أخرى.",
+      "goes": "يُحذف معه:",
+      "unlinked": "يبقى، لكن دون ارتباط به:",
+      "confirm": "نعم، راجعت ذلك: احذفه مع ما هو مذكور.",
+      "what": {
+        "movements": "سجلات الحركة: {count}",
+        "cmdbLinks": "روابط CMDB: {count}",
+        "softwareInstalls": "تثبيتات البرامج: {count}",
+        "monitorChecks": "فحوص المراقبة: {count}",
+        "alerts": "التنبيهات: {count}",
+        "documents": "المستندات المرفقة: {count}",
+        "tickets": "التذاكر: {count}",
+        "changes": "التغييرات: {count}",
+        "risks": "المخاطر: {count}",
+        "vulnerabilities": "الثغرات: {count}",
+        "workstationChecks": "فحوص محطات العمل: {count}",
+        "itForms": "نماذج تقنية المعلومات: {count}",
+        "outlets": "نقاط الشبكة: {count}",
+        "devicesSeen": "الأجهزة المرصودة عند تسجيل الدخول: {count}",
+        "projectTasks": "مهام المشروع: {count}",
+        "teamTasks": "مهام الفريق: {count}",
+        "licenses": "التراخيص: {count}",
+        "contracts": "العقود: {count}",
+        "purchases": "المشتريات: {count}",
+        "assets": "الأصول: {count}",
+        "placedAssets": "الأصول الموضوعة عليه: {count}",
+        "kpiYears": "سنوات المستهدفات: {count}",
+        "kpiFigures": "الأرقام: {count}"
+      }
+    }
   },
   "nav": {
     "groups": {

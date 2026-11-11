@@ -107,7 +107,7 @@ export default function AssetPage({ params }: PageProps<"/[locale]/assets/[id]">
               </Button>
             </>
           )}
-          <DeleteRecord path={`/assets/${asset.id}`} name={asset.name} detail={t("assets.deleteDetail")} onDeleted={() => router.push("/assets/inventory")} />
+          <DeleteRecord impact={`asset/${asset.id}`} path={`/assets/${asset.id}`} name={asset.name} detail={t("assets.deleteDetail")} onDeleted={() => router.push("/assets/inventory")} />
         </div>
       </div>
 

@@ -40,7 +40,38 @@
     "deleteForGood": "It is removed for good; only restoring a backup brings it back.",
     "deleted": "{name} deleted.",
     "keep": "Keep it",
-    "moreInfo": "More information"
+    "moreInfo": "More information",
+    "impact": {
+      "title": "Are you sure? This is linked to other records.",
+      "goes": "Deleted with it:",
+      "unlinked": "Kept, but no longer linked to it:",
+      "confirm": "Yes, I have checked: delete it, and what is listed.",
+      "what": {
+        "movements": "{count, plural, one {# movement record} other {# movement records}}",
+        "cmdbLinks": "{count, plural, one {# CMDB link} other {# CMDB links}}",
+        "softwareInstalls": "{count, plural, one {# software install} other {# software installs}}",
+        "monitorChecks": "{count, plural, one {# monitoring check} other {# monitoring checks}}",
+        "alerts": "{count, plural, one {# alert} other {# alerts}}",
+        "documents": "{count, plural, one {# attached document} other {# attached documents}}",
+        "tickets": "{count, plural, one {# ticket} other {# tickets}}",
+        "changes": "{count, plural, one {# change} other {# changes}}",
+        "risks": "{count, plural, one {# risk} other {# risks}}",
+        "vulnerabilities": "{count, plural, one {# vulnerability} other {# vulnerabilities}}",
+        "workstationChecks": "{count, plural, one {# workstation check} other {# workstation checks}}",
+        "itForms": "{count, plural, one {# IT form} other {# IT forms}}",
+        "outlets": "{count, plural, one {# network outlet} other {# network outlets}}",
+        "devicesSeen": "{count, plural, one {# PC seen at sign-in} other {# PCs seen at sign-in}}",
+        "projectTasks": "{count, plural, one {# project task} other {# project tasks}}",
+        "teamTasks": "{count, plural, one {# team task} other {# team tasks}}",
+        "licenses": "{count, plural, one {# licence} other {# licences}}",
+        "contracts": "{count, plural, one {# contract} other {# contracts}}",
+        "purchases": "{count, plural, one {# purchase} other {# purchases}}",
+        "assets": "{count, plural, one {# asset} other {# assets}}",
+        "placedAssets": "{count, plural, one {# asset placed on it} other {# assets placed on it}}",
+        "kpiYears": "{count, plural, one {# year of targets} other {# years of targets}}",
+        "kpiFigures": "{count, plural, one {# figure} other {# figures}}"
+      }
+    }
   },
   "nav": {
     "groups": {

@@ -123,7 +123,7 @@ export function PlanSettingsDialog({ plan, roles, onClose }: { plan: FloorPlan; 
       form={form}
       onSubmit={(values) => save.mutate(values)}
       pending={save.isPending}
-      extra={<DeleteRecord path={`/floor-plans/${plan.id}`} name={plan.name} detail={t("deleteDetail", { count: plan.outlets.length })} onDeleted={onClose} />}
+      extra={<DeleteRecord impact={`floor_plan/${plan.id}`} path={`/floor-plans/${plan.id}`} name={plan.name} detail={t("deleteDetail", { count: plan.outlets.length })} onDeleted={onClose} />}
     >
       <TextField name="name" label={t("uploadDialog.name")} />
       {plan.switches.map((s) => (
