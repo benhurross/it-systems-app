@@ -71,7 +71,7 @@ function Team() {
         </TabsList>
         <TabsContent value="board">
           {!isLoading && tasks.length === 0 && <p className="mb-3 text-sm text-muted-foreground">{t("noTasks")}</p>}
-          <TeamTasks tasks={tasks} loading={isLoading} onOpen={setOpen} />
+          <TeamTasks tasks={tasks} loading={isLoading} onOpen={setOpen} onAdd={() => setAdding(true)} />
         </TabsContent>
         <TabsContent value="dashboard">
           <TeamDashboard onOpen={setOpen} />

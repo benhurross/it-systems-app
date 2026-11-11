@@ -27,7 +27,7 @@ export function useMoveTask() {
 }
 
 /** The manager's view of every task: filtered, on the board or as a list. */
-export function TeamTasks({ tasks, loading, onOpen }: { tasks: TeamTask[]; loading: boolean; onOpen: (id: number) => void }) {
+export function TeamTasks({ tasks, loading, onOpen, onAdd }: { tasks: TeamTask[]; loading: boolean; onOpen: (id: number) => void; onAdd?: () => void }) {
   const t = useTranslations("team");
   const ids = useId();
   const format = useFormat();
@@ -123,7 +123,7 @@ export function TeamTasks({ tasks, loading, onOpen }: { tasks: TeamTask[]; loadi
         </ToggleGroup>
       </div>
       {view === "board" ? (
-        <TaskBoard tasks={shown} onOpen={onOpen} onMove={(task, to) => move.mutate({ task, to })} />
+        <TaskBoard tasks={shown} onOpen={onOpen} onAdd={onAdd} onMove={(task, to) => move.mutate({ task, to })} />
       ) : (
         <DataTable data={shown} columns={columns} loading={loading} initialSort={{ id: "dueDate", desc: false }} />
       )}

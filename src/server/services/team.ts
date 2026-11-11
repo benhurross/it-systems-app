@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, inArray, isNull, lte, or } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull, lte, or, sql } from "drizzle-orm";
 import { isPlaceholderEmail } from "@/lib/people";
 import { can, IT_ROLES } from "@/lib/permissions";
 import { addDays, isoDate } from "@/lib/dates";
@@ -28,6 +28,8 @@ const columns = {
   task: teamTasks,
   assigneeName: assignee.name,
   projectName: projects.name,
+  /** The updates and comments on it, as its card counts them (never the manager's notes). */
+  updates: sql<number>`(select count(*) from ${teamTaskEvents} where ${teamTaskEvents.taskId} = ${teamTasks.id} and ${teamTaskEvents.kind} in ('comment', 'progress', 'returned'))`.mapWith(Number),
 };
 
 /** The tasks the actor may see: all, for the manager; their own, for anyone else in IT. */
@@ -39,7 +41,7 @@ export async function listTasks(actor: Actor) {
     .leftJoin(projects, eq(projects.id, teamTasks.projectId))
     .where(isManager(actor) ? undefined : eq(teamTasks.assigneeId, actor.id))
     .orderBy(asc(teamTasks.dueDate), desc(teamTasks.id));
-  return rows.map((r) => ({ ...r.task, assigneeName: r.assigneeName, projectName: r.projectName }));
+  return rows.map((r) => ({ ...r.task, assigneeName: r.assigneeName, projectName: r.projectName, updates: r.updates }));
 }
 
 async function visibleTask(id: number, actor: Actor): Promise<Task> {
@@ -63,7 +65,7 @@ export async function getTask(id: number, actor: Actor) {
     .from(teamTaskEvents)
     .where(isManager(actor) ? eq(teamTaskEvents.taskId, id) : and(eq(teamTaskEvents.taskId, id), inArray(teamTaskEvents.kind, MEMBER_EVENTS)))
     .orderBy(asc(teamTaskEvents.at), asc(teamTaskEvents.id));
-  return { ...row.task, assigneeName: row.assigneeName, projectName: row.projectName, events };
+  return { ...row.task, assigneeName: row.assigneeName, projectName: row.projectName, updates: row.updates, events };
 }
 /** Every kind of event but the manager's private notes. */
 const MEMBER_EVENTS: TaskEventKind[] = ["created", "edited", "reassigned", "started", "progress", "comment", "done", "confirmed", "returned", "reopened", "moved"];

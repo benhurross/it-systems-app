@@ -2886,6 +2886,8 @@
       "nothingDue": "Nothing due.",
       "activity": "Recent activity",
       "noActivity": "Nothing yet."
-    }
+    },
+    "updatesCount": "{count, plural, one {# update} other {# updates}}",
+    "addHere": "Add a task here"
   }
 }
