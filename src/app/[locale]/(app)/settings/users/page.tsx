@@ -37,7 +37,7 @@ export default function UsersPage() {
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState<UserRow | null>(null);
 
-  // Only an Admin gives the Admin role or changes an Admin's account; the server holds to it too.
+  // Only an Admin gives the Admin role or sees an Admin's account; the server holds to it too.
   const manager = can(me.role, "manager");
   const allRoles = ROLES.map((r) => ({ value: r, label: t(`roles.${r}`) }));
   const roleOptions = manager ? allRoles : allRoles.filter((r) => r.value !== "admin");
@@ -77,14 +77,11 @@ export default function UsersPage() {
     col.display({
       id: "actions",
       header: () => <span className="sr-only">{t("common.actions")}</span>,
-      cell: (info) =>
-        !manager && info.row.original.role === "admin" ? (
-          <span className="text-xs text-muted-foreground">{t("settings.users.adminOnly")}</span>
-        ) : (
-          <Button variant="ghost" size="sm" onClick={() => setEditing(info.row.original)}>
-            {t("common.edit")}
-          </Button>
-        ),
+      cell: (info) => (
+        <Button variant="ghost" size="sm" onClick={() => setEditing(info.row.original)}>
+          {t("common.edit")}
+        </Button>
+      ),
     }),
   ];
 
@@ -95,7 +92,7 @@ export default function UsersPage() {
         columns={columns}
         loading={isLoading}
         facets={[
-          { column: "role", label: t("settings.users.role"), options: allRoles },
+          { column: "role", label: t("settings.users.role"), options: roleOptions },
           {
             column: "status",
             label: t("settings.users.status"),

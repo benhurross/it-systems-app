@@ -3,8 +3,8 @@ import { userCreate } from "@/lib/schemas";
 import { createUser, listUsers } from "@/server/services/users";
 
 export const GET = handler(async () => {
-  await requireUser("settings");
-  return listUsers();
+  const user = await requireUser("settings");
+  return listUsers(user);
 });
 
 export const POST = handler(async (req) => {

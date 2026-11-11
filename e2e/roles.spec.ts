@@ -13,10 +13,14 @@ test.describe("an IT Admin", () => {
     await expect(page.getByRole("link", { name: "Lists" })).toBeVisible();
     await expect(page.getByRole("link", { name: "Audit log" })).toHaveCount(0);
 
-    // An Admin's row: not theirs to edit; the role list has no Admin.
-    const adminRow = page.getByRole("row").filter({ hasText: "admin@applus.test" });
-    await expect(adminRow).toContainText("Admins only");
-    await expect(adminRow.getByRole("button", { name: "Edit" })).toHaveCount(0);
+    // The Admins' accounts are not listed, nor the Admin role, in the table, its filter or the form.
+    await expect(page.getByRole("row").filter({ hasText: "it@applus.test" })).toBeVisible();
+    await expect(page.getByRole("row").filter({ hasText: "admin@applus.test" })).toHaveCount(0);
+    await expect(page.getByRole("cell", { name: "Admin", exact: true })).toHaveCount(0);
+    await page.getByRole("button", { name: "Role", expanded: false }).click();
+    await expect(page.getByRole("menuitemcheckbox", { name: /^IT Admin/ })).toBeVisible();
+    await expect(page.getByRole("menuitemcheckbox", { name: /^Admin/ })).toHaveCount(0);
+    await page.keyboard.press("Escape");
     await page.getByRole("button", { name: "Add user" }).click();
     await page.getByRole("dialog").getByRole("combobox", { name: "Role" }).click();
     await expect(page.getByRole("option", { name: "IT Admin" })).toBeVisible();
@@ -29,12 +33,17 @@ test.describe("an IT Admin", () => {
     await expect(page.getByRole("heading", { name: "Not available" })).toBeVisible();
   });
 
-  test("cannot make anyone an Admin through the API", async ({ page }) => {
+  test("cannot make anyone an Admin through the API", async ({ page, browser }) => {
     const users = (await (await page.request.get("/api/settings/users")).json()) as { id: string; email: string; role: string }[];
+    expect(users.some((u) => u.role === "admin")).toBe(false);
     const helpdesk = users.find((u) => u.email === "it@applus.test")!;
-    const admin = users.find((u) => u.email === "admin@applus.test")!;
     expect((await page.request.patch(`/api/settings/users/${helpdesk.id}`, { data: { role: "admin" } })).status()).toBe(403);
-    expect((await page.request.patch(`/api/settings/users/${admin.id}`, { data: { active: false } })).status()).toBe(403);
+    // An Admin's account, by its id (seen by an Admin): not there for them.
+    const admin = await browser.newContext({ storageState: session("admin") });
+    const all = (await (await admin.request.get("/api/settings/users")).json()) as { id: string; email: string }[];
+    const boss = all.find((u) => u.email === "admin@applus.test")!;
+    await admin.close();
+    expect((await page.request.patch(`/api/settings/users/${boss.id}`, { data: { active: false } })).status()).toBe(404);
   });
 });
 

@@ -1,4 +1,4 @@
-import { asc, eq } from "drizzle-orm";
+import { asc, eq, ne } from "drizzle-orm";
 import type { z } from "zod";
 import { can } from "@/lib/permissions";
 import type { userCreate, userUpdate } from "@/lib/schemas";
@@ -6,9 +6,10 @@ import { audit } from "../audit";
 import { auth, type SessionUser } from "../auth";
 import { db } from "../db";
 import { employees, sessions, users } from "../db/schema";
-import { badRequest, forbidden, one } from "../http";
+import { badRequest, forbidden, notFound, one } from "../http";
 
-export async function listUsers() {
+/** The accounts: all, for an Admin; for an IT Admin, those at their level or below, without the Admins. */
+export async function listUsers(actor?: Pick<SessionUser, "role">) {
   return db
     .select({
       id: users.id,
@@ -22,17 +23,19 @@ export async function listUsers() {
     })
     .from(users)
     .leftJoin(employees, eq(employees.id, users.employeeId))
+    .where(actor && !can(actor.role, "manager") ? ne(users.role, "admin") : undefined)
     .orderBy(asc(users.name));
 }
 
 /**
  * Only an Admin makes someone an Admin or changes an Admin's account (role, activation, password,
  * employee link): an IT Admin, who manages every other account, cannot raise anyone, themselves
- * included, above their own role.
+ * included, above their own role. To them an Admin's account is not there at all.
  */
 function mayManage(actor: SessionUser, target: { role: string | null } | null, role?: string) {
   if (can(actor.role, "manager")) return;
-  if (role === "admin" || target?.role === "admin") throw forbidden("Only an Admin can manage Admin accounts");
+  if (target?.role === "admin") throw notFound();
+  if (role === "admin") throw forbidden("Only an Admin can give the Admin role");
 }
 
 export async function createUser(input: z.infer<typeof userCreate>, actor: SessionUser) {

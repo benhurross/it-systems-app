@@ -81,9 +81,12 @@ describe("user management", () => {
     await expect(updateUser(helpdesk.id, { role: "admin" }, itAdmin)).rejects.toMatchObject({ status: 403 });
     expect((await updateUser(helpdesk.id, { role: "it_admin" }, itAdmin)).role).toBe("it_admin");
     await updateUser(helpdesk.id, { role: "it_staff" }, itAdmin);
-    // An Admin's account: not its role, activation, password or employee link.
+    // An Admin's account: not listed, and to them not there: not its role, activation, password or employee link.
+    expect((await listUsers(itAdmin)).some((u) => u.role === "admin")).toBe(false);
+    expect((await listUsers(itAdmin)).some((u) => u.id === helpdesk.id)).toBe(true);
+    expect((await listUsers(admin)).some((u) => u.role === "admin")).toBe(true);
     for (const change of [{ role: "it_staff" as const }, { active: false }, { password: "Some-Other-Pass-1" }, { employeeId: null }]) {
-      await expect(updateUser(admin.id, change, itAdmin)).rejects.toMatchObject({ status: 403 });
+      await expect(updateUser(admin.id, change, itAdmin)).rejects.toMatchObject({ status: 404 });
     }
     // Nor a new Admin; another IT Admin, yes.
     await expect(createUser(userCreate.parse({ name: "New Boss", email: "boss@applus.test", password: "Long-Enough-Pass-1", role: "admin", employeeId: null }), itAdmin)).rejects.toMatchObject({ status: 403 });
