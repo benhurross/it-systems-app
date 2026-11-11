@@ -325,27 +325,24 @@ export default function Plan3D(props: Plan3DProps) {
     const { size, wall } = w;
     const block = Math.max(1.2, size * 0.008);
 
-    // Each outlet a floor box: a white faceplate with two RJ-45 jacks, low enough for a desk to
+    // Each outlet a floor box: a white faceplate with one RJ-45 jack, low enough for a desk to
     // stand over it, on a rim the colour of how it is shown (found, chosen, on the switch looked at).
     const n = Math.max(1, props.outlets.length);
-    const plateSize = block * 1.3;
-    const rim = new THREE.InstancedMesh(new THREE.BoxGeometry(plateSize, block * 0.12, plateSize), new THREE.MeshLambertMaterial(), n);
+    const plateSize = block * 0.78;
+    const rim = new THREE.InstancedMesh(new THREE.BoxGeometry(plateSize, block * 0.1, plateSize), new THREE.MeshLambertMaterial(), n);
     const plate = new THREE.InstancedMesh(new THREE.BoxGeometry(plateSize * 0.8, block * 0.04, plateSize * 0.8), new THREE.MeshLambertMaterial({ color: 0xf8fafc }), n);
-    const jacks = new THREE.InstancedMesh(new THREE.BoxGeometry(plateSize * 0.24, block * 0.03, plateSize * 0.2), new THREE.MeshLambertMaterial({ color: 0x1f2937 }), n * 2);
-    for (const mesh of [rim, plate]) mesh.count = props.outlets.length;
-    jacks.count = props.outlets.length * 2;
+    const jacks = new THREE.InstancedMesh(new THREE.BoxGeometry(plateSize * 0.34, block * 0.03, plateSize * 0.3), new THREE.MeshLambertMaterial({ color: 0x1f2937 }), n);
+    for (const mesh of [rim, plate, jacks]) mesh.count = props.outlets.length;
     const m = new THREE.Matrix4();
     props.outlets.forEach((o, i) => {
       const p = toWorld(o.x, o.y);
-      m.makeTranslation(p.x, block * 0.06, p.z);
+      m.makeTranslation(p.x, block * 0.05, p.z);
       rim.setMatrixAt(i, m);
       rim.setColorAt(i, new THREE.Color(COLORS[o.look]));
-      m.makeTranslation(p.x, block * 0.13, p.z);
+      m.makeTranslation(p.x, block * 0.11, p.z);
       plate.setMatrixAt(i, m);
-      for (const [k, dx] of [-1, 1].entries()) {
-        m.makeTranslation(p.x + dx * plateSize * 0.18, block * 0.155, p.z);
-        jacks.setMatrixAt(i * 2 + k, m);
-      }
+      m.makeTranslation(p.x, block * 0.135, p.z);
+      jacks.setMatrixAt(i, m);
     });
     for (const mesh of [rim, plate, jacks]) {
       mesh.instanceMatrix.needsUpdate = true;
@@ -412,7 +409,7 @@ export default function Plan3D(props: Plan3DProps) {
       for (const id of props.traced) {
         const o = props.outlets.find((x) => x.id === id);
         if (!o) continue;
-        const start = toWorld(o.x, o.y).setY(block * 0.15);
+        const start = toWorld(o.x, o.y).setY(block * 0.13);
         const panelPort = portAt("panel", o.panel, o.panelPort);
         const switchPort = portAt("switch", o.switchNo, o.switchPort);
         const end = panelPort ?? switchPort ?? new THREE.Vector3(base.x, rackHeight, base.z);
