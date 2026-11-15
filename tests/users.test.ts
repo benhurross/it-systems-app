@@ -69,7 +69,7 @@ describe("user management", () => {
     await expect(signIn(tech.email, DEMO_PASSWORD)).rejects.toBeTruthy();
     await expect(signIn(tech.email, "Brand-New-Pass-9")).resolves.toBeTruthy();
     const [entry] = await db.select().from(s.auditLog).where(eq(s.auditLog.entityId, tech.id));
-    expect(entry.summary).toBe("Updated Faisal Al-Qahtani: role admin, password reset");
+    expect(entry.summary).toBe("Updated Faisal Al-Qahtani: role admin, password reset, signed out everywhere");
     expect(entry.summary).not.toContain("Brand-New-Pass-9");
   });
 

@@ -9,6 +9,7 @@ import { authClient } from "@/lib/auth-client";
 import { signInFor } from "@/lib/next-path";
 import { AppSidebar } from "./app-sidebar";
 import { CurrentUserProvider } from "./current-user";
+import { IdleGuard } from "./idle-guard";
 import { MeshBackground } from "./mesh-background";
 import { Topbar } from "./topbar";
 
@@ -38,6 +39,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <CurrentUserProvider value={session.user}>
       <MeshBackground />
+      <IdleGuard />
       <SidebarProvider>
         <AppSidebar side={locale === "ar" ? "right" : "left"} />
         <SidebarInset className="min-w-0 bg-transparent">

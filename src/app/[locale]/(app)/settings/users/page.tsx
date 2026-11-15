@@ -9,9 +9,15 @@ import { z } from "zod";
 import { useCurrentUser } from "@/components/app-shell/current-user";
 import { columnHelper, DataTable } from "@/components/data-table";
 import { FormDialog, SelectField, SwitchField, TextField } from "@/components/form";
+import { SessionsList } from "@/components/sessions-list";
 import { StatusBadge } from "@/components/status-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
 import { useApi, useApiMutation } from "@/hooks/use-api";
 import { useFormat } from "@/hooks/use-format";
 import { api } from "@/lib/api";
@@ -19,6 +25,7 @@ import type { Employee, UserRow } from "@/lib/api-types";
 import { isPlaceholderEmail } from "@/lib/people";
 import { can, ROLES, type Role } from "@/lib/permissions";
 import { userCreate, userUpdate } from "@/lib/schemas";
+import { IDLE_CHOICES, type SecuritySettings } from "@/lib/security";
 
 const col = columnHelper<UserRow>();
 
@@ -87,6 +94,7 @@ export default function UsersPage() {
 
   return (
     <>
+      <SignInRules />
       <DataTable
         data={users}
         columns={columns}
@@ -229,6 +237,7 @@ function EditUserDialog({
   employeeOptions: Options;
 }) {
   const t = useTranslations("settings.users");
+  const ts = useTranslations("sessions");
   const form = useForm<z.input<typeof userUpdate>, unknown, z.output<typeof userUpdate>>({
     resolver: zodResolver(userUpdate),
     defaultValues: { role: user.role as Role, employeeId: user.employeeId, active: !user.banned, password: undefined },
@@ -256,7 +265,56 @@ function EditUserDialog({
       {!self && <SelectField name="role" label={t("role")} options={roleOptions} />}
       <SelectField name="employeeId" label={t("employee")} options={employeeOptions} optional />
       {!self && <SwitchField name="active" label={t("active")} description={t("deactivateConfirm", { name: user.name })} />}
-      <TextField name="password" label={t("newPassword")} dir="ltr" autoComplete="new-password" optional />
+      <TextField name="password" label={t("newPassword")} dir="ltr" autoComplete="new-password" optional description={t("newPasswordHint")} />
+      <div className="space-y-2">
+        <p className="text-sm font-medium">{ts("signedInOn")}</p>
+        <SessionsList userId={user.id} />
+      </div>
     </FormDialog>
+  );
+}
+
+/** How signing in behaves, for every account: one sign-in at a time, and signing out when idle. */
+function SignInRules() {
+  const t = useTranslations("settings.users.rules");
+  const { data } = useApi<SecuritySettings>("/settings/security");
+  const save = useApiMutation((value: SecuritySettings) => api<SecuritySettings>("/settings/security", { method: "PUT", body: value }), { success: t("saved") });
+  return (
+    <Card className="mb-4" data-sign-in-rules>
+      <CardHeader>
+        <CardTitle className="text-base">{t("title")}</CardTitle>
+        <CardDescription>{t("description")}</CardDescription>
+      </CardHeader>
+      <CardContent className="flex flex-wrap items-start gap-x-8 gap-y-4">
+        {!data ? (
+          <Skeleton className="h-10 w-full" />
+        ) : (
+          <>
+            <div className="flex max-w-md items-start gap-3">
+              <Switch id="rules-single" checked={data.singleSession} disabled={save.isPending} onCheckedChange={(v) => save.mutate({ ...data, singleSession: v })} />
+              <div className="space-y-0.5">
+                <Label htmlFor="rules-single">{t("singleSession")}</Label>
+                <p className="text-xs text-muted-foreground">{t("singleSessionHint")}</p>
+              </div>
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="rules-idle">{t("idle")}</Label>
+              <Select value={String(data.idleMinutes)} disabled={save.isPending} onValueChange={(v) => save.mutate({ ...data, idleMinutes: Number(v) as SecuritySettings["idleMinutes"] })}>
+                <SelectTrigger id="rules-idle" className="w-44">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {IDLE_CHOICES.map((m) => (
+                    <SelectItem key={m} value={String(m)}>
+                      {m === 0 ? t("idleNever") : t("idleMinutes", { count: m })}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </>
+        )}
+      </CardContent>
+    </Card>
   );
 }

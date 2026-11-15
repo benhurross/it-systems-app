@@ -150,6 +150,8 @@ export const sessions = pgTable("sessions", {
   userId: text()
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
+  /** The last time the person did something here (not a page refreshing itself): for signing out when idle. */
+  lastActiveAt: timestamp({ withTimezone: true }),
   createdAt: createdAt(),
   updatedAt: updatedAt(),
 });

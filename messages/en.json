@@ -122,7 +122,13 @@
     "passwordChanged": "Password changed.",
     "wrongPassword": "The current password is incorrect.",
     "tooMany": "Too many attempts. Wait a few seconds and try again.",
-    "untrusted": "Sign-in from this address isn’t allowed yet. Ask your administrator to add {address} to the app’s trusted addresses."
+    "untrusted": "Sign-in from this address isn’t allowed yet. Ask your administrator to add {address} to the app’s trusted addresses.",
+    "idle": {
+      "title": "Still there?",
+      "body": "You have not done anything for a while. For security, you will be signed out in {seconds} seconds.",
+      "stay": "Stay signed in",
+      "signedOut": "You were signed out after a time without activity. Sign in again to carry on."
+    }
   },
   "display": {
     "title": "Display",
@@ -570,7 +576,18 @@
       "created": "User added.",
       "updated": "User updated.",
       "selfNote": "You cannot change your own role or deactivate yourself.",
-      "deactivateConfirm": "{name} will be signed out and cannot sign in until reactivated."
+      "deactivateConfirm": "{name} will be signed out and cannot sign in until reactivated.",
+      "rules": {
+        "title": "Signing in",
+        "description": "For every account.",
+        "singleSession": "One sign-in at a time per account",
+        "singleSessionHint": "Signing in on another browser or computer signs the account out everywhere else.",
+        "idle": "Sign out after no activity",
+        "idleNever": "Never",
+        "idleMinutes": "{count} minutes",
+        "saved": "Sign-in settings saved."
+      },
+      "newPasswordHint": "Setting a new password also signs the account out everywhere."
     },
     "lists": {
       "list": "List",
@@ -2889,5 +2906,23 @@
     },
     "updatesCount": "{count, plural, one {# update} other {# updates}}",
     "addHere": "Add a task here"
+  },
+  "sessions": {
+    "title": "Where you are signed in",
+    "description": "Each browser you are signed in on. Sign out of any you do not recognise, or are not using.",
+    "none": "Not signed in anywhere.",
+    "unknownBrowser": "A browser",
+    "on": " on ",
+    "thisOne": "This one",
+    "lastActive": "last active {when}",
+    "since": "signed in {date}",
+    "signOut": "Sign out",
+    "signOutOthers": "Sign out everywhere else",
+    "signOutAll": "Sign out everywhere",
+    "ended": "Signed out there.",
+    "endedOthers": "Signed out everywhere else.",
+    "endedAll": "Signed out everywhere.",
+    "signedInOn": "Signed in on",
+    "menu": "Where I'm signed in"
   }
 }

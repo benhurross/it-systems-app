@@ -24,6 +24,23 @@ export const auth = betterAuth({
       employeeId: { type: "number", required: false, input: false },
     },
   },
+  session: {
+    additionalFields: {
+      lastActiveAt: { type: "date", required: false, input: false },
+    },
+  },
+  databaseHooks: {
+    session: {
+      create: {
+        // A new sign-in is active now; with one sign-in at a time, it ends the account's others.
+        before: async (session) => ({ data: { ...session, lastActiveAt: new Date() } }),
+        after: async (session) => {
+          const { endSessions, rulesApply, securityRules } = await import("./sessions");
+          if (rulesApply() && (await securityRules()).singleSession) await endSessions(session.userId, session.id);
+        },
+      },
+    },
+  },
   plugins: [admin({ ac, roles: authRoles, defaultRole: "employee", adminRoles: ["admin"] })],
 });
 

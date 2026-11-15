@@ -38,6 +38,8 @@ export default defineConfig({
     url: `${BASE_URL}/en/sign-in`,
     reuseExistingServer: false,
     timeout: 120_000,
-    env: { DATABASE_URL: TEST_DATABASE_URL, BETTER_AUTH_URL: BASE_URL, AUTH_RATE_LIMIT: "off" },
+    // One sign-in per role serves the whole run, and the same accounts sign in from many places at
+    // once: the idle and one-at-a-time sign-in rules are off here (tested on their own).
+    env: { DATABASE_URL: TEST_DATABASE_URL, BETTER_AUTH_URL: BASE_URL, AUTH_RATE_LIMIT: "off", SESSION_RULES: "off" },
   },
 });

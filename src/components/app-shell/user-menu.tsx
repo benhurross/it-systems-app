@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
-import { KeyRound, LogOut } from "lucide-react";
+import { KeyRound, LogOut, MonitorSmartphone } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -10,7 +10,8 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { SessionsList } from "@/components/sessions-list";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -39,6 +40,7 @@ export function UserMenu() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [changingPassword, setChangingPassword] = useState(false);
+  const [signIns, setSignIns] = useState(false);
 
   const signOut = async () => {
     await authClient.signOut();
@@ -67,6 +69,10 @@ export function UserMenu() {
             <KeyRound />
             {t("auth.changePassword")}
           </DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => setSignIns(true)}>
+            <MonitorSmartphone />
+            {t("sessions.menu")}
+          </DropdownMenuItem>
           <DropdownMenuItem onSelect={signOut}>
             <LogOut />
             {t("auth.signOut")}
@@ -74,6 +80,15 @@ export function UserMenu() {
         </DropdownMenuContent>
       </DropdownMenu>
       <ChangePasswordDialog open={changingPassword} onOpenChange={setChangingPassword} />
+      <Dialog open={signIns} onOpenChange={setSignIns}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{t("sessions.title")}</DialogTitle>
+            <DialogDescription>{t("sessions.description")}</DialogDescription>
+          </DialogHeader>
+          {signIns && <SessionsList />}
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

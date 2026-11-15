@@ -4,6 +4,7 @@ import { DEFAULT_MONITOR_SETTINGS } from "@/lib/monitor";
 import { labelPrinterSettings, monitorSettings, organisationSettings, slaSettings, ticketSettings, toolSettings } from "@/lib/schemas";
 import { DEFAULT_SLA } from "@/lib/sla";
 import { DEFAULT_TEAM_SETTINGS, teamSettings } from "@/lib/team";
+import { DEFAULT_SECURITY, securitySettings } from "@/lib/security";
 import { audit, type Actor } from "./audit";
 import { db } from "./db";
 import { settings } from "./db/schema";
@@ -16,6 +17,8 @@ const SETTINGS = {
   tools: { schema: toolSettings, defaults: {} },
   // Team Management's emails: the Admins' own, through /api/team/settings, not the settings API.
   team: { schema: teamSettings, defaults: DEFAULT_TEAM_SETTINGS },
+  // Signing in: one sign-in at a time, and signing out after so many minutes without activity.
+  security: { schema: securitySettings, defaults: DEFAULT_SECURITY },
   labelPrinter: { schema: labelPrinterSettings, defaults: { host: "", port: 9100, widthMm: 50, heightMm: 25, dpi: 203 as const, owner: "AP Plus IT" } },
 };
 

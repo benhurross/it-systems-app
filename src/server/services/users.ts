@@ -4,6 +4,7 @@ import { can } from "@/lib/permissions";
 import type { userCreate, userUpdate } from "@/lib/schemas";
 import { audit } from "../audit";
 import { auth, type SessionUser } from "../auth";
+import { endSessions } from "../sessions";
 import { db } from "../db";
 import { employees, sessions, users } from "../db/schema";
 import { badRequest, forbidden, notFound, one } from "../http";
@@ -38,6 +39,13 @@ function mayManage(actor: SessionUser, target: { role: string | null } | null, r
   if (role === "admin") throw forbidden("Only an Admin can give the Admin role");
 }
 
+/** An account the actor may manage; an Admin's, to an IT Admin, is not there. */
+export async function checkManage(id: string, actor: SessionUser) {
+  const [target] = await db.select({ role: users.role }).from(users).where(eq(users.id, id));
+  if (!target) throw notFound();
+  mayManage(actor, target);
+}
+
 export async function createUser(input: z.infer<typeof userCreate>, actor: SessionUser) {
   mayManage(actor, null, input.role);
   const { user } = await auth.api.createUser({
@@ -51,9 +59,9 @@ export async function createUser(input: z.infer<typeof userCreate>, actor: Sessi
 /**
  * Role, employee link, activation and password, one at a time or together. Admins cannot change
  * their own role or deactivate themselves, so the system always keeps an administrator.
- * Deactivating ends every session at once.
+ * Deactivating, or a new password, ends every sign-in at once.
  */
-export async function updateUser(id: string, input: z.infer<typeof userUpdate>, actor: SessionUser) {
+export async function updateUser(id: string, input: z.infer<typeof userUpdate>, actor: SessionUser, currentSessionId?: string) {
   const current = one(await db.select().from(users).where(eq(users.id, id)));
   mayManage(actor, current, input.role);
   if (id === actor.id && ((input.role && input.role !== current.role) || input.active === false)) {
@@ -79,7 +87,9 @@ export async function updateUser(id: string, input: z.infer<typeof userUpdate>, 
   if (input.password) {
     const context = await auth.$context;
     await context.internalAdapter.updatePassword(id, await context.password.hash(input.password));
-    notes.push("password reset");
+    // A new password ends the account's sign-ins everywhere (but the one making the change, for one's own).
+    await endSessions(id, id === actor.id ? currentSessionId : undefined);
+    notes.push("password reset, signed out everywhere");
   }
   if (notes.length) await audit(actor, "update", "user", id, `Updated ${current.name}: ${notes.join(", ")}`);
   return one(await db.select().from(users).where(eq(users.id, id)));

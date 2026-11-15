@@ -1,7 +1,8 @@
 import { handler, notFound, requireUser } from "@/server/http";
+import { forgetRules } from "@/server/sessions";
 import { getSetting, putSetting, type SettingKey } from "@/server/settings";
 
-const KEYS: SettingKey[] = ["sla", "monitoring", "organisation", "tickets", "tools", "labelPrinter"];
+const KEYS: SettingKey[] = ["sla", "monitoring", "organisation", "tickets", "tools", "labelPrinter", "security"];
 
 async function settingKey(ctx: RouteContext<"/api/settings/[key]">): Promise<SettingKey> {
   const { key } = await ctx.params;
@@ -16,5 +17,9 @@ export const GET = handler(async (_req, ctx: RouteContext<"/api/settings/[key]">
 
 export const PUT = handler(async (req, ctx: RouteContext<"/api/settings/[key]">) => {
   const user = await requireUser("settings");
-  return putSetting(await settingKey(ctx), await req.json(), user);
+  const key = await settingKey(ctx);
+  const saved = await putSetting(key, await req.json(), user);
+  // New sign-in rules apply at once.
+  if (key === "security") forgetRules();
+  return saved;
 });

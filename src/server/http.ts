@@ -3,7 +3,7 @@ import { gzip as gzipCallback } from "node:zlib";
 import { z } from "zod";
 import { can, type Area } from "@/lib/permissions";
 import type { SessionUser } from "./auth";
-import { currentUser } from "./current-user";
+import { currentSession, currentUser } from "./current-user";
 
 export class HttpError extends Error {
   constructor(
@@ -24,6 +24,14 @@ export async function requireUser(area: Area): Promise<SessionUser> {
   if (!user) throw new HttpError(401, "Sign in required");
   if (!can(user.role, area)) throw forbidden();
   return user;
+}
+
+/** As requireUser, with the sign-in itself: for what acts on where one is signed in. */
+export async function requireSession(area: Area) {
+  const found = await currentSession();
+  if (!found) throw new HttpError(401, "Sign in required");
+  if (!can(found.user.role, area)) throw forbidden();
+  return found;
 }
 
 /** Postgres error codes, read through Drizzle's wrapper. */

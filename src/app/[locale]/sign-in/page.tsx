@@ -1,6 +1,8 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import Image from "next/image";
 import { useForm } from "react-hook-form";
@@ -82,6 +84,11 @@ export default function SignInPage() {
               <h1 className="text-2xl font-semibold">{t("auth.title")}</h1>
               <p className="text-muted-foreground">{t("auth.subtitle")}</p>
             </div>
+            {!failure && (
+              <Suspense>
+                <IdleNotice />
+              </Suspense>
+            )}
             {failure && (
               <Alert variant="destructive">
                 <AlertDescription>{failure}</AlertDescription>
@@ -104,5 +111,16 @@ export default function SignInPage() {
         </main>
       </div>
     </div>
+  );
+}
+
+/** Signed out for being idle: said so, so it is not taken for a fault. */
+function IdleNotice() {
+  const t = useTranslations("auth.idle");
+  if (useSearchParams().get("reason") !== "idle") return null;
+  return (
+    <Alert role="status">
+      <AlertDescription>{t("signedOut")}</AlertDescription>
+    </Alert>
   );
 }
