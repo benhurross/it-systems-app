@@ -25,7 +25,16 @@ import {
   type ColumnDef,
   type RowData,
 } from "@tanstack/react-table";
-import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeft, ChevronRight, Download, ListFilter, X } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
+  ChevronLeft,
+  ChevronRight,
+  Download,
+  ListFilter,
+  X,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useEffectEvent, useRef, type ReactNode } from "react";
 import { Badge } from "@/components/ui/badge";
@@ -40,7 +49,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { useFormat } from "@/hooks/use-format";
 import { useRouter } from "@/i18n/navigation";
 import { downloadCsv, toCsv, type CsvColumn } from "@/lib/csv";
@@ -51,7 +67,12 @@ import { DateRangeFilter } from "./date-range-filter";
 export const dataTableFeatures = tableFeatures({
   rowSortingFeature,
   sortedRowModel: createSortedRowModel(),
-  sortFns: { alphanumeric: sortFn_alphanumeric, basic: sortFn_basic, datetime: sortFn_datetime, text: sortFn_text },
+  sortFns: {
+    alphanumeric: sortFn_alphanumeric,
+    basic: sortFn_basic,
+    datetime: sortFn_datetime,
+    text: sortFn_text,
+  },
   columnFilteringFeature,
   globalFilteringFeature,
   filteredRowModel: createFilteredRowModel(),
@@ -60,7 +81,10 @@ export const dataTableFeatures = tableFeatures({
     includesString: filterFn_includesString,
     // Whole days by the office's calendar, so "today" means today in Riyadh.
     inRange: constructFilterFn({
-      filter: (value, range: DateRange) => value !== null && value !== undefined && inDateRange(value as Date | string, range),
+      filter: (value, range: DateRange) =>
+        value !== null &&
+        value !== undefined &&
+        inDateRange(value as Date | string, range),
       autoRemove: isEmptyRange,
     }),
   },
@@ -74,9 +98,14 @@ export const dataTableFeatures = tableFeatures({
 type Features = typeof dataTableFeatures;
 
 /** Column helper typed for DataTable. Facet columns set `filterFn: "arrHas"`; a date filter's column `filterFn: "inRange"`. */
-export const columnHelper = <T extends RowData>() => createColumnHelper<Features, T>();
+export const columnHelper = <T extends RowData>() =>
+  createColumnHelper<Features, T>();
 
-export type Facet = { column: string; label: string; options: { value: string; label: string }[] };
+export type Facet = {
+  column: string;
+  label: string;
+  options: { value: string; label: string }[];
+};
 
 export function DataTable<T extends RowData>({
   data,
@@ -124,7 +153,8 @@ export function DataTable<T extends RowData>({
   const { pageIndex } = table.state.pagination;
   const from = filtered.length === 0 ? 0 : pageIndex * pageSize + 1;
   const to = Math.min((pageIndex + 1) * pageSize, filtered.length);
-  const filtering = table.state.globalFilter || table.state.columnFilters.length > 0;
+  const filtering =
+    table.state.globalFilter || table.state.columnFilters.length > 0;
 
   return (
     <div className="space-y-3">
@@ -139,12 +169,24 @@ export function DataTable<T extends RowData>({
         {dateFilter && (
           <DateRangeFilter
             label={dateFilter.label}
-            value={(table.getColumn(dateFilter.column)?.getFilterValue() as DateRange | undefined) ?? null}
-            onChange={(range) => table.getColumn(dateFilter.column)?.setFilterValue(isEmptyRange(range) ? undefined : range)}
+            value={
+              (table.getColumn(dateFilter.column)?.getFilterValue() as
+                | DateRange
+                | undefined) ?? null
+            }
+            onChange={(range) =>
+              table
+                .getColumn(dateFilter.column)
+                ?.setFilterValue(isEmptyRange(range) ? undefined : range)
+            }
           />
         )}
         {facets.map((facet) => (
-          <FacetFilter key={facet.column} facet={facet} column={table.getColumn(facet.column)} />
+          <FacetFilter
+            key={facet.column}
+            facet={facet}
+            column={table.getColumn(facet.column)}
+          />
         ))}
         {filtering && (
           <Button
@@ -166,7 +208,15 @@ export function DataTable<T extends RowData>({
               variant="outline"
               size="sm"
               disabled={loading}
-              onClick={() => downloadCsv(csv.filename, toCsv(filtered.map((r) => r.original), csv.columns))}
+              onClick={() =>
+                downloadCsv(
+                  csv.filename,
+                  toCsv(
+                    filtered.map((r) => r.original),
+                    csv.columns,
+                  ),
+                )
+              }
             >
               <Download />
               {csv.label ?? t("common.exportCsv")}
@@ -216,7 +266,10 @@ export function DataTable<T extends RowData>({
               ))
             ) : table.getRowModel().rows.length === 0 ? (
               <TableRow className="hover:bg-transparent">
-                <TableCell colSpan={columns.length} className="h-28 text-center text-muted-foreground">
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-28 text-center text-muted-foreground"
+                >
                   {data.length === 0 ? t("table.empty") : t("table.noMatches")}
                 </TableCell>
               </TableRow>
@@ -229,7 +282,8 @@ export function DataTable<T extends RowData>({
                     rowHref
                       ? (e) => {
                           // Links and buttons inside the row handle their own clicks.
-                          if (!(e.target as HTMLElement).closest("a, button")) router.push(rowHref(row.original));
+                          if (!(e.target as HTMLElement).closest("a, button"))
+                            router.push(rowHref(row.original));
                         }
                       : undefined
                   }
@@ -248,7 +302,11 @@ export function DataTable<T extends RowData>({
 
       <div className="flex items-center justify-between gap-2 text-sm text-muted-foreground">
         <span aria-live="polite">
-          {t("table.range", { from: format.number(from), to: format.number(to), total: format.number(filtered.length) })}
+          {t("table.range", {
+            from: format.number(from),
+            to: format.number(to),
+            total: format.number(filtered.length),
+          })}
         </span>
         <div className="flex gap-1">
           <Button
@@ -275,12 +333,19 @@ export function DataTable<T extends RowData>({
   );
 }
 
-function FacetFilter<T extends RowData>({ facet, column }: { facet: Facet; column?: Column<Features, T, unknown> }) {
+function FacetFilter<T extends RowData>({
+  facet,
+  column,
+}: {
+  facet: Facet;
+  column?: Column<Features, T, unknown>;
+}) {
   const selected = (column?.getFilterValue() as string[] | undefined) ?? [];
-  const counts = column?.getFacetedUniqueValues();
 
   const toggle = (value: string, checked: boolean) => {
-    const next = checked ? [...selected, value] : selected.filter((v) => v !== value);
+    const next = checked
+      ? [...selected, value]
+      : selected.filter((v) => v !== value);
     column?.setFilterValue(next.length ? next : undefined);
   };
 
@@ -291,7 +356,10 @@ function FacetFilter<T extends RowData>({ facet, column }: { facet: Facet; colum
           <ListFilter />
           {facet.label}
           {selected.length > 0 && (
-            <Badge variant="secondary" className="rounded-sm px-1.5 font-normal">
+            <Badge
+              variant="secondary"
+              className="rounded-sm px-1.5 font-normal"
+            >
               {selected.length}
             </Badge>
           )}
@@ -304,11 +372,13 @@ function FacetFilter<T extends RowData>({ facet, column }: { facet: Facet; colum
           <DropdownMenuCheckboxItem
             key={option.value}
             checked={selected.includes(option.value)}
-            onCheckedChange={(checked) => toggle(option.value, checked === true)}
+            onCheckedChange={(checked) =>
+              toggle(option.value, checked === true)
+            }
             onSelect={(e) => e.preventDefault()}
           >
             <span className="flex-1">{option.label}</span>
-            <span className="ms-3 text-xs tabular-nums text-muted-foreground">{counts?.get(option.value) ?? 0}</span>
+            <FacetCount column={column} value={option.value} />
           </DropdownMenuCheckboxItem>
         ))}
       </DropdownMenuContent>
@@ -317,11 +387,35 @@ function FacetFilter<T extends RowData>({ facet, column }: { facet: Facet; colum
 }
 
 /**
+ * How many rows have a value: counted only while its menu is open, since counting goes through
+ * every row (thousands of tickets) for each filter.
+ */
+function FacetCount<T extends RowData>({
+  column,
+  value,
+}: {
+  column?: Column<Features, T, unknown>;
+  value: string;
+}) {
+  return (
+    <span className="ms-3 text-xs tabular-nums text-muted-foreground">
+      {column?.getFacetedUniqueValues().get(value) ?? 0}
+    </span>
+  );
+}
+
+/**
  * Keeps the list's search, filters, sort and page in the page's address, so Back (or a reload)
  * brings the list back as it was left. Read once the page is up, since the server does not see
  * the address's state; the page is set once the rows are there, as loading them goes to page one.
  */
-function useTableInAddress<T extends RowData>(table: ReturnType<typeof useTable<Features, T>>, rows: number, facets: Facet[], dateFilter: { column: string } | undefined, initialSort?: { id: string; desc: boolean }) {
+function useTableInAddress<T extends RowData>(
+  table: ReturnType<typeof useTable<Features, T>>,
+  rows: number,
+  facets: Facet[],
+  dateFilter: { column: string } | undefined,
+  initialSort?: { id: string; desc: boolean },
+) {
   // "start": not read yet; "skip": read, and the state it set not drawn yet; "on": written as it changes.
   const phase = useRef<"start" | "skip" | "on">("start");
   const pendingPage = useRef(0);
@@ -331,20 +425,29 @@ function useTableInAddress<T extends RowData>(table: ReturnType<typeof useTable<
     const saved = readTableUrl(search, {
       facets: facets.map((f) => f.column),
       date: dateFilter?.column,
-      sortable: (id) => !!table.getAllLeafColumns().find((c) => c.id === id)?.getCanSort(),
+      sortable: (id) =>
+        !!table
+          .getAllLeafColumns()
+          .find((c) => c.id === id)
+          ?.getCanSort(),
     });
     if (saved.q) table.setGlobalFilter(saved.q);
-    const filters = [...Object.entries(saved.facets), ...Object.entries(saved.dates)].map(([id, value]) => ({ id, value }));
+    const filters = [
+      ...Object.entries(saved.facets),
+      ...Object.entries(saved.dates),
+    ].map(([id, value]) => ({ id, value }));
     if (filters.length) table.setColumnFilters(filters);
     if (saved.sort) table.setSorting([saved.sort]);
-    else if (new URLSearchParams(search).get("sort") === "none") table.setSorting([]);
+    else if (new URLSearchParams(search).get("sort") === "none")
+      table.setSorting([]);
     pendingPage.current = saved.page;
     phase.current = "skip";
   });
   useEffect(() => restore(), []);
 
   const showPage = useEffectEvent(() => {
-    if (pendingPage.current > 0 && pendingPage.current < table.getPageCount()) table.setPageIndex(pendingPage.current);
+    if (pendingPage.current > 0 && pendingPage.current < table.getPageCount())
+      table.setPageIndex(pendingPage.current);
     pendingPage.current = 0;
   });
   useEffect(() => {
@@ -360,14 +463,27 @@ function useTableInAddress<T extends RowData>(table: ReturnType<typeof useTable<
     const facetIds = new Set(facets.map((f) => f.column));
     const state = {
       q: (globalFilter as string | undefined) ?? "",
-      facets: Object.fromEntries(columnFilters.filter((f) => facetIds.has(f.id)).map((f) => [f.id, f.value as string[]])),
-      dates: Object.fromEntries(columnFilters.filter((f) => f.id === dateFilter?.column).map((f) => [f.id, f.value as DateRange])),
+      facets: Object.fromEntries(
+        columnFilters
+          .filter((f) => facetIds.has(f.id))
+          .map((f) => [f.id, f.value as string[]]),
+      ),
+      dates: Object.fromEntries(
+        columnFilters
+          .filter((f) => f.id === dateFilter?.column)
+          .map((f) => [f.id, f.value as DateRange]),
+      ),
       sort: sorting[0] ? { id: sorting[0].id, desc: sorting[0].desc } : null,
       // While the rows load, the page asked for is still to come.
       page: pendingPage.current || pagination.pageIndex,
     };
     const query = writeTableUrl(window.location.search, state, initialSort);
-    if (query !== window.location.search) window.history.replaceState(null, "", `${window.location.pathname}${query}${window.location.hash}`);
+    if (query !== window.location.search)
+      window.history.replaceState(
+        null,
+        "",
+        `${window.location.pathname}${query}${window.location.hash}`,
+      );
   });
   useEffect(() => save(), [globalFilter, columnFilters, sorting, pagination]);
 }

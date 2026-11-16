@@ -183,6 +183,13 @@
       "when": 1794722253153,
       "tag": "0025_session_activity",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1794825385904,
+      "tag": "0026_list_indexes",
+      "breakpoints": true
     }
   ]
 }

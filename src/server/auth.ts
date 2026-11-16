@@ -1,6 +1,7 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { admin } from "better-auth/plugins";
+import { COOKIE_PREFIX } from "@/lib/auth-cookie";
 import { parseOrigins } from "@/lib/origins";
 import { ac, authRoles } from "@/lib/permissions";
 import { db } from "./db";
@@ -19,6 +20,8 @@ export const auth = betterAuth({
   // Production allows three sign-in attempts per ten seconds per address. The end-to-end suite signs
   // many people in from one address, so its server sets AUTH_RATE_LIMIT=off; nothing else should.
   rateLimit: { enabled: process.env.AUTH_RATE_LIMIT === "off" ? false : undefined },
+  // Cookies of its own, apart from other apps on the same server.
+  advanced: { cookiePrefix: COOKIE_PREFIX },
   user: {
     additionalFields: {
       employeeId: { type: "number", required: false, input: false },
