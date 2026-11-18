@@ -1,12 +1,13 @@
 import { and, eq, inArray, isNull, or } from "drizzle-orm";
 import { ref } from "@/lib/domain";
+import { ALERT_RULES } from "@/lib/monitor";
 import { isPlaceholderEmail } from "@/lib/people";
 import { db } from "../db";
 import type { Actor } from "../audit";
-import { employees, lookups, tickets, users } from "../db/schema";
+import { assets, employees, lookups, tickets, users } from "../db/schema";
 import { getMailConfig } from "../mail/config";
 import { queueEmail } from "../mail/outbox";
-import { assignedEmail, newTicketEmail, resolutionEmail, type Locale, type TicketFacts } from "../mail/templates";
+import { assignedEmail, deviceEmail, newTicketEmail, resolutionEmail, type Locale, type TicketFacts } from "../mail/templates";
 import { listStaff } from "./people";
 import { autoCloseAt, createResolutionLink } from "./respond";
 
@@ -109,5 +110,38 @@ export function notifyAssigned(ticket: Ticket, by: Actor) {
     await queueEmail([
       { kind: "assigned", to: assignee.email, ticketId: ticket.id, ...assignedEmail({ ticket: facts, by: by.name, open: ticketUrl(appUrl, ticket.id) }) },
     ]);
+  });
+}
+
+/**
+ * A device has gone down, or come back, and its criticality says the IT team should hear of it:
+ * a critical one to every Admin, IT Admin and IT Staff member, a high one to the Admins and IT Admins.
+ */
+export function notifyDevice(kind: "down" | "up", device: typeof assets.$inferSelect, at: Date, since: Date | null = null) {
+  return quietly(`device ${kind}`, async () => {
+    const rule = ALERT_RULES[device.criticality].email;
+    if (rule === "none" || !device.ipAddress || device.monitorMethod === "none") return;
+    const roles = rule === "team" ? (["admin", "it_admin", "it_staff"] as const) : (["admin", "it_admin"] as const);
+    const people = (await db.select().from(users).where(and(inArray(users.role, [...roles]), active))).filter((u) => !isPlaceholderEmail(u.email));
+    if (people.length === 0) return;
+    const [[location], { appUrl }] = await Promise.all([
+      db.select().from(lookups).where(and(eq(lookups.list, "location"), eq(lookups.code, device.location))),
+      getMailConfig(),
+    ]);
+    const email = deviceEmail(kind, {
+      device: {
+        name: device.name,
+        ref: ref("asset", device.id),
+        address: device.ipAddress,
+        method: device.monitorMethod,
+        port: device.monitorPort,
+        location: { en: location?.labelEn ?? device.location, ar: location?.labelAr ?? device.location },
+        criticality: device.criticality,
+      },
+      at,
+      since,
+      open: (locale) => `${appUrl}/${locale}/network`,
+    });
+    await queueEmail(people.map((p) => ({ kind: kind === "down" ? ("device_down" as const) : ("device_up" as const), to: p.email, ...email })));
   });
 }

@@ -290,6 +290,19 @@ describe("monitoring", () => {
     expect(worse).toMatchObject({ status: "down", open: "down", resolve: true });
   });
 
+  it("goes by the device's criticality: a critical one is down at once, a low one after three", () => {
+    expect(nextState({ status: "up", failures: 0 }, down, 300, "critical")).toMatchObject({ status: "down", open: "down" });
+    const once = nextState({ status: "up", failures: 0 }, down, 300, "low");
+    const twice = nextState(once, down, 300, "low");
+    expect(twice).toMatchObject({ status: "up", open: null });
+    expect(nextState(twice, down, 300, "low")).toMatchObject({ status: "down", failures: 3, open: "down" });
+  });
+
+  it("raises no alert for a low-criticality device that is only slow", () => {
+    const slow = nextState({ status: "up", failures: 0 }, { up: true, latencyMs: 450 }, 300, "low");
+    expect(slow).toMatchObject({ status: "degraded", open: null });
+  });
+
   it("raises nothing on a first successful check", () => {
     expect(nextState({ status: "unknown", failures: 0 }, up, 300)).toMatchObject({ status: "up", open: null, resolve: false });
   });

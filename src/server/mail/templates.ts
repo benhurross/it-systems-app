@@ -1,5 +1,5 @@
 import { createTranslator } from "next-intl";
-import { formatDate } from "@/lib/format";
+import { formatDate, formatDateTime } from "@/lib/format";
 import ar from "../../../messages/ar.json";
 import en from "../../../messages/en.json";
 
@@ -195,4 +195,27 @@ export function teamTaskEmail(kind: TeamEmailKind, p: { task: TeamTaskFacts; who
     ],
     buttons: [{ label: t("email.team.open"), href: p.open(locale), primary: true }],
   }));
+}
+
+/** What an outage email says about the device; the location's label comes from the list, in both languages. */
+export type DeviceFacts = { name: string; ref: string; address: string; method: "ping" | "tcp"; port: number | null; location: Record<Locale, string>; criticality: string };
+
+/** To the IT team when a high or critical device stops answering network checks, and when it answers again. */
+export function deviceEmail(kind: "down" | "up", p: { device: DeviceFacts; at: Date; since?: Date | null; open: (locale: Locale) => string }) {
+  return bilingual((t, locale) => {
+    const criticality = t(`enums.criticality.${p.device.criticality}`);
+    return {
+      subject: t(`email.device.${kind}.subject`, { name: p.device.name }),
+      heading: t(`email.device.${kind}.heading`, { name: p.device.name }),
+      paragraphs: [t(`email.device.${kind}.body`, { time: formatDateTime(p.at, locale), since: p.since ? formatDateTime(p.since, locale) : "—", criticality })],
+      details: [
+        [t("email.device.facts.device"), `${p.device.ref} ${p.device.name}`],
+        [t("email.device.facts.address"), p.device.address],
+        [t("email.device.facts.check"), p.device.method === "tcp" ? t("email.device.tcp", { port: p.device.port ?? "" }) : t("email.device.ping")],
+        [t("email.device.facts.location"), p.device.location[locale]],
+        [t("email.device.facts.criticality"), criticality],
+      ],
+      buttons: [{ label: t("email.device.open"), href: p.open(locale), primary: true }],
+    };
+  });
 }

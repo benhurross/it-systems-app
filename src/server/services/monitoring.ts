@@ -7,6 +7,7 @@ import { alerts, assets, monitorChecks, users } from "../db/schema";
 import { badRequest, one } from "../http";
 import { pingProbe, pool, tcpProbe } from "../monitor/probes";
 import { getSetting } from "../settings";
+import { notifyDevice } from "./notify";
 import { createTicket } from "./tickets";
 
 const CONCURRENCY = 16;
@@ -27,8 +28,18 @@ function probe(device: Device, timeoutMs: number): Promise<ProbeResult> {
 /** Probes one device and records the check, the device's new state, and any alert it opens or resolves. */
 export async function checkDevice(device: Device, settings: MonitorSettings) {
   const result = await probe(device, settings.timeoutMs);
-  const next = nextState({ status: device.monitorStatus, failures: device.monitorFailures }, result, settings.degradedMs);
+  const next = nextState({ status: device.monitorStatus, failures: device.monitorFailures }, result, settings.degradedMs, device.criticality);
   const now = new Date();
+  // When it went down, for the email saying it is back.
+  const [downSince] =
+    next.resolve && device.monitorStatus === "down"
+      ? await db
+          .select({ openedAt: alerts.openedAt })
+          .from(alerts)
+          .where(and(eq(alerts.assetId, device.id), eq(alerts.kind, "down"), ne(alerts.status, "resolved")))
+          .orderBy(desc(alerts.openedAt))
+          .limit(1)
+      : [];
   await db.transaction(async (tx) => {
     await tx.insert(monitorChecks).values({ assetId: device.id, checkedAt: now, ...result });
     await tx
@@ -43,6 +54,9 @@ export async function checkDevice(device: Device, settings: MonitorSettings) {
     }
     if (next.open) await tx.insert(alerts).values({ assetId: device.id, kind: next.open, openedAt: now });
   });
+  // The IT team hears of an important device going down, and of it coming back.
+  if (next.open === "down") await notifyDevice("down", device, now);
+  else if (next.resolve && device.monitorStatus === "down" && next.status !== "down") await notifyDevice("up", device, now, downSince?.openedAt ?? null);
   return { ...result, status: next.status };
 }
 

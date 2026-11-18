@@ -12,7 +12,9 @@ import { ApiError } from "@/lib/api";
 
 function makeQueryClient() {
   const client: QueryClient = new QueryClient({
-    defaultOptions: { queries: { staleTime: 15_000, retry: 1 } },
+    // One more try after a dropped connection or a server error; none after an answer such as
+    // "sign in", "not allowed" or "not found", which asking again would only delay by a second.
+    defaultOptions: { queries: { staleTime: 15_000, retry: (failures, error) => failures < 1 && !(error instanceof ApiError && error.status < 500) } },
     // An expired session sends the user back to sign-in rather than showing broken pages.
     queryCache: new QueryCache({
       onError: (error) => {

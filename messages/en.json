@@ -488,7 +488,9 @@
       "team_assigned": "Team task given",
       "team_done": "Team task done",
       "team_due": "Team task due",
-      "team_returned": "Team task sent back"
+      "team_returned": "Team task sent back",
+      "device_down": "Device down",
+      "device_up": "Device back up"
     },
     "attachmentKind": {
       "invoice": "Invoice",
@@ -1173,7 +1175,8 @@
       "noPrinter": "No label printer is set up. Open the PDF and print it through the printer's driver, or ask an admin to add the printer in Settings → Label printer.",
       "sent": "{count, plural, one {# tag sent} other {# tags sent}} to the label printer.",
       "unreachable": "The label printer did not answer. Check it is on and connected to the network, then try again.",
-      "failed": "The tags could not be made. Please try again."
+      "failed": "The tags could not be made. Please try again.",
+      "physicalOnly": "Virtual servers, software and cloud services have nothing to stick a tag on, so they are not listed."
     },
     "anydeskId": "AnyDesk ID",
     "anydeskHint": "The ID AnyDesk shows on this computer, such as 123 456 789, or its alias.",
@@ -1273,7 +1276,8 @@
     "showOnPlan": "Show the floor plan",
     "moveRoom": "New room / area",
     "moveStatus": "Status after the move",
-    "moveStatusHint": "A device shared by a room (a meeting room's TV, a server) stays In use, held by no one."
+    "moveStatusHint": "A device shared by a room (a meeting room's TV, a server) stays In use, held by no one.",
+    "criticalityHint": "How much an outage matters. Critical: an alert at the first failed check and an email to the whole IT team. High: an email to the Admins and IT Admins. Low: an alert only after three failed checks, and none for being slow."
   },
   "discovery": {
     "intro": "Sweep a subnet from the server to find devices on the network and compare them with the inventory.",
@@ -1968,6 +1972,28 @@
         "heading": "A task was sent back to you",
         "body": "{name} sent this task back:"
       }
+    },
+    "device": {
+      "down": {
+        "subject": "{name} is down",
+        "heading": "{name} is not responding",
+        "body": "Network monitoring has had no answer from this device since {time}. It is marked {criticality}, so the IT team is told straight away."
+      },
+      "up": {
+        "subject": "{name} is back up",
+        "heading": "{name} is responding again",
+        "body": "This device answered network monitoring again at {time}, after being down since {since}."
+      },
+      "facts": {
+        "device": "Device",
+        "address": "Address",
+        "location": "Location",
+        "criticality": "Criticality",
+        "check": "Checked by"
+      },
+      "ping": "Ping",
+      "tcp": "TCP port {port}",
+      "open": "Open network status"
     }
   },
   "respond": {

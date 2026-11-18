@@ -165,6 +165,7 @@ export function AssetDialog({
         <SelectField
           name="criticality"
           label={t("assets.criticality")}
+          description={t("assets.criticalityHint")}
           options={options("criticality", CRITICALITIES)}
         />
       </div>

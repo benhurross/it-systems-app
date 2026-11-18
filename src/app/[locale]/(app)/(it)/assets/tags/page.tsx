@@ -24,6 +24,7 @@ import { Link } from "@/i18n/navigation";
 import { api, ApiError, apiFile } from "@/lib/api";
 import type { Asset, TagSetup } from "@/lib/api-types";
 import { ref } from "@/lib/domain";
+import { deviceKind } from "@/lib/plan-devices";
 
 /** As many as the printer takes at once; the list shows this many at most, a search narrows it. */
 const MOST = 500;
@@ -45,6 +46,8 @@ export default function AssetTagsPage() {
 
   const term = search.trim().toLowerCase();
   const matching = (assets ?? [])
+    // Only what has a body to stick a label on: no virtual servers, software or cloud services.
+    .filter((a) => deviceKind(a) !== null || selected.includes(a.id))
     .filter((a) => a.status !== "retired" || selected.includes(a.id))
     .filter((a) => !untaggedOnly || !a.tagPrintedAt || selected.includes(a.id))
     .filter(
@@ -167,6 +170,7 @@ export default function AssetTagsPage() {
               </TableBody>
             </Table>
           </div>
+          <p className="text-sm text-muted-foreground">{t("physicalOnly")}</p>
           {matching.length > shown.length && (
             <p className="text-sm text-muted-foreground">{t("limited", { shown: format.number(shown.length), total: format.number(matching.length) })}</p>
           )}

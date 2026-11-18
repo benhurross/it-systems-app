@@ -1,5 +1,5 @@
 import { createServer, type AddressInfo, type Server } from "node:net";
-import { and, eq, ne } from "drizzle-orm";
+import { and, eq, inArray, ne } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { createTestDb } from "./helpers/db";
 
@@ -121,6 +121,34 @@ describe("checks", () => {
     expect(await monitoring.checkNow(device.id)).toMatchObject({ up: true, status: "up" });
     expect((await alertsOn(device.id))[0]).toMatchObject({ status: "resolved" });
     expect(await db.select().from(s.monitorChecks).where(eq(s.monitorChecks.assetId, device.id))).toHaveLength(4);
+  }, 30_000);
+
+  it("calls a critical device down at once, and emails the IT team when it goes down and comes back", async () => {
+    const emailed = (subject: string) => db.select().from(s.emails).where(eq(s.emails.subject, subject));
+    // The medium-criticality device above went down without an email.
+    expect(await emailed("PROBE is down | PROBE متوقف")).toHaveLength(0);
+
+    const { server, port } = await listen();
+    const [device] = await db
+      .insert(s.assets)
+      .values({ name: "CORE-SW", category: "network", type: "switch", location: "jeddah", criticality: "critical", ipAddress: "127.0.0.1", monitorMethod: "tcp", monitorPort: port })
+      .returning();
+    expect(await monitoring.checkNow(device.id)).toMatchObject({ status: "up" });
+    await close(server);
+    expect(await monitoring.checkNow(device.id)).toMatchObject({ up: false, status: "down" });
+    expect(await alertsOn(device.id)).toEqual([expect.objectContaining({ kind: "down", status: "open" })]);
+
+    const team = await db.select().from(s.users).where(inArray(s.users.role, ["admin", "it_admin", "it_staff"]));
+    const down = await emailed("CORE-SW is down | CORE-SW متوقف");
+    expect(down.map((e) => e.recipient).sort()).toEqual(team.map((u) => u.email).sort());
+    expect(down[0]).toMatchObject({ kind: "device_down" });
+    expect(down[0].text).toContain("Critical");
+
+    await db.update(s.assets).set({ monitorPort: (await listen()).port }).where(eq(s.assets.id, device.id));
+    expect(await monitoring.checkNow(device.id)).toMatchObject({ status: "up" });
+    const back = await emailed("CORE-SW is back up | CORE-SW عاد للعمل");
+    expect(back).toHaveLength(team.length);
+    expect(back[0]).toMatchObject({ kind: "device_up" });
   }, 30_000);
 
   it("refuses to check a device that is not monitored", async () => {

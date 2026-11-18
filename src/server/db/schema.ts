@@ -52,18 +52,11 @@ import type { ItFormKind } from "@/lib/it-forms";
 import type { AssetSpecs } from "@/lib/asset-specs";
 import type { KpiFilter } from "@/lib/kpi-register";
 import type { LayerRole } from "@/lib/svg-plan";
-import type {
-  PlanKind,
-  Requester,
-  TaskEventKind,
-  TaskPriority,
-  TaskStatus as TeamTaskStatus,
-} from "@/lib/team";
+import type { PlanKind, Requester, TaskEventKind, TaskPriority, TaskStatus as TeamTaskStatus } from "@/lib/team";
 import type { ToolAccessState, ToolKey } from "@/lib/tools";
 
 const id = () => integer().primaryKey().generatedAlwaysAsIdentity();
-const createdAt = () =>
-  timestamp({ withTimezone: true }).notNull().defaultNow();
+const createdAt = () => timestamp({ withTimezone: true }).notNull().defaultNow();
 const updatedAt = () =>
   timestamp({ withTimezone: true })
     .notNull()
@@ -143,54 +136,44 @@ export const users = pgTable("users", {
   banned: boolean().default(false),
   banReason: text(),
   banExpires: timestamp({ withTimezone: true }),
-  employeeId: integer().references(() => employees.id, {
-    onDelete: "set null",
-  }),
+  employeeId: integer().references(() => employees.id, { onDelete: "set null" }),
   createdAt: createdAt(),
   updatedAt: updatedAt(),
 });
 
-export const sessions = pgTable(
-  "sessions",
-  {
-    id: text().primaryKey(),
-    token: text().notNull().unique(),
-    expiresAt: timestamp({ withTimezone: true }).notNull(),
-    ipAddress: text(),
-    userAgent: text(),
-    impersonatedBy: text(),
-    userId: text()
-      .notNull()
-      .references(() => users.id, { onDelete: "cascade" }),
-    /** The last time the person did something here (not a page refreshing itself): for signing out when idle. */
-    lastActiveAt: timestamp({ withTimezone: true }),
-    createdAt: createdAt(),
-    updatedAt: updatedAt(),
-  },
-  (t) => [index().on(t.userId)],
-);
+export const sessions = pgTable("sessions", {
+  id: text().primaryKey(),
+  token: text().notNull().unique(),
+  expiresAt: timestamp({ withTimezone: true }).notNull(),
+  ipAddress: text(),
+  userAgent: text(),
+  impersonatedBy: text(),
+  userId: text()
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  /** The last time the person did something here (not a page refreshing itself): for signing out when idle. */
+  lastActiveAt: timestamp({ withTimezone: true }),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+}, (t) => [index().on(t.userId)]);
 
-export const accounts = pgTable(
-  "accounts",
-  {
-    id: text().primaryKey(),
-    accountId: text().notNull(),
-    providerId: text().notNull(),
-    userId: text()
-      .notNull()
-      .references(() => users.id, { onDelete: "cascade" }),
-    accessToken: text(),
-    refreshToken: text(),
-    idToken: text(),
-    accessTokenExpiresAt: timestamp({ withTimezone: true }),
-    refreshTokenExpiresAt: timestamp({ withTimezone: true }),
-    scope: text(),
-    password: text(),
-    createdAt: createdAt(),
-    updatedAt: updatedAt(),
-  },
-  (t) => [index().on(t.userId)],
-);
+export const accounts = pgTable("accounts", {
+  id: text().primaryKey(),
+  accountId: text().notNull(),
+  providerId: text().notNull(),
+  userId: text()
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  accessToken: text(),
+  refreshToken: text(),
+  idToken: text(),
+  accessTokenExpiresAt: timestamp({ withTimezone: true }),
+  refreshTokenExpiresAt: timestamp({ withTimezone: true }),
+  scope: text(),
+  password: text(),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+}, (t) => [index().on(t.userId)]);
 
 export const verifications = pgTable("verifications", {
   id: text().primaryKey(),
@@ -211,9 +194,7 @@ export const joiners = pgTable("joiners", {
   employeeNumber: text(),
   startDate: day().notNull(),
   tasks: jsonb().$type<Record<string, boolean>>().notNull().default({}),
-  employeeId: integer().references(() => employees.id, {
-    onDelete: "set null",
-  }),
+  employeeId: integer().references(() => employees.id, { onDelete: "set null" }),
   completedAt: timestamp({ withTimezone: true }),
   createdAt: createdAt(),
   updatedAt: updatedAt(),
@@ -254,12 +235,8 @@ export const assets = pgTable(
     /** Where on that plan it was put by hand (fractions of the plan from its top left); null: in its room. */
     planX: real(),
     planY: real(),
-    assignedTo: integer().references(() => employees.id, {
-      onDelete: "set null",
-    }),
-    purchaseId: integer().references(() => purchases.id, {
-      onDelete: "set null",
-    }),
+    assignedTo: integer().references(() => employees.id, { onDelete: "set null" }),
+    purchaseId: integer().references(() => purchases.id, { onDelete: "set null" }),
     purchaseDate: day(),
     purchaseCost: money(),
     warrantyEnd: day(),
@@ -275,10 +252,7 @@ export const assets = pgTable(
     beyondRepairReason: text(),
     beyondRepairBy: text(),
     /** Processor, memory, drives, ports, operating system, screen: what the asset's type has (lib/asset-specs). */
-    specs: jsonb()
-      .$type<AssetSpecs>()
-      .notNull()
-      .default({} as AssetSpecs),
+    specs: jsonb().$type<AssetSpecs>().notNull().default({} as AssetSpecs),
     notes: text(),
     monitorMethod: text().$type<MonitorMethod>().notNull().default("none"),
     monitorPort: integer(),
@@ -303,12 +277,8 @@ export const assetMovements = pgTable("asset_movements", {
   toLocation: text().notNull(),
   fromRoom: text().notNull().default(""),
   toRoom: text().notNull().default(""),
-  fromEmployeeId: integer().references(() => employees.id, {
-    onDelete: "set null",
-  }),
-  toEmployeeId: integer().references(() => employees.id, {
-    onDelete: "set null",
-  }),
+  fromEmployeeId: integer().references(() => employees.id, { onDelete: "set null" }),
+  toEmployeeId: integer().references(() => employees.id, { onDelete: "set null" }),
   reason: text().notNull(),
   movedBy: text().notNull(),
   movedAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
@@ -360,28 +330,19 @@ export const tickets = pgTable(
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
-  (t) => [
-    index().on(t.status),
-    index().on(t.requesterId),
-    index().on(t.createdAt),
-    index().on(t.assigneeId),
-  ],
+  (t) => [index().on(t.status), index().on(t.requesterId), index().on(t.createdAt), index().on(t.assigneeId)],
 );
 
-export const ticketComments = pgTable(
-  "ticket_comments",
-  {
-    id: id(),
-    ticketId: integer()
-      .notNull()
-      .references(() => tickets.id, { onDelete: "cascade" }),
-    authorId: text().references(() => users.id, { onDelete: "set null" }),
-    authorName: text().notNull(),
-    body: text().notNull(),
-    createdAt: createdAt(),
-  },
-  (t) => [index().on(t.ticketId)],
-);
+export const ticketComments = pgTable("ticket_comments", {
+  id: id(),
+  ticketId: integer()
+    .notNull()
+    .references(() => tickets.id, { onDelete: "cascade" }),
+  authorId: text().references(() => users.id, { onDelete: "set null" }),
+  authorName: text().notNull(),
+  body: text().notNull(),
+  createdAt: createdAt(),
+}, (t) => [index().on(t.ticketId)]);
 
 export const kbArticles = pgTable("kb_articles", {
   id: id(),
@@ -488,9 +449,7 @@ export const purchases = pgTable("purchases", {
   title: text().notNull(),
   category: text().notNull(),
   vendorId: integer().references(() => vendors.id, { onDelete: "set null" }),
-  requestedFor: integer().references(() => employees.id, {
-    onDelete: "set null",
-  }),
+  requestedFor: integer().references(() => employees.id, { onDelete: "set null" }),
   quantity: integer().notNull().default(1),
   amount: money().notNull(),
   status: text().$type<PurchaseStatus>().notNull().default("requested"),
@@ -602,10 +561,7 @@ export const alerts = pgTable("alerts", {
     .notNull()
     .references(() => assets.id, { onDelete: "cascade" }),
   kind: text().$type<"down" | "degraded">().notNull(),
-  status: text()
-    .$type<"open" | "acknowledged" | "resolved">()
-    .notNull()
-    .default("open"),
+  status: text().$type<"open" | "acknowledged" | "resolved">().notNull().default("open"),
   openedAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
   acknowledgedBy: text().references(() => users.id, { onDelete: "set null" }),
   acknowledgedAt: timestamp({ withTimezone: true }),
@@ -616,10 +572,7 @@ export const alerts = pgTable("alerts", {
 export const discoveryRuns = pgTable("discovery_runs", {
   id: id(),
   cidr: text().notNull(),
-  status: text()
-    .$type<"running" | "done" | "failed">()
-    .notNull()
-    .default("running"),
+  status: text().$type<"running" | "done" | "failed">().notNull().default("running"),
   total: integer().notNull(),
   scanned: integer().notNull().default(0),
   error: text(),
@@ -658,13 +611,7 @@ export const dailyChecks = pgTable(
 // ---------------------------------------------------------------- workstation checks
 
 /** One checklist item as it was found, its wording kept as it stood on the day. */
-export type WorkstationItem = {
-  code: string;
-  labelEn: string;
-  labelAr: string;
-  state: WorkstationItemState;
-  note: string;
-};
+export type WorkstationItem = { code: string; labelEn: string; labelAr: string; state: WorkstationItemState; note: string };
 
 /**
  * IT's check of a desk against the IT standard. The employee sees it once, at their next Windows
@@ -678,9 +625,7 @@ export const workstationChecks = pgTable(
     assetId: integer().references(() => assets.id, { onDelete: "set null" }),
     /** The computer's name, as Windows gives it: messages for people the app cannot match go by it. */
     computerName: text().notNull(),
-    employeeId: integer().references(() => employees.id, {
-      onDelete: "set null",
-    }),
+    employeeId: integer().references(() => employees.id, { onDelete: "set null" }),
     employeeName: text(),
     result: text().$type<WorkstationResult>().notNull(),
     items: jsonb().$type<WorkstationItem[]>().notNull(),
@@ -695,11 +640,7 @@ export const workstationChecks = pgTable(
     /** Where: the computer's name, or "app". */
     readOn: text(),
   },
-  (t) => [
-    index().on(t.employeeId),
-    index().on(t.computerName),
-    index().on(t.assetId),
-  ],
+  (t) => [index().on(t.employeeId), index().on(t.computerName), index().on(t.assetId)],
 );
 
 // ---------------------------------------------------------------- devices seen at sign-in
@@ -740,9 +681,7 @@ export const itForms = pgTable(
   {
     id: id(),
     kind: text().$type<ItFormKind>().notNull(),
-    employeeId: integer().references(() => employees.id, {
-      onDelete: "set null",
-    }),
+    employeeId: integer().references(() => employees.id, { onDelete: "set null" }),
     employeeName: text().notNull().default(""),
     assetId: integer().references(() => assets.id, { onDelete: "set null" }),
     data: jsonb().$type<Record<string, unknown>>().notNull(),
@@ -947,35 +886,27 @@ export const emails = pgTable(
     lastAttemptAt: timestamp({ withTimezone: true }),
     sentAt: timestamp({ withTimezone: true }),
   },
-  (t) => [
-    index().on(t.status),
-    index().on(t.createdAt),
-    index().on(t.ticketId),
-  ],
+  (t) => [index().on(t.status), index().on(t.createdAt), index().on(t.ticketId)],
 );
 
 /**
  * A link in an email that acts without signing in. Only a hash of its token is stored, so the
  * table cannot be used to forge one. Each works once, for one person and one ticket, until it expires.
  */
-export const emailLinks = pgTable(
-  "email_links",
-  {
-    id: id(),
-    tokenHash: text().notNull().unique(),
-    kind: text().$type<"resolution">().notNull(),
-    ticketId: integer()
-      .notNull()
-      .references(() => tickets.id, { onDelete: "cascade" }),
-    employeeId: integer()
-      .notNull()
-      .references(() => employees.id, { onDelete: "cascade" }),
-    expiresAt: timestamp({ withTimezone: true }).notNull(),
-    usedAt: timestamp({ withTimezone: true }),
-    createdAt: createdAt(),
-  },
-  (t) => [index().on(t.ticketId)],
-);
+export const emailLinks = pgTable("email_links", {
+  id: id(),
+  tokenHash: text().notNull().unique(),
+  kind: text().$type<"resolution">().notNull(),
+  ticketId: integer()
+    .notNull()
+    .references(() => tickets.id, { onDelete: "cascade" }),
+  employeeId: integer()
+    .notNull()
+    .references(() => employees.id, { onDelete: "cascade" }),
+  expiresAt: timestamp({ withTimezone: true }).notNull(),
+  usedAt: timestamp({ withTimezone: true }),
+  createdAt: createdAt(),
+}, (t) => [index().on(t.ticketId)]);
 
 // ---------------------------------------------------------------- files
 
@@ -1012,9 +943,7 @@ export const idCards = pgTable(
   "id_cards",
   {
     id: id(),
-    employeeId: integer().references(() => employees.id, {
-      onDelete: "cascade",
-    }),
+    employeeId: integer().references(() => employees.id, { onDelete: "cascade" }),
     joinerId: integer().references(() => joiners.id, { onDelete: "cascade" }),
     ticketId: integer().references(() => tickets.id, { onDelete: "set null" }),
     reason: text().$type<IdCardReason>().notNull(),
@@ -1037,11 +966,7 @@ export const idCards = pgTable(
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
-  (t) => [
-    index().on(t.employeeId),
-    index().on(t.joinerId),
-    index().on(t.ticketId),
-  ],
+  (t) => [index().on(t.employeeId), index().on(t.joinerId), index().on(t.ticketId)],
 );
 
 // ---------------------------------------------------------------- tools
@@ -1101,9 +1026,7 @@ export const teamTasks = pgTable(
     status: text().$type<TeamTaskStatus>().notNull().default("todo"),
     progress: smallint().notNull().default(0),
     confidential: boolean().notNull().default(false),
-    projectId: integer().references(() => projects.id, {
-      onDelete: "set null",
-    }),
+    projectId: integer().references(() => projects.id, { onDelete: "set null" }),
     startedAt: timestamp({ withTimezone: true }),
     doneAt: timestamp({ withTimezone: true }),
     confirmedAt: timestamp({ withTimezone: true }),

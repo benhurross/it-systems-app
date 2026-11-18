@@ -290,6 +290,11 @@ test.describe("tags", () => {
       ids.push(((await res.json()) as { id: number }).id);
     }
     const tags = ids.map((id) => `AST-${String(id).padStart(4, "0")}`);
+    // A virtual server has nothing to stick a tag on: it is not offered.
+    const virtual = await page.request.post("/api/assets", {
+      data: { name: `${prefix}-vm`, category: "servers", type: "virtual_server", status: "in_use", location: "jeddah", supportStatus: "supported", criticality: "low", monitorMethod: "none" },
+    });
+    expect(virtual.ok()).toBe(true);
 
     await page.goto("/en/assets/inventory");
     await page.getByRole("tab", { name: "Tags" }).or(page.getByRole("link", { name: "Tags" })).click();
