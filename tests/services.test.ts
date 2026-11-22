@@ -309,15 +309,39 @@ describe("directory", () => {
 describe("joiners and leavers", () => {
   it("completes onboarding only when every step is done, adding the employee", async () => {
     const joiner = await people.createJoiner(
-      { name: "Test Joiner", email: "test.joiner@applus.test", department: "sales", location: "riyadh", jobTitle: "Account Manager", employeeNumber: "2077", startDate: "2026-10-05" },
+      { name: "Test Joiner", email: "test.joiner@applus.test", department: "sales", location: "riyadh", jobTitle: "Account Manager", employeeNumber: "2077", phone: "1234", mobile: "+966 50 111 2233", startDate: "2026-10-05" },
       it_,
     );
     await expect(people.completeJoiner(joiner.id, it_)).rejects.toMatchObject({ status: 400 });
     await people.updateJoinerTasks(joiner.id, { tasks: { ...Object.fromEntries(ONBOARDING_TASKS.map((t) => [t.key, true])), injected: true } }, it_);
     const done = await people.completeJoiner(joiner.id, it_);
+    expect(done).toMatchObject({ linked: false });
     expect(done.employeeId).not.toBeNull();
     expect(Object.keys(done.tasks)).not.toContain("injected");
-    expect(await people.getEmployee(done.employeeId!)).toMatchObject({ email: "test.joiner@applus.test", employeeNumber: "2077" });
+    expect(await people.getEmployee(done.employeeId!)).toMatchObject({ email: "test.joiner@applus.test", employeeNumber: "2077", phone: "1234", mobile: "+966 50 111 2233" });
+  });
+
+  it("links a joiner to the directory entry already added for them by hand, filling in only what it lacks", async () => {
+    const added = await people.createEmployee(
+      { name: "Hand Added", email: "hand.added@applus.test", department: "finance", location: "jeddah", jobTitle: "Accountant", employeeNumber: null, phone: "5555", mobile: null, active: false },
+      it_,
+    );
+    const joiner = await people.createJoiner(
+      { name: "Hand Added (joiner)", email: "Hand.Added@applus.test", department: "sales", location: "riyadh", jobTitle: "Account Manager", employeeNumber: "2088", phone: "9999", mobile: "+966 55 000 1111", startDate: "2026-10-06" },
+      it_,
+    );
+    await people.updateJoinerTasks(joiner.id, { tasks: Object.fromEntries(ONBOARDING_TASKS.map((t) => [t.key, true])) }, it_);
+    const done = await people.completeJoiner(joiner.id, it_);
+    expect(done).toMatchObject({ linked: true, employeeId: added.id });
+    expect(await people.getEmployee(added.id)).toMatchObject({
+      name: "Hand Added",
+      department: "finance",
+      employeeNumber: "2088",
+      phone: "5555",
+      mobile: "+966 55 000 1111",
+      active: true,
+    });
+    expect(await db.select().from(s.employees).where(eq(s.employees.employeeNumber, "2088"))).toHaveLength(1);
   });
 
   it("marks the employee inactive when offboarding finishes", async () => {

@@ -561,7 +561,7 @@
       "email": "Email",
       "role": "Role",
       "employee": "Employee record",
-      "employeeHint": "Choosing a person fills in their name and email.",
+      "employeeHint": "Current staff without an account are listed. Choosing a person fills in their name and email.",
       "noEmailOnRecord": "This person has no email on record. Enter the address they will sign in with.",
       "noEmployee": "Not linked",
       "password": "Temporary password",
@@ -1662,7 +1662,12 @@
       "noAssets": "No assets assigned.",
       "tickets": "Recent tickets",
       "noTickets": "No tickets raised.",
-      "duplicate": "Duplicate"
+      "duplicate": "Duplicate",
+      "joining": {
+        "title": "{name} is being onboarded",
+        "body": "Completing their onboarding adds them to the directory, so there is no need to add them here. If you add them anyway, completing onboarding links to this entry.",
+        "open": "Open their onboarding"
+      }
     },
     "onboarding": {
       "new": "New joiner",
@@ -1674,9 +1679,10 @@
       "open": "Open the checklist for {name}",
       "starts": "Starts {date}",
       "complete": "Complete onboarding",
-      "completeHint": "Finishing adds {name} to the directory.",
+      "completeHint": "Finishing adds {name} to the directory, or links them to their entry if someone already added it.",
       "done": "Onboarding complete. {name} is now in the directory.",
-      "viewInDirectory": "View in the directory"
+      "viewInDirectory": "View in the directory",
+      "doneLinked": "Onboarding complete. {name} was already in the directory: their entry is linked, with any missing details filled in."
     },
     "offboarding": {
       "new": "New leaver",

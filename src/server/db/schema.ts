@@ -192,6 +192,9 @@ export const joiners = pgTable("joiners", {
   location: text().notNull(),
   jobTitle: text().notNull(),
   employeeNumber: text(),
+  /** Carried to their directory entry when onboarding completes. */
+  phone: text(),
+  mobile: text(),
   startDate: day().notNull(),
   tasks: jsonb().$type<Record<string, boolean>>().notNull().default({}),
   employeeId: integer().references(() => employees.id, { onDelete: "set null" }),

@@ -333,6 +333,8 @@ export const joinerInput = z.object({
   location: code,
   jobTitle: name,
   employeeNumber,
+  phone: optionalText,
+  mobile,
   startDate: day,
 });
 

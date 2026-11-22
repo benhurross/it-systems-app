@@ -3,7 +3,9 @@
 import { Hint } from "@/components/hint";
 import { IdCard, Plus } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
+import { useSearchParams } from "next/navigation";
 import { useState } from "react";
+import { toast } from "sonner";
 import { columnHelper, DataTable } from "@/components/data-table";
 import { JoinerDialog } from "@/components/people/dialogs";
 import { PeopleHeader } from "@/components/people/people-header";
@@ -29,7 +31,9 @@ export default function OnboardingPage() {
   const format = useFormat();
   const lookups = useLookups();
   const [adding, setAdding] = useState(false);
-  const [openId, setOpenId] = useState<number | null>(null);
+  // Opened from elsewhere (the directory's warning about someone being onboarded) with ?open=<id>.
+  const asked = Number(useSearchParams().get("open"));
+  const [openId, setOpenId] = useState<number | null>(Number.isInteger(asked) && asked > 0 ? asked : null);
   const { data = [], isLoading } = useApi<Joiner[]>("/joiners");
   const open = data.find((j) => j.id === openId);
 
@@ -115,8 +119,9 @@ function JoinerSheet({ joiner, onClose }: { joiner: Joiner; onClose: () => void 
     (next: Record<string, boolean>) => api(`/joiners/${joiner.id}`, { method: "PATCH", body: { tasks: next } }),
     { scope },
   );
-  const complete = useApiMutation(() => api(`/joiners/${joiner.id}/complete`, { method: "POST" }), {
-    success: t("people.onboarding.done", { name: joiner.name }),
+  const complete = useApiMutation(() => api<{ linked: boolean }>(`/joiners/${joiner.id}/complete`, { method: "POST" }), {
+    // Linked to an entry someone had already added by hand, or a new one.
+    onSuccess: (done) => toast.success(t(done.linked ? "people.onboarding.doneLinked" : "people.onboarding.done", { name: joiner.name })),
     scope,
   });
   const router = useRouter();

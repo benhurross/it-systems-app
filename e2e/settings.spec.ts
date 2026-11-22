@@ -58,7 +58,11 @@ test.describe("as an admin", () => {
   });
 
   test("choosing an employee record fills in the new user's name and email", async ({ page }, info) => {
-    const [person] = (await (await page.request.get("/api/employees")).json()) as { name: string; email: string }[];
+    const everyone = (await (await page.request.get("/api/employees")).json()) as { id: number; name: string; email: string; active: boolean }[];
+    const accounts = (await (await page.request.get("/api/settings/users")).json()) as { employeeId: number | null }[];
+    const hasAccount = new Set(accounts.map((a) => a.employeeId));
+    const person = everyone.find((e) => e.active && !hasAccount.has(e.id))!;
+    const withAccount = everyone.find((e) => hasAccount.has(e.id))!;
     // Someone from the staff list with no email on record has a placeholder address.
     const unrecorded = unique(info, "No Mail");
     const res = await page.request.post("/api/employees", {
@@ -77,6 +81,11 @@ test.describe("as an admin", () => {
     await page.goto("/en/settings/users");
     await page.getByRole("button", { name: "Add user" }).click();
     const dialog = page.getByRole("dialog");
+    // Someone who already has an account is not offered again.
+    await page.getByRole("combobox", { name: "Employee record" }).click();
+    await expect(page.getByRole("option", { name: `${person.name} (${person.email})` })).toBeVisible();
+    await expect(page.getByRole("option", { name: `${withAccount.name} (${withAccount.email})` })).toHaveCount(0);
+    await page.keyboard.press("Escape");
     await choose(page, "Employee record", `${person.name} (${person.email})`);
     await expect(dialog.getByLabel("Full name")).toHaveValue(person.name);
     await expect(dialog.getByLabel("Email")).toHaveValue(person.email);

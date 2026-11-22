@@ -242,7 +242,7 @@ describe("IT printing a card", () => {
   it("ticks a joiner's onboarding step when printed, and moves the card to their directory entry", async () => {
     const tasks = Object.fromEntries(ONBOARDING_TASKS.map((t) => [t.key, t.key !== "print_id_card"]));
     const joiner = await people.createJoiner(
-      { name: "Yara Al-Mutairi", email: "yara@applus.test", department: "sales", location: "riyadh", jobTitle: "Account Manager", employeeNumber: "2044", startDate: "2026-10-04" },
+      { name: "Yara Al-Mutairi", email: "yara@applus.test", department: "sales", location: "riyadh", jobTitle: "Account Manager", employeeNumber: "2044", phone: null, mobile: null, startDate: "2026-10-04" },
       it_,
     );
     await people.updateJoinerTasks(joiner.id, { tasks }, it_);

@@ -190,6 +190,13 @@
       "when": 1794825385904,
       "tag": "0026_list_indexes",
       "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1795332476066,
+      "tag": "0027_joiner_contact",
+      "breakpoints": true
     }
   ]
 }

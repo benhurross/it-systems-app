@@ -48,7 +48,13 @@ export default function UsersPage() {
   const manager = can(me.role, "manager");
   const allRoles = ROLES.map((r) => ({ value: r, label: t(`roles.${r}`) }));
   const roleOptions = manager ? allRoles : allRoles.filter((r) => r.value !== "admin");
-  const employeeOptions = employees.map((e) => ({ value: e.id, label: `${e.name} (${e.email})` }));
+  // The people an account can be for: current staff without an account of their own (an account's
+  // own person stays on its list).
+  const linked = new Map(users.filter((u) => u.employeeId !== null).map((u) => [u.employeeId, u.id]));
+  const employeeOptions = (account?: UserRow) =>
+    employees
+      .filter((e) => e.id === account?.employeeId || (e.active && !linked.has(e.id)))
+      .map((e) => ({ value: e.id, label: `${e.name} (${e.email})` }));
 
   const columns = [
     col.accessor("name", {
@@ -122,7 +128,7 @@ export default function UsersPage() {
           onClose={() => setAdding(false)}
           roleOptions={roleOptions}
           employees={employees}
-          employeeOptions={employeeOptions}
+          employeeOptions={employeeOptions()}
         />
       )}
       {editing && (
@@ -131,7 +137,7 @@ export default function UsersPage() {
           self={editing.id === me.id}
           onClose={() => setEditing(null)}
           roleOptions={roleOptions}
-          employeeOptions={employeeOptions}
+          employeeOptions={employeeOptions(editing)}
         />
       )}
     </>

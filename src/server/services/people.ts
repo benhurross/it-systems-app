@@ -1,5 +1,5 @@
 import { IT_ROLES } from "@/lib/permissions";
-import { and, asc, desc, eq, getTableColumns, inArray, isNull, or } from "drizzle-orm";
+import { and, asc, desc, eq, getTableColumns, inArray, isNull, or, sql } from "drizzle-orm";
 import type { z } from "zod";
 import { OFFBOARDING_TASKS, ONBOARDING_TASKS } from "@/lib/domain";
 import { onboardingComplete } from "@/lib/people";
@@ -84,23 +84,43 @@ export async function updateJoinerTasks(id: number, input: z.infer<typeof checkl
 
 /** Finishing onboarding adds the new starter to the directory, in one transaction. */
 export async function completeJoiner(id: number, actor: Actor) {
+  let linked = false;
   const result = await db.transaction(async (tx) => {
     const joiner = one(await tx.select().from(joiners).where(eq(joiners.id, id)));
     if (joiner.completedAt) throw badRequest("Onboarding is already complete");
     if (!onboardingComplete(joiner.tasks)) throw badRequest("Finish every checklist step first");
-    const employee = one(
-      await tx
-        .insert(employees)
-        .values({
-          name: joiner.name,
-          email: joiner.email,
-          department: joiner.department,
-          location: joiner.location,
-          jobTitle: joiner.jobTitle,
-          employeeNumber: joiner.employeeNumber,
-        })
-        .returning(),
-    );
+    // Someone may have added them to the directory by hand already: that entry is theirs, kept as
+    // it is but for what it lacks, and active again.
+    const [existing] = await tx.select().from(employees).where(sql`lower(${employees.email}) = ${joiner.email.trim().toLowerCase()}`);
+    const employee = existing
+      ? one(
+          await tx
+            .update(employees)
+            .set({
+              employeeNumber: existing.employeeNumber || joiner.employeeNumber,
+              phone: existing.phone || joiner.phone,
+              mobile: existing.mobile || joiner.mobile,
+              active: true,
+            })
+            .where(eq(employees.id, existing.id))
+            .returning(),
+        )
+      : one(
+          await tx
+            .insert(employees)
+            .values({
+              name: joiner.name,
+              email: joiner.email,
+              department: joiner.department,
+              location: joiner.location,
+              jobTitle: joiner.jobTitle,
+              employeeNumber: joiner.employeeNumber,
+              phone: joiner.phone,
+              mobile: joiner.mobile,
+            })
+            .returning(),
+        );
+    linked = !!existing;
     // Their ID card now belongs to the directory entry too.
     await tx.update(idCards).set({ employeeId: employee.id }).where(eq(idCards.joinerId, id));
     return one(
@@ -111,8 +131,8 @@ export async function completeJoiner(id: number, actor: Actor) {
         .returning(),
     );
   });
-  await audit(actor, "complete", "joiner", result.id, `Completed onboarding for ${result.name}`);
-  return result;
+  await audit(actor, "complete", "joiner", result.id, `Completed onboarding for ${result.name}${linked ? " (linked to their existing directory entry)" : ""}`);
+  return { ...result, linked };
 }
 
 // ---------------------------------------------------------------- leavers

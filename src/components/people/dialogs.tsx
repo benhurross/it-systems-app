@@ -2,13 +2,16 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslations } from "next-intl";
-import { useForm } from "react-hook-form";
+import { UserPlus } from "lucide-react";
+import { useForm, useWatch } from "react-hook-form";
 import type { z } from "zod";
 import { ComboboxField, DateField, FormDialog, SelectField, SwitchField, TextareaField, TextField } from "@/components/form";
 import { useApi, useApiMutation } from "@/hooks/use-api";
 import { useLookups } from "@/hooks/use-lookups";
+import { Link } from "@/i18n/navigation";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { api } from "@/lib/api";
-import type { Employee, Leaver } from "@/lib/api-types";
+import type { Employee, Joiner, Leaver } from "@/lib/api-types";
 import { isoDate } from "@/lib/dates";
 import { employeeInput, joinerInput, leaverInput } from "@/lib/schemas";
 
@@ -24,6 +27,10 @@ export function EmployeeDialog({ employee, onClose }: { employee?: Employee; onC
       employee ? api(`/employees/${employee.id}`, { method: "PATCH", body: values }) : api("/employees", { body: values }),
     { form, success: t("directory.saved"), onSuccess: onClose },
   );
+  // A new hire belongs in onboarding, which adds them here when it is complete.
+  const { data: joiners = [] } = useApi<Joiner[]>(employee ? null : "/joiners");
+  const email = (useWatch({ control: form.control, name: "email" }) ?? "").trim().toLowerCase();
+  const joining = email ? joiners.find((j) => !j.completedAt && j.email.trim().toLowerCase() === email) : undefined;
 
   return (
     <FormDialog
@@ -45,6 +52,18 @@ export function EmployeeDialog({ employee, onClose }: { employee?: Employee; onC
         <SelectField name="department" label={t("department")} options={lookups.options("department")} />
         <SelectField name="location" label={t("location")} options={lookups.options("location")} />
       </div>
+      {joining && (
+        <Alert data-joining>
+          <UserPlus />
+          <AlertTitle>{t("directory.joining.title", { name: joining.name })}</AlertTitle>
+          <AlertDescription>
+            <p>{t("directory.joining.body")}</p>
+            <Link href={`/people/onboarding?open=${joining.id}`} className="font-medium text-primary underline-offset-4 hover:underline">
+              {t("directory.joining.open")}
+            </Link>
+          </AlertDescription>
+        </Alert>
+      )}
       <SwitchField name="active" label={t("directory.active")} />
     </FormDialog>
   );
@@ -70,6 +89,8 @@ export function JoinerDialog({ onClose }: { onClose: () => void }) {
         <TextField name="jobTitle" label={t("jobTitle")} />
         <TextField name="email" label={t("email")} type="email" dir="ltr" />
         <DateField name="startDate" label={t("onboarding.startDate")} />
+        <TextField name="mobile" label={t("mobile")} type="tel" dir="ltr" placeholder="+966 5x xxx xxxx" autoComplete="off" optional />
+        <TextField name="phone" label={t("phone")} description={t("phoneHint")} dir="ltr" optional />
         <TextField name="employeeNumber" label={t("employeeNumber")} dir="ltr" optional />
         <SelectField name="department" label={t("department")} options={lookups.options("department")} />
         <SelectField name="location" label={t("location")} options={lookups.options("location")} />

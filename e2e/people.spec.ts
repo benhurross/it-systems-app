@@ -18,6 +18,7 @@ test("completing a joiner's checklist adds them to the directory", async ({ page
   await dialog.getByLabel("Job title").fill("Claims Officer");
   await dialog.getByLabel("Email").fill(email);
   await dialog.getByLabel("Start date").fill(new Date(Date.now() + 7 * 86_400_000).toISOString().slice(0, 10));
+  await dialog.getByLabel("Mobile").fill("+966 50 765 4321");
   await choose(page, "Department", "Operations");
   await choose(page, "Location", "Jeddah Head Office");
   await dialog.getByRole("button", { name: "Save" }).click();
@@ -37,6 +38,32 @@ test("completing a joiner's checklist adds them to the directory", async ({ page
   await sheet.getByRole("link", { name: "View in the directory" }).click();
   await expect(page.getByRole("heading", { name })).toBeVisible();
   await expect(page.getByText(email)).toBeVisible();
+  // The mobile number given at onboarding came along.
+  await expect(page.getByRole("link", { name: /\+966 50 765 4321/ })).toBeVisible();
+  console.assertClean();
+});
+
+test("adding someone to the directory who is being onboarded points to their onboarding", async ({ page }, info) => {
+  const console = watchConsole(page);
+  const name = unique(info, "Omar Joining");
+  const email = `omar.${info.project.name}.${Date.now()}@applus.test`;
+  const made = await page.request.post("/api/joiners", {
+    data: { name, email, department: "sales", location: "jeddah", jobTitle: "Account Manager", employeeNumber: null, phone: null, mobile: null, startDate: "2026-12-01" },
+  });
+  expect(made.ok(), await made.text()).toBe(true);
+  const id = ((await made.json()) as { id: number }).id;
+
+  await page.goto("/en/people/directory");
+  await page.getByRole("button", { name: "Add employee" }).click();
+  const dialog = page.getByRole("dialog");
+  await dialog.getByLabel("Email").fill("someone.else@applus.test");
+  await expect(dialog.getByText(`${name} is being onboarded`)).toBeHidden();
+  // Typed differently, it is still the same person.
+  await dialog.getByLabel("Email").fill(email.toUpperCase());
+  await expect(dialog.getByText(`${name} is being onboarded`)).toBeVisible();
+  await dialog.getByRole("link", { name: "Open their onboarding" }).click();
+  await expect(page).toHaveURL(new RegExp(`/en/people/onboarding\\?open=${id}$`));
+  await expect(page.getByRole("dialog", { name: `Onboarding: ${name}` })).toBeVisible();
   console.assertClean();
 });
 
