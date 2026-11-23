@@ -1,5 +1,5 @@
 import { IT_ROLES } from "@/lib/permissions";
-import { and, asc, desc, eq, getTableColumns, inArray, isNull, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, getTableColumns, inArray, isNotNull, isNull, or, sql } from "drizzle-orm";
 import type { z } from "zod";
 import { OFFBOARDING_TASKS, ONBOARDING_TASKS } from "@/lib/domain";
 import { onboardingComplete } from "@/lib/people";
@@ -133,6 +133,23 @@ export async function completeJoiner(id: number, actor: Actor) {
   });
   await audit(actor, "complete", "joiner", result.id, `Completed onboarding for ${result.name}${linked ? " (linked to their existing directory entry)" : ""}`);
   return { ...result, linked };
+}
+
+/**
+ * Deletes onboarding records (one, or many chosen together), for good. Anyone already added to the
+ * directory stays there, with their ID card; an ID card request started for someone still being
+ * onboarded goes with their record.
+ */
+export async function deleteJoiners(ids: number[], actor: Actor) {
+  const gone = await db.transaction(async (tx) => {
+    // A card that now belongs to a directory entry is kept: only its link to onboarding is dropped.
+    await tx.update(idCards).set({ joinerId: null }).where(and(inArray(idCards.joinerId, ids), isNotNull(idCards.employeeId)));
+    return tx.delete(joiners).where(inArray(joiners.id, ids)).returning({ id: joiners.id, name: joiners.name, completedAt: joiners.completedAt });
+  });
+  for (const row of gone) {
+    await audit(actor, "delete", "joiner", row.id, `Deleted the onboarding record for ${row.name}${row.completedAt ? " (they stay in the directory)" : ""}`);
+  }
+  return { deleted: gone.length };
 }
 
 // ---------------------------------------------------------------- leavers

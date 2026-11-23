@@ -1,25 +1,16 @@
 "use client";
 
 import { Hint } from "@/components/hint";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { useId, useRef, useState } from "react";
+import { useId, useState } from "react";
 import { useCurrentUser } from "@/components/app-shell/current-user";
 import { EnumBadge } from "@/components/badges";
 import { columnHelper, DataTable } from "@/components/data-table";
+import { ChosenActions, ConfirmDelete, selectColumn, useChosen } from "@/components/people/bulk-select";
 import { LeaverDialog } from "@/components/people/dialogs";
 import { PeopleHeader } from "@/components/people/people-header";
 import { TaskProgress } from "@/components/projects/progress-cell";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -51,50 +42,14 @@ export default function OffboardingPage() {
   const today = isoDate();
   const rows: Row[] = data.map((l) => ({ ...l, state: leaverState(l, today), daysLeft: forwardingDaysLeft(l.resignationDate, today) }));
   const open = rows.find((l) => l.id === openId);
-  // Records ticked for deleting. Shift-ticking ticks every row between the last one ticked and this
-  // one, as the list shows them (sorted and filtered), so a run of names is chosen in two clicks.
-  const [chosen, setChosen] = useState<number[]>([]);
-  const lastTicked = useRef<number | null>(null);
+  // Records ticked for deleting: Admins only, and the server holds to it too.
+  const mayDelete = can(useCurrentUser().role, "manager");
+  const chosenState = useChosen();
+  const { chosen } = chosenState;
   const [deleting, setDeleting] = useState(false);
   const chosenRows = rows.filter((r) => chosen.includes(r.id));
-  // Only an Admin deletes offboarding records; the server holds to it too.
-  const mayDelete = can(useCurrentUser().role, "manager");
+  const select = [selectColumn(col, chosenState, { row: (name) => t("people.bulk.select", { name }), page: t("people.bulk.selectPage") })];
 
-  const select = [
-    col.display({
-      id: "select",
-      header: (info) => {
-        const page = info.table.getRowModel().rows.map((r) => r.original.id);
-        const all = page.length > 0 && page.every((id) => chosen.includes(id));
-        return (
-          <Checkbox
-            checked={all ? true : page.some((id) => chosen.includes(id)) ? "indeterminate" : false}
-            onCheckedChange={(on) => setChosen((c) => (on === true ? [...new Set([...c, ...page])] : c.filter((id) => !page.includes(id))))}
-            aria-label={t("people.offboarding.selectPage")}
-          />
-        );
-      },
-      cell: (info) => {
-        const row = info.row.original;
-        return (
-          <Checkbox
-            checked={chosen.includes(row.id)}
-            aria-label={t("people.offboarding.select", { name: row.name })}
-            onClick={(e) => {
-              const on = !chosen.includes(row.id);
-              const order = info.table.getPrePaginatedRowModel().rows.map((r) => r.original.id);
-              const from = lastTicked.current === null ? -1 : order.indexOf(lastTicked.current);
-              const to = order.indexOf(row.id);
-              const run = e.shiftKey && from >= 0 && to >= 0 ? order.slice(Math.min(from, to), Math.max(from, to) + 1) : [row.id];
-              setChosen((c) => (on ? [...new Set([...c, ...run])] : c.filter((id) => !run.includes(id))));
-              lastTicked.current = row.id;
-              e.preventDefault();
-            }}
-          />
-        );
-      },
-    }),
-  ];
   const columns = [
     ...(mayDelete ? select : []),
     col.accessor("name", {
@@ -137,25 +92,12 @@ export default function OffboardingPage() {
           </Button>
         }
       />
-      {mayDelete && <p className="mb-3 text-sm text-muted-foreground">{t("people.offboarding.selectHint")}</p>}
+      {mayDelete && <p className="mb-3 text-sm text-muted-foreground">{t("people.bulk.selectHint")}</p>}
       <DataTable
         data={rows}
         columns={columns}
         loading={isLoading}
-        toolbar={
-          mayDelete &&
-          chosen.length > 0 && (
-            <>
-              <Button variant="ghost" size="sm" onClick={() => setChosen([])}>
-                {t("people.offboarding.clearSelection")}
-              </Button>
-              <Button variant="outline" size="sm" className="text-destructive hover:text-destructive" onClick={() => setDeleting(true)}>
-                <Trash2 />
-                {t("people.offboarding.deleteSelected", { count: chosen.length })}
-              </Button>
-            </>
-          )
-        }
+        toolbar={mayDelete && <ChosenActions count={chosen.length} onClear={chosenState.clear} onDelete={() => setDeleting(true)} />}
         facets={[
           {
             column: "state",
@@ -171,7 +113,7 @@ export default function OffboardingPage() {
           rows={chosenRows}
           onClose={() => setDeleting(false)}
           onDeleted={() => {
-            setChosen([]);
+            chosenState.clear();
             setDeleting(false);
           }}
         />
@@ -187,8 +129,7 @@ export default function OffboardingPage() {
  */
 function DeleteLeavers({ rows, onClose, onDeleted }: { rows: Row[]; onClose: () => void; onDeleted: () => void }) {
   const t = useTranslations();
-  const ids = useId();
-  const [sure, setSure] = useState(false);
+  const id = useId();
   const [restore, setRestore] = useState(false);
   const completed = rows.filter((r) => r.completedAt);
   const remove = useApiMutation(
@@ -196,47 +137,24 @@ function DeleteLeavers({ rows, onClose, onDeleted }: { rows: Row[]; onClose: () 
     { onSuccess: (done) => (toast.success(t("people.offboarding.deleted", { count: done.deleted })), onDeleted()) },
   );
   return (
-    <AlertDialog open onOpenChange={(open) => !open && onClose()}>
-      <AlertDialogContent data-delete-leavers>
-        <AlertDialogHeader>
-          <AlertDialogTitle>{t("people.offboarding.deleteTitle", { count: rows.length })}</AlertDialogTitle>
-          <AlertDialogDescription>{t("people.offboarding.deleteBody")}</AlertDialogDescription>
-        </AlertDialogHeader>
-        <ul className="max-h-48 list-inside list-disc overflow-y-auto rounded-lg border p-3 text-sm">
-          {rows.map((r) => (
-            <li key={r.id}>{r.name}</li>
-          ))}
-        </ul>
-        {completed.length > 0 && (
+    <ConfirmDelete
+      title={t("people.offboarding.deleteTitle", { count: rows.length })}
+      body={t("people.offboarding.deleteBody")}
+      names={rows.map((r) => r.name)}
+      pending={remove.isPending}
+      onConfirm={() => remove.mutate(undefined)}
+      onClose={onClose}
+      extra={
+        completed.length > 0 && (
           <div className="flex items-start gap-2">
-            <Checkbox id={`${ids}-restore`} checked={restore} onCheckedChange={(v) => setRestore(v === true)} />
-            <Label htmlFor={`${ids}-restore`} className="font-normal leading-snug">
+            <Checkbox id={id} checked={restore} onCheckedChange={(v) => setRestore(v === true)} />
+            <Label htmlFor={id} className="font-normal leading-snug">
               {t("people.offboarding.restore", { count: completed.length })}
             </Label>
           </div>
-        )}
-        <div className="flex items-start gap-2 border-t pt-3">
-          <Checkbox id={`${ids}-sure`} checked={sure} onCheckedChange={(v) => setSure(v === true)} />
-          <Label htmlFor={`${ids}-sure`} className="font-medium leading-snug">
-            {t("people.offboarding.deleteConfirm", { count: rows.length })}
-          </Label>
-        </div>
-        <AlertDialogFooter>
-          <AlertDialogCancel>{t("common.keep")}</AlertDialogCancel>
-          <AlertDialogAction
-            variant="destructive"
-            disabled={!sure || remove.isPending}
-            onClick={(e) => {
-              // Stays open until it is done, so a failure can be seen.
-              e.preventDefault();
-              remove.mutate(undefined);
-            }}
-          >
-            {t("common.delete")}
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+        )
+      }
+    />
   );
 }
 

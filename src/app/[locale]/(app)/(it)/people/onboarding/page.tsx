@@ -7,6 +7,8 @@ import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import { columnHelper, DataTable } from "@/components/data-table";
+import { useCurrentUser } from "@/components/app-shell/current-user";
+import { ChosenActions, ConfirmDelete, selectColumn, useChosen } from "@/components/people/bulk-select";
 import { JoinerDialog } from "@/components/people/dialogs";
 import { PeopleHeader } from "@/components/people/people-header";
 import { TaskProgress } from "@/components/projects/progress-cell";
@@ -23,6 +25,7 @@ import { api } from "@/lib/api";
 import type { Joiner } from "@/lib/api-types";
 import { ONBOARDING_PHASES, ONBOARDING_TASKS } from "@/lib/domain";
 import { onboardingComplete, onboardingProgress } from "@/lib/people";
+import { can } from "@/lib/permissions";
 
 const col = columnHelper<Joiner>();
 
@@ -36,8 +39,14 @@ export default function OnboardingPage() {
   const [openId, setOpenId] = useState<number | null>(Number.isInteger(asked) && asked > 0 ? asked : null);
   const { data = [], isLoading } = useApi<Joiner[]>("/joiners");
   const open = data.find((j) => j.id === openId);
+  // Records ticked for deleting: Admins only, and the server holds to it too.
+  const mayDelete = can(useCurrentUser().role, "manager");
+  const chosenState = useChosen();
+  const { chosen } = chosenState;
+  const [deleting, setDeleting] = useState(false);
 
   const columns = [
+    ...(mayDelete ? [selectColumn(col, chosenState, { row: (name) => t("bulk.select", { name }), page: t("bulk.selectPage") })] : []),
     col.accessor("name", {
       header: t("name"),
       cell: (info) => (
@@ -84,10 +93,12 @@ export default function OnboardingPage() {
           </Button>
         }
       />
+      {mayDelete && <p className="mb-3 text-sm text-muted-foreground">{t("bulk.selectHint")}</p>}
       <DataTable
         data={data}
         columns={columns}
         loading={isLoading}
+        toolbar={mayDelete && <ChosenActions count={chosen.length} onClear={chosenState.clear} onDelete={() => setDeleting(true)} />}
         facets={[
           { column: "department", label: t("department"), options: lookups.options("department") },
           {
@@ -101,8 +112,37 @@ export default function OnboardingPage() {
         ]}
       />
       {adding && <JoinerDialog onClose={() => setAdding(false)} />}
+      {deleting && (
+        <DeleteJoiners
+          rows={data.filter((j) => chosen.includes(j.id))}
+          onClose={() => setDeleting(false)}
+          onDeleted={() => {
+            chosenState.clear();
+            setDeleting(false);
+            setOpenId(null);
+          }}
+        />
+      )}
       {open && <JoinerSheet key={open.id} joiner={open} onClose={() => setOpenId(null)} />}
     </>
+  );
+}
+
+/** Deletes the chosen onboarding records once asked; those already in the directory stay there. */
+function DeleteJoiners({ rows, onClose, onDeleted }: { rows: Joiner[]; onClose: () => void; onDeleted: () => void }) {
+  const t = useTranslations("people.onboarding");
+  const remove = useApiMutation(() => api<{ deleted: number }>("/joiners/delete", { body: { ids: rows.map((r) => r.id) } }), {
+    onSuccess: (done) => (toast.success(t("deleted", { count: done.deleted })), onDeleted()),
+  });
+  return (
+    <ConfirmDelete
+      title={t("deleteTitle", { count: rows.length })}
+      body={t("deleteBody")}
+      names={rows.map((r) => r.name)}
+      pending={remove.isPending}
+      onConfirm={() => remove.mutate(undefined)}
+      onClose={onClose}
+    />
   );
 }
 

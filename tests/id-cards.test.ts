@@ -257,6 +257,21 @@ describe("IT printing a card", () => {
     const [moved] = await db.select().from(s.idCards).where(eq(s.idCards.id, card.id));
     expect(moved.employeeId).toBe(done.employeeId);
     expect((await cards.listCards()).find((c) => c.id === card.id)).toMatchObject({ personName: "Yara Al-Mutairi", hasPhoto: false });
+
+    // Deleting the finished onboarding record keeps the person and their card.
+    const waiting = await people.createJoiner(
+      { name: "Not Yet Started", email: "not.yet@applus.test", department: "sales", location: "riyadh", jobTitle: "Account Manager", employeeNumber: "2045", phone: null, mobile: null, startDate: "2026-12-04" },
+      it_,
+    );
+    const draft = await cards.createCard({ employeeId: null, joinerId: waiting.id, reason: "new_joiner" }, it_);
+    expect(await people.deleteJoiners([joiner.id, waiting.id], it_)).toEqual({ deleted: 2 });
+    const [kept] = await db.select().from(s.idCards).where(eq(s.idCards.id, card.id));
+    expect(kept).toMatchObject({ employeeId: done.employeeId, joinerId: null });
+    expect(await people.getEmployee(done.employeeId!)).toMatchObject({ name: "Yara Al-Mutairi" });
+    // The unfinished one's card request went with it.
+    expect(await db.select().from(s.idCards).where(eq(s.idCards.id, draft.id))).toHaveLength(0);
+    const logged = await db.select().from(s.auditLog).where(and(eq(s.auditLog.entity, "joiner"), eq(s.auditLog.action, "delete")));
+    expect(logged.map((l) => l.summary)).toContain("Deleted the onboarding record for Yara Al-Mutairi (they stay in the directory)");
   });
 });
 

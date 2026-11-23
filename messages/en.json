@@ -1682,7 +1682,10 @@
       "completeHint": "Finishing adds {name} to the directory, or links them to their entry if someone already added it.",
       "done": "Onboarding complete. {name} is now in the directory.",
       "viewInDirectory": "View in the directory",
-      "doneLinked": "Onboarding complete. {name} was already in the directory: their entry is linked, with any missing details filled in."
+      "doneLinked": "Onboarding complete. {name} was already in the directory: their entry is linked, with any missing details filled in.",
+      "deleteTitle": "{count, plural, one {Delete this onboarding record?} other {Delete these # onboarding records?}}",
+      "deleteBody": "Only the onboarding checklists go. Anyone who finished onboarding stays in the directory, with their ID card. An ID card request started for someone still being onboarded is deleted with their record. This cannot be undone.",
+      "deleted": "{count, plural, one {Onboarding record deleted.} other {# onboarding records deleted.}}"
     },
     "offboarding": {
       "new": "New leaver",
@@ -1700,19 +1703,21 @@
       "completeHint": "Ticking the last step completes offboarding and marks the employee as having left.",
       "notesSaved": "Notes saved.",
       "saveNotes": "Save notes",
+      "deleteTitle": "{count, plural, one {Delete this offboarding record?} other {Delete these # offboarding records?}}",
+      "deleteBody": "Only the offboarding checklists go. The people stay in the directory as they are. This cannot be undone.",
+      "restore": "{count, plural, one {One of them finished offboarding and is marked as having left: mark them as a current employee again.} other {# of them finished offboarding and are marked as having left: mark them as current employees again.}}",
+      "deleted": "{count, plural, one {Offboarding record deleted.} other {# offboarding records deleted.}}"
+    },
+    "employeeNumber": "ID number",
+    "idLabel": "ID: {number}",
+    "bulk": {
       "select": "Select {name}",
       "selectPage": "Select everyone on this page",
       "clearSelection": "Clear selection",
       "deleteSelected": "Delete selected ({count})",
-      "deleteTitle": "{count, plural, one {Delete this offboarding record?} other {Delete these # offboarding records?}}",
-      "deleteBody": "Only the offboarding checklists go. The people stay in the directory as they are. This cannot be undone.",
-      "restore": "{count, plural, one {One of them finished offboarding and is marked as having left: mark them as a current employee again.} other {# of them finished offboarding and are marked as having left: mark them as current employees again.}}",
       "deleteConfirm": "{count, plural, one {I have checked: delete this record.} other {I have checked: delete these # records.}}",
-      "deleted": "{count, plural, one {Offboarding record deleted.} other {# offboarding records deleted.}}",
       "selectHint": "Tick a name, then hold Shift and tick another to select everyone in between."
-    },
-    "employeeNumber": "ID number",
-    "idLabel": "ID: {number}"
+    }
   },
   "kpis": {
     "title": "KPIs",
