@@ -351,6 +351,31 @@ describe("joiners and leavers", () => {
     expect((await people.getEmployee(someone.id)).active).toBe(false);
   });
 
+  it("deletes offboarding records, making those who had finished current again only when asked", async () => {
+    const people_ = await db.select().from(s.employees).where(and(eq(s.employees.active, true), eq(s.employees.department, "finance"))).limit(3);
+    expect(people_).toHaveLength(3);
+    const [a, b, c] = await Promise.all(people_.map((p) => people.createLeaver({ employeeId: p.id, resignationDate: "2026-09-01", forwardTo: null, notes: null }, it_)));
+    const all = Object.fromEntries(OFFBOARDING_TASKS.map((t) => [t, true]));
+    await people.updateLeaver(b.id, { tasks: all }, it_);
+    await people.updateLeaver(c.id, { tasks: all }, it_);
+    expect((await people.getEmployee(people_[1].id)).active).toBe(false);
+
+    // b without restoring: still marked as having left.
+    expect(await people.deleteLeavers([a.id, b.id], false, it_)).toEqual({ deleted: 2 });
+    expect((await people.getEmployee(people_[0].id)).active).toBe(true);
+    expect((await people.getEmployee(people_[1].id)).active).toBe(false);
+    // c restoring: current again.
+    expect(await people.deleteLeavers([c.id], true, it_)).toEqual({ deleted: 1 });
+    expect((await people.getEmployee(people_[2].id)).active).toBe(true);
+
+    const left = (await people.listLeavers()).map((l) => l.id);
+    expect(left).not.toContain(a.id);
+    expect(left).not.toContain(c.id);
+    expect(await people.deleteLeavers([a.id], false, it_)).toEqual({ deleted: 0 });
+    const logged = await db.select().from(s.auditLog).where(and(eq(s.auditLog.entity, "leaver"), eq(s.auditLog.action, "delete")));
+    expect(logged.map((l) => l.summary)).toContain(`Deleted the offboarding record for ${people_[2].name} and marked them as a current employee again`);
+  });
+
   it("lists IT staff for assignment", async () => {
     const staff = await people.listStaff();
     expect(staff.map((u) => u.role).sort()).toEqual(["admin", "it_admin", "it_staff", "it_staff"]);

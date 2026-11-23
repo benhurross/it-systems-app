@@ -1699,7 +1699,17 @@
       "overdueBy": "Ended days ago: {days}",
       "completeHint": "Ticking the last step completes offboarding and marks the employee as having left.",
       "notesSaved": "Notes saved.",
-      "saveNotes": "Save notes"
+      "saveNotes": "Save notes",
+      "select": "Select {name}",
+      "selectPage": "Select everyone on this page",
+      "clearSelection": "Clear selection",
+      "deleteSelected": "Delete selected ({count})",
+      "deleteTitle": "{count, plural, one {Delete this offboarding record?} other {Delete these # offboarding records?}}",
+      "deleteBody": "Only the offboarding checklists go. The people stay in the directory as they are. This cannot be undone.",
+      "restore": "{count, plural, one {One of them finished offboarding and is marked as having left: mark them as a current employee again.} other {# of them finished offboarding and are marked as having left: mark them as current employees again.}}",
+      "deleteConfirm": "{count, plural, one {I have checked: delete this record.} other {I have checked: delete these # records.}}",
+      "deleted": "{count, plural, one {Offboarding record deleted.} other {# offboarding records deleted.}}",
+      "selectHint": "Tick a name, then hold Shift and tick another to select everyone in between."
     },
     "employeeNumber": "ID number",
     "idLabel": "ID: {number}"

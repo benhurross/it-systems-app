@@ -188,3 +188,53 @@ test("an employee's mobile number is added, checked, and shown in the directory"
   await expect(page.getByRole("row").filter({ hasText: name })).toContainText("+966 55 123 4567");
   console.assertClean();
 });
+
+test.describe("deleting offboarding records", () => {
+  test.use({ storageState: session("admin") });
+
+  test("an Admin chooses a run of them with Shift and deletes them together, after a confirmation", async ({ page }, info) => {
+    const console = watchConsole(page);
+    const prefix = unique(info, "Gone Person");
+    // Three people leaving, resigned a day apart so the list (newest first) shows them in order 3, 2, 1.
+    for (const n of [1, 2, 3]) {
+      const made = await page.request.post("/api/employees", {
+        data: { name: `${prefix} ${n}`, email: `gone.${n}.${info.project.name}.${Date.now()}@applus.test`, department: "sales", location: "jeddah", jobTitle: "Account Manager", employeeNumber: null, phone: null, active: true },
+      });
+      expect(made.ok(), await made.text()).toBe(true);
+      const id = ((await made.json()) as { id: number }).id;
+      const leaving = await page.request.post("/api/leavers", { data: { employeeId: id, resignationDate: `2026-10-0${n}`, forwardTo: null, notes: null } });
+      expect(leaving.ok(), await leaving.text()).toBe(true);
+    }
+
+    await page.goto(`/en/people/offboarding?q=${encodeURIComponent(prefix)}`);
+    const rows = page.getByRole("row").filter({ has: page.getByRole("cell") });
+    await expect(rows).toHaveCount(3);
+    await page.getByRole("checkbox", { name: `Select ${prefix} 3` }).click();
+    await page.getByRole("checkbox", { name: `Select ${prefix} 1` }).click({ modifiers: ["Shift"] });
+    for (const n of [1, 2, 3]) await expect(page.getByRole("checkbox", { name: `Select ${prefix} ${n}` })).toBeChecked();
+
+    await page.getByRole("button", { name: "Delete selected (3)" }).click();
+    const ask = page.getByRole("alertdialog", { name: "Delete these 3 offboarding records?" });
+    for (const n of [1, 2, 3]) await expect(ask.getByRole("listitem").filter({ hasText: `${prefix} ${n}` })).toBeVisible();
+    const remove = ask.getByRole("button", { name: "Delete" });
+    await expect(remove).toBeDisabled();
+    await ask.getByLabel("I have checked: delete these 3 records.").check();
+    await remove.click();
+    await expect(page.getByText("3 offboarding records deleted.")).toBeVisible();
+    await expect(rows).toHaveCount(1);
+    await expect(rows).toContainText("No rows match the filters");
+    console.assertClean();
+  });
+
+  test("an IT Admin has no way to delete them, and the server refuses", async ({ browser }) => {
+    const context = await browser.newContext({ storageState: session("itAdmin") });
+    const page = await context.newPage();
+    await page.goto("/en/people/offboarding");
+    await expect(page.getByRole("row").filter({ has: page.getByRole("cell") }).first()).toBeVisible();
+    await expect(page.getByRole("checkbox", { name: /^Select / })).toHaveCount(0);
+    await expect(page.getByText("hold Shift", { exact: false })).toHaveCount(0);
+    const [first] = (await (await page.request.get("/api/leavers")).json()) as { id: number }[];
+    expect((await page.request.post("/api/leavers/delete", { data: { ids: [first.id] } })).status()).toBe(403);
+    await context.close();
+  });
+});

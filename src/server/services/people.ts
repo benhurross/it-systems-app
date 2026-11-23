@@ -157,6 +157,32 @@ export async function createLeaver(input: z.infer<typeof leaverInput>, actor: Ac
   return row;
 }
 
+/**
+ * Deletes offboarding records (one, or many chosen together), for good. The people stay in the
+ * directory as they are; with `restore`, those whose completed offboarding had marked them as
+ * having left are made current again.
+ */
+export async function deleteLeavers(ids: number[], restore: boolean, actor: Actor) {
+  const gone = await db.transaction(async (tx) => {
+    const rows = await tx
+      .delete(leavers)
+      .where(inArray(leavers.id, ids))
+      .returning({ id: leavers.id, employeeId: leavers.employeeId, completedAt: leavers.completedAt });
+    const back = rows.filter((r) => r.completedAt).map((r) => r.employeeId);
+    if (restore && back.length) await tx.update(employees).set({ active: true }).where(inArray(employees.id, back));
+    return rows;
+  });
+  if (gone.length === 0) return { deleted: 0 };
+  const names = new Map(
+    (await db.select({ id: employees.id, name: employees.name }).from(employees).where(inArray(employees.id, gone.map((r) => r.employeeId)))).map((e) => [e.id, e.name]),
+  );
+  for (const row of gone) {
+    const back = restore && row.completedAt ? " and marked them as a current employee again" : "";
+    await audit(actor, "delete", "leaver", row.id, `Deleted the offboarding record for ${names.get(row.employeeId) ?? "someone"}${back}`);
+  }
+  return { deleted: gone.length };
+}
+
 /** Ticking the last step completes offboarding and marks the employee inactive. */
 export async function updateLeaver(
   id: number,
